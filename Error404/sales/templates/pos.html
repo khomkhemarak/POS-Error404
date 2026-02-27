@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error404 | Cafe POS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans overflow-hidden">
+
+    <div class="flex h-screen w-full">
+        <div class="w-3/4 flex flex-col p-6 space-y-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-black text-blue-500">Error<span class="text-white">404</span> <span class="text-sm font-light text-slate-400">POS v1.0</span></h1>
+                <div class="relative w-1/3">
+                    <i class="bi bi-search absolute left-3 top-2.5 text-slate-400"></i>
+                    <input type="text" placeholder="Search menu..." class="w-full bg-slate-800 border-none rounded-xl py-2 pl-10 focus:ring-2 focus:ring-blue-500 text-slate-200">
+                </div>
+            </div>
+
+            <div class="flex space-x-4 no-scrollbar overflow-x-auto pb-2">
+                <button class="px-6 py-3 bg-blue-600 rounded-2xl font-bold shadow-lg shadow-blue-900/20">All Items</button>
+                <button class="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition">☕ Hot Drinks</button>
+                <button class="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition">❄️ Iced Drinks</button>
+                <button class="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition">🧋 Frappe Drinks</button>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto pr-2 no-scrollbar">
+                {% for product in products %}
+                <button onclick="addToCart('{{ product.id }}', '{{ product.name }}', {{ product.base_price }})" 
+                        class="group bg-slate-800 p-4 rounded-3xl border-2 border-transparent hover:border-blue-500 hover:bg-slate-750 transition-all text-left flex flex-col justify-between h-48 shadow-xl relative overflow-hidden">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" class="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-40 transition-opacity">
+                    {% endif %}
+                    <div class="relative z-10">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-1 rounded-md">{{ product.category }}</span>
+                        <h3 class="text-lg font-bold mt-2 group-hover:text-white">{{ product.name }}</h3>
+                    </div>
+                    <div class="relative z-10 flex justify-between items-end">
+                        <span class="text-2xl font-black text-white">${{ product.base_price }}</span>
+                        <div class="bg-slate-700 p-2 rounded-xl group-hover:bg-blue-600 transition">
+                            <i class="bi bi-plus-lg text-white"></i>
+                        </div>
+                    </div>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="w-1/4 bg-slate-800 border-l border-slate-700 flex flex-col shadow-2xl">
+            <div class="p-6 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold">Current Order</h2>
+                <button onclick="clearCart()" class="text-slate-400 hover:text-red-400"><i class="bi bi-trash3"></i></button>
+            </div>
+
+            <div class="p-4 bg-slate-900/50 m-4 rounded-2xl border border-slate-700">
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Customer Loyalty</label>
+                <div class="flex gap-2">
+                    <input type="text" id="customer-phone" placeholder="Phone..." 
+                           class="flex-grow bg-slate-800 border-none rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none text-slate-200">
+                    <button onclick="searchCustomer()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg transition">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <div id="customer-display" class="mt-2 flex items-center justify-between hidden animate-fadeIn">
+                    <span class="text-xs font-bold text-blue-400"><i class="bi bi-person-fill"></i> <span id="customer-name-label"></span></span>
+                    <button onclick="removeCustomer()" class="text-slate-500 hover:text-red-500 text-xs font-black uppercase tracking-tighter">Remove</button>
+                </div>
+            </div>
+
+            <div id="cart-list" class="flex-grow overflow-y-auto p-4 space-y-4 no-scrollbar">
+                <div class="text-center text-slate-500 mt-20 italic font-medium">Cart is empty</div>
+            </div>
+
+            <div class="p-6 bg-slate-850 space-y-3 border-t border-slate-700 bg-slate-900/40">
+                <div class="flex justify-between text-slate-400 text-sm">
+                    <span>Subtotal</span>
+                    <span id="subtotal">$0.00</span>
+                </div>
+                <div id="loyalty-discount-row" class="flex justify-between text-green-500 text-sm hidden font-bold">
+                    <span>Loyalty Discount (10%)</span>
+                    <span id="discount-amount">-$0.00</span>
+                </div>
+                <div class="flex justify-between text-slate-400 text-sm border-b border-slate-700 pb-2">
+                    <span>Tax (10%)</span>
+                    <span id="tax">$0.00</span>
+                </div>
+                <div class="flex justify-between text-3xl font-black text-blue-400 py-2">
+                    <span>Total</span>
+                    <span id="total-price">$0.00</span>
+                </div>
+
+                <button onclick="sendOrder()" class="w-full bg-green-500 hover:bg-green-400 text-slate-900 py-5 rounded-2xl font-black text-xl transition transform active:scale-95 shadow-lg shadow-green-900/20 mt-2">
+                    PLACE ORDER
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="option-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-800 w-full max-w-md rounded-3xl p-8 border border-slate-700 relative shadow-2xl">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white transition"><i class="bi bi-x-lg text-xl"></i></button>
+            <h2 id="modal-product-name" class="text-2xl font-black mb-8 text-blue-500 tracking-tight">Customize</h2>
+            <div class="mb-8">
+                <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Select Size</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <button id="size-Small" onclick="selectSize('Small', -0.5)" class="size-btn bg-slate-700 py-3 rounded-xl transition font-black text-sm">Small</button>
+                    <button id="size-Medium" onclick="selectSize('Medium', 0)" class="size-btn bg-slate-700 py-3 rounded-xl transition font-black text-sm">Medium</button>
+                    <button id="size-Large" onclick="selectSize('Large', 1.0)" class="size-btn bg-slate-700 py-3 rounded-xl transition font-black text-sm">Large</button>
+                </div>
+            </div>
+            <div class="mb-8">
+                <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Sugar Level</p>
+                <div class="grid grid-cols-4 gap-2">
+                    <button id="sugar-0%" onclick="selectSugar('0%')" class="sugar-btn bg-slate-700 py-2 rounded-xl text-xs font-black">0%</button>
+                    <button id="sugar-50%" onclick="selectSugar('50%')" class="sugar-btn bg-slate-700 py-2 rounded-xl text-xs font-black">50%</button>
+                    <button id="sugar-100%" onclick="selectSugar('100%')" class="sugar-btn bg-slate-700 py-2 rounded-xl text-xs font-black">100%</button>
+                    <button id="sugar-Extra" onclick="selectSugar('Extra')" class="sugar-btn bg-slate-700 py-2 rounded-xl text-xs font-black">Extra</button>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-10">
+                <button onclick="closeModal()" class="flex-1 bg-slate-700 py-4 rounded-2xl font-black text-slate-300 hover:bg-slate-600 transition">CANCEL</button>
+                <button onclick="confirmCustomization()" class="flex-2 bg-blue-500 py-4 px-8 rounded-2xl font-black text-slate-900 shadow-lg shadow-blue-500/20 hover:bg-blue-400 transition">ADD TO CART</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="register-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+        <div class="bg-slate-800 w-full max-w-sm rounded-3xl p-8 border border-slate-700 shadow-2xl">
+            <h2 class="text-2xl font-black mb-6 text-green-500 tracking-tight">New Regular</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Full Name</label>
+                    <input type="text" id="reg-name" placeholder="Enter Name" class="w-full bg-slate-900 border-none rounded-xl p-4 text-white outline-none focus:ring-2 focus:ring-green-500 transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Phone Number</label>
+                    <input type="text" id="reg-phone" placeholder="Enter Phone" class="w-full bg-slate-900 border-none rounded-xl p-4 text-white outline-none focus:ring-2 focus:ring-green-500 transition">
+                </div>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button onclick="toggleRegisterModal()" class="flex-1 bg-slate-700 py-4 rounded-2xl font-bold text-slate-300 hover:bg-slate-600 transition">CANCEL</button>
+                <button onclick="submitRegistration()" class="flex-1 bg-green-600 py-4 rounded-2xl font-black text-white shadow-lg shadow-green-600/20 hover:bg-green-500 transition">REGISTER</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+        let currentItem = null;
+        let selectedCustomerId = null;
+
+        // --- LOYALTY LOGIC ---
+        async function searchCustomer() {
+            const phone = document.getElementById('customer-phone').value;
+            if (!phone) return;
+
+            try {
+                const response = await fetch(`/api/customer-lookup/?phone=${phone}`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    selectedCustomerId = data.id;
+                    document.getElementById('customer-name-label').innerText = data.name;
+                    document.getElementById('customer-display').classList.remove('hidden');
+                    renderCart();
+                } else {
+                    // Logic updated to trigger registration modal if phone not found
+                    if(confirm("Customer not found. Register them now?")) {
+                        document.getElementById('reg-phone').value = phone;
+                        toggleRegisterModal();
+                    }
+                }
+            } catch (error) {
+                console.error("Search failed", error);
+            }
+        }
+
+        function removeCustomer() {
+            selectedCustomerId = null;
+            document.getElementById('customer-phone').value = '';
+            document.getElementById('customer-display').classList.add('hidden');
+            renderCart();
+        }
+
+        function toggleRegisterModal() {
+            document.getElementById('register-modal').classList.toggle('hidden');
+        }
+
+        async function submitRegistration() {
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
+
+            if(!name || !phone) return alert("Please fill in all fields.");
+
+            const response = await fetch('/api/register-customer/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, phone })
+            });
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                selectedCustomerId = data.id;
+                document.getElementById('customer-name-label').innerText = data.name;
+                document.getElementById('customer-display').classList.remove('hidden');
+                toggleRegisterModal();
+                renderCart();
+                alert("Welcome to the club, " + data.name + "!");
+            } else {
+                alert("Error: " + data.message);
+            }
+        }
+
+        // --- CORE POS LOGIC ---
+        async function addToCart(id, name, basePrice) {
+            const response = await fetch(`/check-stock/${id}/`);
+            const data = await response.json();
+            if (!data.available) return alert("⚠️ Out of stock: " + data.message);
+
+            currentItem = { id, name, basePrice, size: 'Medium', sugar: '100%', extraPrice: 0 };
+            document.getElementById('modal-product-name').innerText = name;
+            document.getElementById('option-modal').classList.remove('hidden');
+            selectSize('Medium', 0);
+            selectSugar('100%');
+        }
+
+        function selectSize(size, extra) {
+            currentItem.size = size;
+            currentItem.extraPrice = parseFloat(extra);
+            document.querySelectorAll('.size-btn').forEach(btn => btn.classList.replace('bg-blue-600', 'bg-slate-700'));
+            document.getElementById(`size-${size}`).classList.replace('bg-slate-700', 'bg-blue-600');
+        }
+
+        function selectSugar(level) {
+            currentItem.sugar = level;
+            document.querySelectorAll('.sugar-btn').forEach(btn => btn.classList.replace('bg-blue-600', 'bg-slate-700'));
+            document.getElementById(`sugar-${level}`).classList.replace('bg-slate-700', 'bg-blue-600');
+        }
+
+        function confirmCustomization() {
+            const finalPrice = currentItem.basePrice + currentItem.extraPrice;
+            const uniqueKey = `${currentItem.id}-${currentItem.size}-${currentItem.sugar}`;
+            const existing = cart.find(i => i.uniqueKey === uniqueKey);
+            
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({
+                    uniqueKey,
+                    id: currentItem.id,
+                    name: currentItem.name,
+                    size: currentItem.size,
+                    sugar: currentItem.sugar,
+                    price: finalPrice,
+                    qty: 1
+                });
+            }
+            closeModal();
+            renderCart();
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cart-list');
+            if (cart.length === 0) {
+                list.innerHTML = '<div class="text-center text-slate-500 mt-20 italic font-medium">Cart is empty</div>';
+                updateTotals(0);
+                return;
+            }
+
+            list.innerHTML = cart.map((item, index) => `
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
+                    <div>
+                        <p class="font-black text-sm text-white">${item.name}</p>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">${item.size} | ${item.sugar} Sugar</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-black text-blue-400">$${(item.price * item.qty).toFixed(2)}</p>
+                        <p class="text-[10px] text-slate-600">${item.qty} units</p>
+                    </div>
+                </div>
+            `).join('');
+
+            const subtotal = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+            updateTotals(subtotal);
+        }
+
+        function updateTotals(subtotal) {
+            let discount = 0;
+            if (selectedCustomerId) {
+                discount = subtotal * 0.10; // 10% Loyalty Discount
+                document.getElementById('loyalty-discount-row').classList.remove('hidden');
+            } else {
+                document.getElementById('loyalty-discount-row').classList.add('hidden');
+            }
+
+            const afterDiscount = subtotal - discount;
+            const tax = afterDiscount * 0.10;
+            const total = afterDiscount + tax;
+
+            document.getElementById('subtotal').innerText = `$${subtotal.toFixed(2)}`;
+            document.getElementById('discount-amount').innerText = `-$${discount.toFixed(2)}`;
+            document.getElementById('tax').innerText = `$${tax.toFixed(2)}`;
+            document.getElementById('total-price').innerText = `$${total.toFixed(2)}`;
+        }
+
+        async function sendOrder() {
+            if (cart.length === 0) return;
+            const total = document.getElementById('total-price').innerText.replace('$', '');
+
+            const response = await fetch('/api/process-payment/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: cart,
+                    total: parseFloat(total),
+                    customer_id: selectedCustomerId
+                })
+            });
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                alert(`Order Success! Points added to Regular.`);
+                clearCart();
+                removeCustomer();
+            }
+        }
+
+        function clearCart() { cart = []; renderCart(); }
+        function closeModal() { document.getElementById('option-modal').classList.add('hidden'); }
+    </script>
+</body>
+</html>
