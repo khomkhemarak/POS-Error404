@@ -37,16 +37,21 @@
             <div class="p-5 flex-grow">
                 <ul class="space-y-4">
                     {% for item in order.items.all %}
-                    <li class="border-b border-slate-100 pb-3 last:border-0">
-                        <div class="flex justify-between font-black text-lg leading-tight">
-                            <span>{{ item.quantity }}x {{ item.product.name }}</span>
+                    <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div>
+                            <span class="font-black text-slate-800">{{ item.quantity }}x {{ item.product.name }}</span>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                {{ item.size }} | {{ item.sugar }} Sugar
+                            </p>
                         </div>
-                        <div class="mt-1 flex flex-wrap gap-2">
-                            <span class="bg-slate-900 text-white px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">
-                                {{ item.notes }}
-                            </span>
-                        </div>
-                    </li>
+                        
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase 
+                            {% if item.drink_type == 'Hot' %} bg-orange-100 text-orange-600
+                            {% elif item.drink_type == 'Iced' %} bg-blue-100 text-blue-600
+                            {% else %} bg-purple-100 text-purple-600 {% endif %}">
+                            {{ item.drink_type }}
+                        </span>
+                    </div>
                     {% endfor %}
                 </ul>
             </div>

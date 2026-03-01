@@ -201,6 +201,24 @@
                         class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
                 </div>
 
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-2 tracking-widest text-left">Available Types</label>
+                    <div class="flex gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="type_hot" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked>
+                            <span class="text-sm font-bold text-slate-700">HOT</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="type_iced" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm font-bold text-slate-700">ICED</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="type_frappe" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm font-bold text-slate-700">FRAPPE</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="flex gap-3 pt-6">
                     <button type="button" onclick="toggleProductModal()" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold hover:bg-slate-200 transition">CANCEL</button>
                     <button type="submit" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition">SAVE DRINK</button>

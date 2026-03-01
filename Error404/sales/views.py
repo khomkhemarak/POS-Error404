@@ -74,17 +74,22 @@ def add_product(request):
     if request.method == "POST":
         name = request.POST.get('name')
         price = request.POST.get('price')
-        image = request.FILES.get('image') # Files are in request.FILES, not request.POST
+        image = request.FILES.get('image')
         
-        # Create the new drink in the database
+        # Catch the checkboxes (True if checked, False if not)
+        is_hot = 'type_hot' in request.POST
+        is_iced = 'type_iced' in request.POST
+        is_frappe = 'type_frappe' in request.POST
+
         Product.objects.create(
-            name=name,
-            base_price=price,
-            image=image
+            name=name, 
+            base_price=price, 
+            image=image,
+            can_be_hot=is_hot,
+            can_be_iced=is_iced,
+            can_be_frappe=is_frappe
         )
-        
-    # After saving, go back to the dashboard
-    return redirect('admin_dashboard')
+        return redirect('admin_dashboard')
 
 ######## inventory page ########
 
@@ -244,67 +249,74 @@ def process_payment(request):
             data = json.loads(request.body)
             cart_items = data.get('items', [])
             total_price = data.get('total')
-            customer_id = data.get('customer_id') # New: From POS loyalty search
+            customer_id = data.get('customer_id') 
 
             with transaction.atomic():
-                # 1. Create the Main Order
+                # 1. Create the Main Order (is_completed=True means it's paid)
                 new_order = Order.objects.create(
                     total_amount=total_price,
-                    is_completed=False
+                    is_completed=True 
                 )
 
-                # New: Link Customer if they exist
+                # 2. Link Customer & Add Loyalty Points
                 if customer_id:
                     try:
                         customer = Customer.objects.get(id=customer_id)
                         new_order.customer = customer
                         new_order.save()
                         
-                        # Add loyalty points (e.g., 1 point per $1 spent)
+                        # Add 1 point per $1 spent (rounded down)
                         customer.points += int(float(total_price))
                         customer.save()
-                    except Customer.DoesNotExist:
-                        pass # If ID is invalid, continue as guest
+                    except (Customer.DoesNotExist, ValueError):
+                        pass # Continue as guest if ID is invalid
 
+                # 3. Process each item in the cart
                 for item in cart_items:
                     product = Product.objects.get(id=item['id'])
                     target_size = item.get('size', 'Medium')
+                    # Get the new Drink Type (Hot/Iced/Frappe)
+                    target_type = item.get('type', 'Hot')
                     
-                    # 2. Find Ingredients for the specific size
+                    # --- INVENTORY DEDUCTION LOGIC ---
                     recipe_items = Recipe.objects.filter(product=product, size=target_size)
                     
                     # FALLBACK: If specific size recipe doesn't exist, try Medium
                     if not recipe_items.exists() and target_size != 'Medium':
                         recipe_items = Recipe.objects.filter(product=product, size='Medium')
                     
-                    # CRITICAL ERROR: If still no recipe is found, stop the transaction
-                    if not recipe_items.exists():
-                        raise ValueError(f"No recipe defined for {product.name} in {target_size} or Medium.")
+                    # If a recipe exists, subtract ingredients
+                    if recipe_items.exists():
+                        for recipe in recipe_items:
+                            usage = recipe.amount_needed * item['qty']
+                            ingredient = recipe.ingredient
+                            ingredient.stock_quantity -= usage
+                            ingredient.save()
+                    else:
+                        # Log warning but don't crash the POS (optional)
+                        print(f"Warning: No recipe for {product.name}. Inventory not deducted.")
 
-                    for recipe in recipe_items:
-                        # 3. Calculate exact usage
-                        usage = recipe.amount_needed * item['qty']
-                        
-                        # 4. Subtract from Ingredient stock
-                        ingredient = recipe.ingredient
-                        ingredient.stock_quantity -= usage
-                        ingredient.save()
-
-                    # 5. Create the OrderItem record
+                    # 4. Create the OrderItem record
+                    # We store the Size, Sugar, and Type for the Kitchen View
                     OrderItem.objects.create(
                         order=new_order,
                         product=product,
                         quantity=item['qty'],
-                        price=item['price'],
-                        notes=f"{target_size} | {item.get('sugar', '100%')}" 
+                        size=target_size,
+                        sugar=item.get('sugar', '100%'),
+                        drink_type=target_type # Saving the Hot/Iced/Frappe choice
                     )
 
-            return JsonResponse({'status': 'success', 'order_id': new_order.id})
+            return JsonResponse({
+                'status': 'success', 
+                'order_id': new_order.id,
+                'message': 'Order processed and inventory updated'
+            })
 
         except Exception as e:
-            print(f"Payment Error: {str(e)}")
+            print(f"CRITICAL Payment Error: {str(e)}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-
+        
 def complete_order(request, order_id):
     if request.method == 'POST':
         # Find the specific order

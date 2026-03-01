@@ -12,6 +12,19 @@ class Product(models.Model):
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     category = models.CharField(max_length=50, default="Coffee") # Optional: Coffee, Tea, etc.
 
+    CATEGORIES = (
+        ('Coffee', 'Coffee'),
+        ('Tea', 'Tea'),
+        ('Matcha', 'Matcha'),
+        ('Other', 'Other'),
+    )
+    name = models.CharField(max_length=100)
+    category = models.CharField(max_length=20, choices=CATEGORIES, default='Coffee')
+
+    can_be_hot = models.BooleanField(default=True)
+    can_be_iced = models.BooleanField(default=False)
+    can_be_frappe = models.BooleanField(default=False)
+
     def __str__(self):
         return self.name
     
@@ -42,8 +55,12 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    notes = models.CharField(max_length=255, blank=True, null=True)
+    size = models.CharField(max_length=20, default='Medium')
+    sugar = models.CharField(max_length=20, default='100%')
+    drink_type = models.CharField(max_length=20, default='Hot') 
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name} ({self.drink_type})"
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=100) # e.g., "Whole Milk", "Espresso Beans"

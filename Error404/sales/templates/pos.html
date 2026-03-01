@@ -9,6 +9,15 @@
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .product-item {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .product-item.hidden {
+            display: none;
+            opacity: 0;
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans overflow-hidden">
@@ -23,33 +32,53 @@
                 </div>
             </div>
 
-            <div class="flex space-x-4 no-scrollbar overflow-x-auto pb-2">
-                <button class="px-6 py-3 bg-blue-600 rounded-2xl font-bold shadow-lg shadow-blue-900/20">All Items</button>
-                <button class="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition">☕ Hot Drinks</button>
-                <button class="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition">❄️ Iced Drinks</button>
-                <button class="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition">🧋 Frappe Drinks</button>
+            <div class="flex space-x-4 no-scrollbar overflow-x-auto pb-4">
+                <button onclick="filterCategory('All')" class="cat-btn px-6 py-3 bg-blue-600 rounded-2xl font-bold shadow-lg shadow-blue-900/20 whitespace-nowrap">All Items</button>
+                <button onclick="filterCategory('Coffee')" class="cat-btn px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition whitespace-nowrap text-slate-300">☕ Coffee</button>
+                <button onclick="filterCategory('Tea')" class="cat-btn px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition whitespace-nowrap text-slate-300">🍵 Tea</button>
+                <button onclick="filterCategory('Matcha')" class="cat-btn px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition whitespace-nowrap text-slate-300">Matcha</button>
+                <button onclick="filterCategory('Other')" class="cat-btn px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition whitespace-nowrap text-slate-300">Other</button>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto pr-2 no-scrollbar">
+            <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto pr-2 no-scrollbar">
                 {% for product in products %}
-                <button onclick="addToCart('{{ product.id }}', '{{ product.name }}', {{ product.base_price }})" 
-                        class="group bg-slate-800 p-4 rounded-3xl border-2 border-transparent hover:border-blue-500 hover:bg-slate-750 transition-all text-left flex flex-col justify-between h-48 shadow-xl relative overflow-hidden">
-                    {% if product.image %}
-                    <img src="{{ product.image.url }}" class="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-40 transition-opacity">
-                    {% endif %}
-                    <div class="relative z-10">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-1 rounded-md">{{ product.category }}</span>
-                        <h3 class="text-lg font-bold mt-2 group-hover:text-white">{{ product.name }}</h3>
-                    </div>
-                    <div class="relative z-10 flex justify-between items-end">
-                        <span class="text-2xl font-black text-white">${{ product.base_price }}</span>
-                        <div class="bg-slate-700 p-2 rounded-xl group-hover:bg-blue-600 transition">
-                            <i class="bi bi-plus-lg text-white"></i>
+                <div class="product-item" data-category="{{ product.category }}">
+                    <button onclick="addToCart('{{ product.id }}', '{{ product.name }}', {{ product.base_price }}, '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" 
+                            class="group w-full bg-slate-800 p-4 rounded-3xl border-2 border-transparent hover:border-blue-500 hover:bg-slate-750 transition-all text-left flex flex-col justify-between h-48 shadow-xl relative overflow-hidden">
+                        
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" class="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-40 transition-opacity">
+                        {% endif %}
+                        
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-1 rounded-md border border-blue-500/20">
+                                    {{ product.category }}
+                                </span>
+                                
+                                <div class="flex gap-1 opacity-40 group-hover:opacity-100 transition">
+                                    {% if product.can_be_hot %}<i class="bi bi-thermometer-sun text-[10px] text-orange-400"></i>{% endif %}
+                                    {% if product.can_be_iced %}<i class="bi bi-snow text-[10px] text-blue-400"></i>{% endif %}
+                                    {% if product.can_be_frappe %}<i class="bi bi-wind text-[10px] text-purple-400"></i>{% endif %}
+                                </div>
+                            </div>
+                            <h3 class="text-lg font-bold mt-2 group-hover:text-white leading-tight">{{ product.name }}</h3>
                         </div>
-                    </div>
-                </button>
+
+                        <div class="relative z-10 flex justify-between items-end">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Starts at</span>
+                                <span class="text-2xl font-black text-white">${{ product.base_price }}</span>
+                            </div>
+                            <div class="bg-slate-700 p-2 rounded-xl group-hover:bg-blue-600 group-hover:scale-110 transition-all shadow-lg">
+                                <i class="bi bi-plus-lg text-white"></i>
+                            </div>
+                        </div>
+                    </button>
+                </div>
                 {% endfor %}
             </div>
+
         </div>
 
         <div class="w-1/4 bg-slate-800 border-l border-slate-700 flex flex-col shadow-2xl">
@@ -106,6 +135,7 @@
         <div class="bg-slate-800 w-full max-w-md rounded-3xl p-8 border border-slate-700 relative shadow-2xl">
             <button onclick="closeModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white transition"><i class="bi bi-x-lg text-xl"></i></button>
             <h2 id="modal-product-name" class="text-2xl font-black mb-8 text-blue-500 tracking-tight">Customize</h2>
+            
             <div class="mb-8">
                 <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Select Size</p>
                 <div class="grid grid-cols-3 gap-3">
@@ -114,6 +144,22 @@
                     <button id="size-Large" onclick="selectSize('Large', 1.0)" class="size-btn bg-slate-700 py-3 rounded-xl transition font-black text-sm">Large</button>
                 </div>
             </div>
+
+            <div class="mb-8">
+                <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Drink Type</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <button id="type-Hot" onclick="selectType('Hot')" class="type-btn bg-slate-700 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
+                        <i class="bi bi-thermometer-sun text-orange-400"></i> Hot
+                    </button>
+                    <button id="type-Iced" onclick="selectType('Iced')" class="type-btn bg-slate-700 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
+                        <i class="bi bi-snow text-blue-400"></i> Iced
+                    </button>
+                    <button id="type-Frappe" onclick="selectType('Frappe')" class="type-btn bg-slate-700 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
+                        <i class="bi bi-wind text-purple-400"></i> Frappe
+                    </button>
+                </div>
+            </div>
+
             <div class="mb-8">
                 <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Sugar Level</p>
                 <div class="grid grid-cols-4 gap-2">
@@ -123,9 +169,10 @@
                     <button id="sugar-Extra" onclick="selectSugar('Extra')" class="sugar-btn bg-slate-700 py-2 rounded-xl text-xs font-black">Extra</button>
                 </div>
             </div>
+
             <div class="flex gap-3 mt-10">
                 <button onclick="closeModal()" class="flex-1 bg-slate-700 py-4 rounded-2xl font-black text-slate-300 hover:bg-slate-600 transition">CANCEL</button>
-                <button onclick="confirmCustomization()" class="flex-2 bg-blue-500 py-4 px-8 rounded-2xl font-black text-slate-900 shadow-lg shadow-blue-500/20 hover:bg-blue-400 transition">ADD TO CART</button>
+                <button onclick="addToCart('{{ product.id }}', '{{ product.name }}', {{ product.base_price }}, '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" ...>
             </div>
         </div>
     </div>
@@ -155,6 +202,32 @@
         let currentItem = null;
         let selectedCustomerId = null;
 
+        function filterCategory(category) {
+            // 1. Update Button Visuals
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'font-bold', 'shadow-lg', 'shadow-blue-900/20');
+                btn.classList.add('bg-slate-800', 'font-semibold', 'text-slate-300');
+            });
+
+            // Highlight the clicked button (target the specific element)
+            event.currentTarget.classList.add('bg-blue-600', 'font-bold', 'shadow-lg', 'shadow-blue-900/20');
+            event.currentTarget.classList.remove('bg-slate-800', 'text-slate-300');
+
+            // 2. Filter the Items
+            const items = document.querySelectorAll('.product-item');
+            
+            items.forEach(item => {
+                if (category === 'All' || item.getAttribute('data-category') === category) {
+                    item.classList.remove('hidden');
+                    // Adding a small fade-in animation
+                    item.style.opacity = '0';
+                    setTimeout(() => { item.style.opacity = '1'; item.style.transition = '0.3s'; }, 10);
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        }
+
         // --- LOYALTY LOGIC ---
         async function searchCustomer() {
             const phone = document.getElementById('customer-phone').value;
@@ -170,7 +243,6 @@
                     document.getElementById('customer-display').classList.remove('hidden');
                     renderCart();
                 } else {
-                    // Logic updated to trigger registration modal if phone not found
                     if(confirm("Customer not found. Register them now?")) {
                         document.getElementById('reg-phone').value = phone;
                         toggleRegisterModal();
@@ -218,13 +290,38 @@
         }
 
         // --- CORE POS LOGIC ---
-        async function addToCart(id, name, basePrice) {
+        
+        // Updated to accept availability flags
+        async function addToCart(id, name, basePrice, canHot, canIced, canFrappe) {
             const response = await fetch(`/check-stock/${id}/`);
             const data = await response.json();
             if (!data.available) return alert("⚠️ Out of stock: " + data.message);
 
-            currentItem = { id, name, basePrice, size: 'Medium', sugar: '100%', extraPrice: 0 };
+            // Initialize current item with new 'type' field
+            currentItem = { 
+                id, name, basePrice, 
+                size: 'Medium', 
+                sugar: '100%', 
+                type: 'Hot', // Default
+                extraPrice: 0 
+            };
+
             document.getElementById('modal-product-name').innerText = name;
+            
+            // OPTIONAL 3: Dynamic Button Hiding
+            const btnHot = document.getElementById('type-Hot');
+            const btnIced = document.getElementById('type-Iced');
+            const btnFrappe = document.getElementById('type-Frappe');
+
+            btnHot.style.display = canHot === 'True' ? 'flex' : 'none';
+            btnIced.style.display = canIced === 'True' ? 'flex' : 'none';
+            btnFrappe.style.display = canFrappe === 'True' ? 'flex' : 'none';
+
+            // Auto-select the first available type
+            if (canHot === 'True') selectType('Hot');
+            else if (canIced === 'True') selectType('Iced');
+            else if (canFrappe === 'True') selectType('Frappe');
+
             document.getElementById('option-modal').classList.remove('hidden');
             selectSize('Medium', 0);
             selectSugar('100%');
@@ -237,6 +334,17 @@
             document.getElementById(`size-${size}`).classList.replace('bg-slate-700', 'bg-blue-600');
         }
 
+        function selectType(type) {
+            currentItem.type = type;
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white', 'ring-2', 'ring-blue-400');
+                btn.classList.add('bg-slate-700');
+            });
+            const activeBtn = document.getElementById(`type-${type}`);
+            activeBtn.classList.replace('bg-slate-700', 'bg-blue-600');
+            activeBtn.classList.add('text-white', 'ring-2', 'ring-blue-400');
+        }
+
         function selectSugar(level) {
             currentItem.sugar = level;
             document.querySelectorAll('.sugar-btn').forEach(btn => btn.classList.replace('bg-blue-600', 'bg-slate-700'));
@@ -245,7 +353,8 @@
 
         function confirmCustomization() {
             const finalPrice = currentItem.basePrice + currentItem.extraPrice;
-            const uniqueKey = `${currentItem.id}-${currentItem.size}-${currentItem.sugar}`;
+            // Added type to uniqueKey so Hot and Iced versions of same drink stay separate
+            const uniqueKey = `${currentItem.id}-${currentItem.size}-${currentItem.sugar}-${currentItem.type}`;
             const existing = cart.find(i => i.uniqueKey === uniqueKey);
             
             if (existing) {
@@ -257,6 +366,7 @@
                     name: currentItem.name,
                     size: currentItem.size,
                     sugar: currentItem.sugar,
+                    type: currentItem.type,
                     price: finalPrice,
                     qty: 1
                 });
@@ -276,7 +386,10 @@
             list.innerHTML = cart.map((item, index) => `
                 <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
                     <div>
-                        <p class="font-black text-sm text-white">${item.name}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="font-black text-sm text-white">${item.name}</p>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 font-black uppercase">${item.type}</span>
+                        </div>
                         <p class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">${item.size} | ${item.sugar} Sugar</p>
                     </div>
                     <div class="text-right">
@@ -293,7 +406,7 @@
         function updateTotals(subtotal) {
             let discount = 0;
             if (selectedCustomerId) {
-                discount = subtotal * 0.10; // 10% Loyalty Discount
+                discount = subtotal * 0.10; 
                 document.getElementById('loyalty-discount-row').classList.remove('hidden');
             } else {
                 document.getElementById('loyalty-discount-row').classList.add('hidden');
