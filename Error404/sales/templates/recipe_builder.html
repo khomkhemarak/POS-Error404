@@ -5,62 +5,69 @@
     <title>Error404 | Recipe Builder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .orange-glow { box-shadow: 0 0 40px rgba(245, 158, 11, 0.05); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-900 flex min-h-screen">
+<body class="bg-slate-950 text-slate-100 flex min-h-screen font-sans">
 
-    <div class="w-64 bg-slate-900 text-white p-6 hidden md:block">
-        <h2 class="text-2xl font-black text-blue-500 mb-10">Error<span class="text-white">404</span></h2>
-        <nav class="space-y-4 font-semibold">
-            <a href="{% url 'admin_dashboard' %}" class="block p-3 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
-                <i class="bi bi-speedometer2"></i> Dashboard
+    <div class="w-64 bg-slate-900 border-r border-slate-800 p-6 hidden md:flex flex-col">
+        <h1 class="text-3xl font-black bg-gradient-to-r from-orange-500 to-amber-300 bg-clip-text text-transparent mb-10">
+            Error<span class="text-white">404</span>
+        </h1>
+        <nav class="space-y-3 font-semibold flex-grow">
+            <a href="{% url 'admin_dashboard' %}" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
+                <i class="bi bi-speedometer2 text-lg"></i> Dashboard
             </a>
 
-            <a href="{% url 'inventory_list' %}" class="block p-3 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
-                <i class="bi bi-box-seam"></i> Inventory
+            <a href="{% url 'inventory_list' %}" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
+                <i class="bi bi-box-seam text-lg"></i> Inventory
             </a>
 
-            <a href="{% url 'recipe_builder' %}" class="block p-3 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20 flex items-center gap-3">
-                <i class="bi bi-journal-text"></i> Recipe Builder
+            <a href="{% url 'recipe_builder' %}" class="block p-3 bg-gradient-to-br from-orange-500 to-amber-600 text-slate-950 rounded-xl shadow-lg shadow-orange-900/40 flex items-center gap-3 transform transition hover:scale-105">
+                <i class="bi bi-journal-text text-lg"></i> Recipe Builder
             </a>
 
-            <a href="/kitchen/" class="block p-3 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
-                <i class="bi bi-cup-hot"></i> Kitchen View
+            <a href="/kitchen/" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
+                <i class="bi bi-cup-hot text-lg"></i> Kitchen View
             </a>
 
             <div class="border-t border-slate-800 my-4"></div>
 
-            <a href="/pos/" class="block p-3 hover:bg-slate-800 rounded-xl transition text-slate-400 italic flex items-center gap-3">
-                <i class="bi bi-pc-display-horizontal"></i> Open POS interface →
+            <a href="/pos/" class="block p-3 hover:bg-slate-800 rounded-xl transition text-slate-500 hover:text-orange-300 italic flex items-center gap-3">
+                <i class="bi bi-pc-display-horizontal text-lg"></i> Open POS interface →
             </a>
         </nav>
     </div>
 
-    <div class="flex-grow p-8">
+    <div class="flex-grow p-8 overflow-y-auto custom-scrollbar">
         <header class="mb-10 flex justify-between items-end">
             <div>
-                <h1 class="text-3xl font-bold tracking-tight">Recipe Builder</h1>
-                <p class="text-slate-500 text-sm">Define ingredient consumption per product size</p>
+                <h1 class="text-3xl font-black tracking-tight text-white">Recipe Builder</h1>
+                <p class="text-orange-500/70 font-bold uppercase tracking-widest text-[10px] mt-1">Define ingredient consumption per product size</p>
             </div>
-            <div class="text-right hidden lg:block">
-                <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1">Active Rules</span>
-                <span class="text-2xl font-black text-slate-700">{{ recipes.count }}</span>
+            <div class="text-right hidden lg:block bg-slate-900 px-6 py-3 rounded-2xl border border-slate-800">
+                <span class="text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-1">Active Rules</span>
+                <span class="text-2xl font-black text-orange-400">{{ recipes.count }}</span>
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 h-fit sticky top-8">
-                <div class="flex items-center gap-2 mb-6">
-                    <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                        <i class="bi bi-link-45deg text-xl"></i>
+            <div class="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 h-fit sticky top-8 orange-glow">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-10 h-10 bg-orange-500/10 text-orange-500 rounded-xl flex items-center justify-center border border-orange-500/20">
+                        <i class="bi bi-link-45deg text-2xl"></i>
                     </div>
-                    <h3 class="text-lg font-bold">Link Ingredient</h3>
+                    <h3 class="text-xl font-black text-white">Link Ingredient</h3>
                 </div>
 
-                <form method="POST" class="space-y-5">
+                <form method="POST" class="space-y-6">
                     {% csrf_token %}
                     <div>
-                        <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-wider">Target Product</label>
-                        <select name="product" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer">
+                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Target Product</label>
+                        <select name="product" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
                             {% for p in products %}
                                 <option value="{{ p.id }}">{{ p.name }}</option>
                             {% endfor %}
@@ -69,16 +76,16 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-wider">Ingredient</label>
-                            <select name="ingredient" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer">
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Ingredient</label>
+                            <select name="ingredient" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
                                 {% for i in ingredients %}
                                     <option value="{{ i.id }}">{{ i.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-wider">Cup Size</label>
-                            <select name="size" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer">
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Cup Size</label>
+                            <select name="size" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
                                 <option value="Small">Small</option>
                                 <option value="Medium" selected>Medium</option>
                                 <option value="Large">Large</option>
@@ -87,54 +94,54 @@
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-wider">Amount Needed</label>
+                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Amount Needed</label>
                         <div class="relative">
                             <input type="number" step="0.01" name="amount" placeholder="0.00" required
-                                class="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition">
-                            <span class="absolute right-4 top-3 text-slate-400 font-bold text-sm">Unit</span>
+                                class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition font-mono font-bold">
+                            <span class="absolute right-4 top-4 text-slate-600 font-black text-xs uppercase tracking-widest">Qty</span>
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-0.5 transition transform active:scale-95">
+                    <button type="submit" class="w-full bg-gradient-to-r from-orange-600 to-amber-500 text-slate-950 py-4 rounded-2xl font-black shadow-lg shadow-orange-900/40 hover:from-orange-500 hover:to-amber-400 transition transform active:scale-95 uppercase tracking-widest text-xs">
                         SAVE RECIPE RULE
                     </button>
                 </form>
             </div>
 
-            <div class="lg:col-span-2 space-y-4">
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-slate-900 rounded-[2rem] border border-slate-800 overflow-hidden shadow-xl">
                     <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b border-slate-100">
+                        <thead class="bg-slate-900/50 border-b border-slate-800">
                             <tr>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Menu Item</th>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Ingredient</th>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Usage</th>
+                                <th class="p-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">Menu Item</th>
+                                <th class="p-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">Ingredient</th>
+                                <th class="p-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">Usage</th>
                                 <th class="p-5"></th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-50">
+                        <tbody class="divide-y divide-slate-800/50">
                             {% for r in recipes %}
-                            <tr class="hover:bg-slate-50/80 transition-colors">
+                            <tr class="hover:bg-slate-800/30 transition-colors group">
                                 <td class="p-5">
                                     <div class="flex flex-col">
-                                        <span class="font-black text-slate-800">{{ r.product.name }}</span>
-                                        <span class="text-[10px] w-fit font-bold bg-slate-900 text-white px-2 py-0.5 rounded-md mt-1 uppercase tracking-tighter">
-                                            {{ r.size }} Cup
+                                        <span class="font-black text-slate-200 group-hover:text-orange-400 transition">{{ r.product.name }}</span>
+                                        <span class="text-[9px] w-fit font-black bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2 py-0.5 rounded-lg mt-1.5 uppercase tracking-widest">
+                                            {{ r.size }} Size
                                         </span>
                                     </div>
                                 </td>
                                 <td class="p-5">
-                                    <span class="text-slate-600 font-medium">{{ r.ingredient.name }}</span>
+                                    <span class="text-slate-400 font-bold">{{ r.ingredient.name }}</span>
                                 </td>
                                 <td class="p-5">
                                     <div class="flex items-center gap-2">
-                                        <span class="bg-blue-50 text-blue-700 px-4 py-1.5 rounded-xl font-mono font-black text-sm border border-blue-100">
-                                            {{ r.amount_needed }} <small class="font-normal">{{ r.ingredient.unit }}</small>
+                                        <span class="bg-slate-950 text-orange-400 px-4 py-2 rounded-xl font-mono font-black text-sm border border-slate-800 shadow-inner">
+                                            {{ r.amount_needed }} <small class="text-slate-600 font-bold ml-1">{{ r.ingredient.unit }}</small>
                                         </span>
                                     </div>
                                 </td>
                                 <td class="p-5 text-right">
-                                    <a href="#" onclick="return confirm('Remove this recipe rule?')" class="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                                    <a href="#" onclick="return confirm('Remove this recipe rule?')" class="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all border border-red-500/20">
                                         <i class="bi bi-trash3-fill"></i>
                                     </a>
                                 </td>
@@ -143,8 +150,10 @@
                             <tr>
                                 <td colspan="4" class="p-20 text-center">
                                     <div class="flex flex-col items-center">
-                                        <i class="bi bi-journal-x text-5xl text-slate-200 mb-4"></i>
-                                        <p class="text-slate-400 font-medium">No recipe rules defined yet.</p>
+                                        <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                                            <i class="bi bi-journal-x text-4xl text-slate-600"></i>
+                                        </div>
+                                        <p class="text-slate-500 font-bold tracking-widest uppercase text-xs">No recipe rules defined yet.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -153,12 +162,17 @@
                     </table>
                 </div>
                 
-                <div class="bg-blue-600 rounded-3xl p-6 text-white flex items-center gap-6">
-                    <div class="text-3xl"><i class="bi bi-lightbulb"></i></div>
-                    <p class="text-sm font-medium opacity-90 leading-relaxed">
-                        <strong>Pro-Tip:</strong> Define recipes for all three sizes (S, M, L) to ensure your inventory 
-                        is deducted accurately regardless of what the customer orders!
-                    </p>
+                <div class="bg-gradient-to-r from-orange-600/20 to-amber-500/10 rounded-[2rem] border border-orange-500/20 p-6 text-white flex items-center gap-6">
+                    <div class="w-14 h-14 shrink-0 rounded-2xl bg-orange-500 text-slate-950 flex items-center justify-center text-2xl shadow-lg shadow-orange-900/20">
+                        <i class="bi bi-lightbulb-fill"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase font-black text-orange-400 tracking-widest mb-1">Inventory Optimization</p>
+                        <p class="text-sm font-medium text-slate-300 leading-relaxed">
+                            Define recipes for <span class="text-white font-bold text-orange-300">all sizes (S, M, L)</span> to ensure stock 
+                            is deducted accurately. This powers your real-time "Healthy" status in Inventory.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

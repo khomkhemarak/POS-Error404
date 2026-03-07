@@ -5,152 +5,171 @@
     <title>Error404 | Inventory Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .orange-glow { box-shadow: 0 0 40px rgba(245, 158, 11, 0.05); }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-900 flex min-h-screen">
+<body class="bg-slate-950 text-slate-100 flex min-h-screen font-sans">
 
-    <div class="w-64 bg-slate-900 text-white p-6 hidden md:block">
-        <h2 class="text-2xl font-black text-blue-500 mb-10">Error<span class="text-white">404</span></h2>
-        <nav class="space-y-4 font-semibold">
-            <a href="{% url 'admin_dashboard' %}" class="block p-3 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
-                <i class="bi bi-speedometer2"></i> Dashboard
+    <div class="w-64 bg-slate-900 border-r border-slate-800 p-6 hidden md:flex flex-col">
+        <h1 class="text-3xl font-black bg-gradient-to-r from-orange-500 to-amber-300 bg-clip-text text-transparent mb-10">
+            Error<span class="text-white">404</span>
+        </h1>
+        <nav class="space-y-3 font-semibold flex-grow">
+            <a href="{% url 'admin_dashboard' %}" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
+                <i class="bi bi-speedometer2 text-lg"></i> Dashboard
             </a>
 
-            <a href="{% url 'inventory_list' %}" class="block p-3 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20 flex items-center gap-3">
-                <i class="bi bi-box-seam"></i> Inventory
+            <a href="{% url 'inventory_list' %}" class="block p-3 bg-gradient-to-br from-orange-500 to-amber-600 text-slate-950 rounded-xl shadow-lg shadow-orange-900/40 flex items-center gap-3 transform transition hover:scale-105">
+                <i class="bi bi-box-seam text-lg"></i> Inventory
             </a>
 
-            <a href="{% url 'recipe_builder' %}" class="block p-3 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
-                <i class="bi bi-journal-text"></i> Recipe Builder
+            <a href="{% url 'recipe_builder' %}" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
+                <i class="bi bi-journal-text text-lg"></i> Recipe Builder
             </a>
 
-            <a href="/kitchen/" class="block p-3 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
-                <i class="bi bi-cup-hot"></i> Kitchen View
+            <a href="/kitchen/" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
+                <i class="bi bi-cup-hot text-lg"></i> Kitchen View
             </a>
 
             <div class="border-t border-slate-800 my-4"></div>
 
-            <a href="/pos/" class="block p-3 hover:bg-slate-800 rounded-xl transition text-slate-400 italic flex items-center gap-3">
-                <i class="bi bi-pc-display-horizontal"></i> Open POS interface →
+            <a href="/pos/" class="block p-3 hover:bg-slate-800 rounded-xl transition text-slate-500 hover:text-orange-300 italic flex items-center gap-3">
+                <i class="bi bi-pc-display-horizontal text-lg"></i> Open POS interface →
             </a>
         </nav>
     </div>
 
-    <div class="flex-grow p-8">
+    <div class="flex-grow p-8 overflow-y-auto">
         
         {% if messages %}
             {% for message in messages %}
-            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-r-xl shadow-sm">
-                {{ message }}
+            <div class="bg-emerald-500/10 border-l-4 border-emerald-500 text-emerald-400 p-4 mb-8 rounded-r-2xl shadow-lg backdrop-blur-sm flex items-center">
+                <i class="bi bi-check-circle-fill mr-3 text-lg"></i>
+                <span class="font-bold">{{ message }}</span>
             </div>
             {% endfor %}
         {% endif %}
 
         <header class="flex justify-between items-center mb-10">
             <div>
-                <h1 class="text-3xl font-bold tracking-tight">Inventory Control</h1>
-                <p class="text-slate-500">Manage raw ingredients and stock levels</p>
+                <h1 class="text-3xl font-black tracking-tight text-white">Inventory Control</h1>
+                <p class="text-orange-500/70 font-bold uppercase tracking-widest text-[10px] mt-1">Manage raw ingredients and stock levels</p>
             </div>
-            <button onclick="toggleModal()" class="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-slate-800 transition">
-                <i class="bi bi-plus-lg"></i> Add New Ingredient
+            <button onclick="toggleModal()" class="bg-gradient-to-r from-orange-600 to-amber-500 text-slate-950 px-6 py-3 rounded-[1.5rem] font-black flex items-center gap-2 hover:from-orange-500 hover:to-amber-400 transition shadow-lg shadow-orange-900/20 active:scale-95">
+                <i class="bi bi-plus-circle-fill text-lg"></i> Add New Ingredient
             </button>
         </header>
 
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-12">
-            <table class="w-full text-left">
-                <thead class="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                        <th class="p-4 font-bold text-xs uppercase tracking-widest text-slate-500">Ingredient Name</th>
-                        <th class="p-4 font-bold text-xs uppercase tracking-widest text-slate-500">Current Stock</th>
-                        <th class="p-4 font-bold text-xs uppercase tracking-widest text-slate-500">Unit</th>
-                        <th class="p-4 font-bold text-xs uppercase tracking-widest text-slate-500">Status</th>
-                        <th class="p-4 font-bold text-xs uppercase tracking-widest text-slate-500 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    {% for ing in ingredients %}
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-4 font-bold text-slate-700">{{ ing.name }}</td>
-                        <td class="p-4 font-mono text-lg">{{ ing.stock_quantity|floatformat:0 }}</td>
-                        <td class="p-4 text-slate-500">{{ ing.unit }}</td>
-                        <td class="p-4">
-                            {% if ing.stock_quantity < 500 %}
-                            <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold">LOW STOCK</span>
-                            {% else %}
-                            <span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold">HEALTHY</span>
-                            {% endif %}
-                        </td>
-                        <td class="p-4 text-right">
-                            <div class="flex items-center justify-end gap-3">
-                                <form method="POST" action="{% url 'inventory_list' %}" class="inline-flex gap-2">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="ingredient_id" value="{{ ing.id }}">
-                                    <input type="number" name="amount" step="0.01" placeholder="+ Add" 
-                                           class="w-24 px-3 py-1 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
-                                    <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-bold hover:bg-blue-700 transition active:scale-95">
+        <div class="bg-slate-900 rounded-[2rem] border border-slate-800 shadow-xl overflow-hidden mb-10 orange-glow">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-800 bg-slate-900/50">
+                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 w-1/4">Ingredient Name</th>
+                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Qty (Items)</th>
+                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Current Stock</th>
+                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Unit</th>
+                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Status</th>
+                            <th class="p-5 pr-16 font-black text-[10px] uppercase tracking-widest text-slate-500 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/50">
+                        {% for ing in ingredients %}
+                        <tr class="hover:bg-slate-800/50 transition group">
+                            <td class="p-5 font-bold text-slate-200 group-hover:text-orange-400 transition">{{ ing.name }}</td>
+                            
+                            <td class="p-5 text-center">
+                                <span class="bg-slate-800 text-slate-300 px-3 py-1.5 rounded-xl font-black text-xs border border-slate-700 shadow-inner">
+                                    × {{ ing.items_count }}
+                                </span>
+                            </td>
+                            
+                            <td class="p-5 font-mono text-xl font-black text-orange-400 text-center">
+                                {{ ing.stock_quantity|floatformat:0 }}
+                            </td>
+                            
+                            <td class="p-5 text-slate-500 text-center font-bold text-sm">{{ ing.unit }}</td>
+                            
+                            <td class="p-5 text-center">
+                                <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    {{ ing.status|default:"HEALTHY" }}
+                                </span>
+                            </td>
+
+                            <td class="p-5 text-right">
+                                <div class="flex justify-end items-center gap-3">
+                                    <button type="button" 
+                                            onclick="openUpdateModal('{{ ing.id }}', '{{ ing.name }}', '{{ ing.items_count }}', '{{ ing.initial_stock_per_item }}')"
+                                            class="bg-orange-500 hover:bg-orange-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-black transition shadow-lg shadow-orange-900/20 uppercase tracking-wider">
                                         Update
                                     </button>
-                                </form>
-                                
-                                <a href="{% url 'delete_ingredient' ing.id %}" 
-                                   onclick="return confirm('Delete {{ ing.name }}? This cannot be undone.')"
-                                   class="text-slate-400 hover:text-red-500 transition-colors text-xl">
-                                    <i class="bi bi-trash3"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+                                    <button type="button" 
+                                            onclick="openDeleteModal('{{ ing.id }}', '{{ ing.name }}')"
+                                            class="p-2 text-slate-500 hover:text-red-400 transition border border-transparent hover:border-red-500/30 hover:bg-red-500/10 rounded-xl">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </button>                                
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
-            <h3 class="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800">
-                <i class="bi bi-clock-history text-blue-500"></i> Recent Stock Updates
+        <div class="bg-slate-900 rounded-[2rem] shadow-xl border border-slate-800 p-8">
+            <h3 class="text-xl font-black mb-6 flex items-center gap-3 text-white tracking-tight">
+                <div class="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                Recent Stock Updates
             </h3>
             <div class="space-y-4">
                 {% for log in recent_history %}
-                <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div class="flex justify-between items-center p-4 bg-slate-950/50 rounded-2xl border border-slate-800 hover:border-orange-500/20 transition">
                     <div>
-                        <p class="font-bold text-slate-800">{{ log.ingredient.name }}</p>
-                        <p class="text-xs text-slate-400">{{ log.created_at|date:"M d, Y | H:i" }}</p>
+                        <p class="font-bold text-slate-200">{{ log.ingredient.name }}</p>
+                        <p class="text-[10px] font-bold tracking-widest uppercase text-slate-500 mt-1">{{ log.created_at|date:"M d, Y | H:i" }}</p>
                     </div>
                     <div class="text-right">
-                        <span class="text-green-600 font-black">+{{ log.amount_added|floatformat:0 }} {{ log.ingredient.unit }}</span>
-                        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-tighter">Received</p>
+                        <span class="text-emerald-400 font-black text-lg">+{{ log.amount_added|floatformat:0 }} <span class="text-sm">{{ log.ingredient.unit }}</span></span>
+                        <p class="text-[9px] uppercase font-black text-slate-600 tracking-widest mt-0.5">Received</p>
                     </div>
                 </div>
                 {% empty %}
-                <p class="text-slate-400 italic text-center py-4">No recent stock movements recorded.</p>
+                <p class="text-slate-500 italic text-center py-6">No recent stock movements recorded.</p>
                 {% endfor %}
             </div>
         </div>
     </div>
 
-    <div id="ingredient-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl transform transition-all">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-black text-slate-900">New Ingredient</h2>
-                <button onclick="toggleModal()" class="text-slate-400 hover:text-slate-600"><i class="bi bi-x-lg"></i></button>
+    <div id="ingredient-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8 shadow-[0_0_50px_rgba(245,158,11,0.1)] border border-slate-800 transform transition-all">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-black text-white tracking-tight">New Ingredient</h2>
+                <button onclick="toggleModal()" class="text-slate-500 hover:text-white transition"><i class="bi bi-x-lg text-xl"></i></button>
             </div>
             
             <form action="{% url 'add_ingredient' %}" method="POST" class="space-y-5">
                 {% csrf_token %}
+                
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Ingredient Name</label>
-                    <input type="text" name="name" placeholder="e.g. Oat Milk" required
-                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Ingredient Name</label>
+                    <input type="text" name="name" placeholder="e.g. Arabica Beans" required
+                        class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition placeholder-slate-700">
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Initial Stock</label>
-                        <input type="number" name="stock" value="0" step="0.01"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Quantity (Items)</label>
+                        <input type="number" id="calc-qty" name="quantity_items" value="1" min="1" oninput="calculateTotal()"
+                            class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition font-bold">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Unit</label>
-                        <select name="unit" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Unit</label>
+                        <select id="calc-unit" name="unit" onchange="calculateTotal()" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none font-bold">
                             <option value="g">Grams (g)</option>
                             <option value="ml">Milliliters (ml)</option>
                             <option value="pc">Pieces (pc)</option>
@@ -158,24 +177,147 @@
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition transform active:scale-95">
-                    SAVE INGREDIENT
-                </button>
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Initial Stock per 1 Item</label>
+                    <input type="number" id="calc-stock" name="stock_per_item" placeholder="e.g. 1000" step="0.01" oninput="calculateTotal()" required
+                        class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition font-bold placeholder-slate-700">
+                </div>
+
+                <div class="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 flex justify-between items-center shadow-inner mt-2">
+                    <span class="text-orange-500 font-black text-[10px] uppercase tracking-widest">Total Stock:</span>
+                    <span id="total-display" class="text-orange-400 font-black text-xl">0g (0)</span>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="w-full bg-gradient-to-r from-orange-600 to-amber-500 text-slate-950 py-4 rounded-2xl font-black shadow-lg shadow-orange-900/40 hover:from-orange-500 hover:to-amber-400 transition transform active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest text-xs">
+                        <i class="bi bi-save-fill text-lg"></i> SAVE INGREDIENT
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 
+    <div id="updateStockModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8 shadow-[0_0_50px_rgba(245,158,11,0.1)] border border-slate-800">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h3 class="text-3xl font-black text-white tracking-tight">Update Stock</h3>
+                    <p id="modalIngName" class="text-orange-500 font-bold uppercase tracking-widest text-xs mt-1"></p>
+                </div>
+                <button onclick="closeModal()" class="text-slate-500 hover:text-white transition self-start"><i class="bi bi-x-lg text-xl"></i></button>
+            </div>
+            
+            <form method="POST" action="{% url 'inventory_list' %}" class="space-y-5">
+                {% csrf_token %}
+                <input type="hidden" name="ingredient_id" id="modalIngId">
+                
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Quantity (Full Items/Bottles)</label>
+                    <input type="number" name="items_to_add" id="modalQty" 
+                        class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition font-bold placeholder-slate-700" 
+                        placeholder="e.g. 5">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Unit Size (e.g. 1500g per bottle)</label>
+                    <input type="number" name="unit_size" id="modalUnitSize" 
+                        class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition font-bold" 
+                        step="0.01">
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-slate-800 text-slate-400 py-4 rounded-2xl font-bold hover:bg-slate-700 hover:text-white transition text-xs tracking-widest uppercase">Cancel</button>
+                    <button type="submit" class="flex-[2] bg-gradient-to-r from-orange-600 to-amber-500 text-slate-950 py-4 rounded-2xl font-black shadow-lg shadow-orange-900/40 hover:from-orange-500 hover:to-amber-400 transition uppercase tracking-widest text-xs">Confirm Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[60] flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden border border-slate-800 transform transition-all">
+            <div class="p-8 text-center">
+                <div class="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+                    <i class="bi bi-exclamation-triangle-fill text-3xl"></i>
+                </div>
+                
+                <h3 class="text-2xl font-black text-white mb-2 tracking-tight">Are you sure?</h3>
+                <p class="text-slate-400 text-sm mb-8">
+                    You are about to delete <span id="deleteIngName" class="font-bold text-red-400"></span>. This action cannot be undone.
+                </p>
+
+                <div class="flex flex-col gap-3">
+                    <form id="deleteForm" method="POST" action="">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-black rounded-2xl shadow-lg shadow-red-900/40 transition active:scale-95 uppercase tracking-widest text-xs">
+                            Yes, Delete Ingredient
+                        </button>
+                    </form>
+                    
+                    <button onclick="closeDeleteModal()" class="w-full py-4 text-slate-500 font-bold hover:text-white hover:bg-slate-800 rounded-2xl transition uppercase tracking-widest text-xs">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function calculateTotal() {
+            const qty = parseFloat(document.getElementById('calc-qty').value) || 0;
+            const stockPerItem = parseFloat(document.getElementById('calc-stock').value) || 0;
+            const unit = document.getElementById('calc-unit').value;
+            
+            const total = qty * stockPerItem;
+            document.getElementById('total-display').innerText = `${total}${unit} (${qty})`;
+        }
+
+        // Cleaned up window click logic (consolidated into one event listener)
+        window.onclick = function(event) {
+            const addModal = document.getElementById('ingredient-modal');
+            const updateModal = document.getElementById('updateStockModal');
+            const deleteModal = document.getElementById('deleteModal');
+
+            if (event.target == addModal) toggleModal();
+            if (event.target == updateModal) closeModal();
+            if (event.target == deleteModal) closeDeleteModal();
+        }
+
+        // Modal Toggles
         function toggleModal() {
             const modal = document.getElementById('ingredient-modal');
             modal.classList.toggle('hidden');
+            if(!modal.classList.contains('hidden')) {
+                document.getElementById('calc-qty').value = 1;
+                document.getElementById('calc-stock').value = "";
+                calculateTotal();
+            }
         }
 
-        window.onclick = function(event) {
-            const modal = document.getElementById('ingredient-modal');
-            if (event.target == modal) {
-                toggleModal();
-            }
+        function openUpdateModal(id, name, qty, unitSize) {
+            document.getElementById('modalIngId').value = id;
+            document.getElementById('modalIngName').innerText = name;
+            document.getElementById('modalUnitSize').value = unitSize;
+            document.getElementById('modalQty').value = ""; 
+            
+            document.getElementById('updateStockModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('updateStockModal').classList.add('hidden');
+        }
+
+        function openDeleteModal(id, name) {
+            const modal = document.getElementById('deleteModal');
+            const deleteForm = document.getElementById('deleteForm');
+            const nameSpan = document.getElementById('deleteIngName');
+
+            nameSpan.innerText = name;
+            deleteForm.action = `/inventory/delete/${id}/`;
+            modal.classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
         }
     </script>
 </body>

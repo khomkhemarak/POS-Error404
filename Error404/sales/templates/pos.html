@@ -18,60 +18,72 @@
             opacity: 0;
             transform: scale(0.95);
         }
+        /* Custom Orange Glow for modal */
+        .orange-glow { box-shadow: 0 0 50px rgba(245, 158, 11, 0.1); }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans overflow-hidden">
+<body class="bg-slate-950 text-slate-100 font-sans overflow-hidden">
 
+    {% csrf_token %}
     <div class="flex h-screen w-full">
         <div class="w-3/4 flex flex-col p-6 space-y-6">
             <div class="flex justify-between items-center">
-                <h1 class="text-3xl font-black text-blue-500">Error<span class="text-white">404</span> <span class="text-sm font-light text-slate-400">POS v1.0</span></h1>
+                <h1 class="text-3xl font-black bg-gradient-to-r from-orange-500 to-amber-300 bg-clip-text text-transparent">
+                    Error<span class="text-white">404</span> 
+                    <span class="text-xs font-light text-slate-500 tracking-widest ml-2 uppercase">Premium POS</span>
+                </h1>
                 <div class="relative w-1/3">
-                    <i class="bi bi-search absolute left-3 top-2.5 text-slate-400"></i>
-                    <input type="text" placeholder="Search menu..." class="w-full bg-slate-800 border-none rounded-xl py-2 pl-10 focus:ring-2 focus:ring-blue-500 text-slate-200">
+                    <i class="bi bi-search absolute left-4 top-3 text-slate-500"></i>
+                    <input type="text" placeholder="Search menu..." class="w-full bg-slate-900 border border-slate-800 rounded-2xl py-3 pl-12 focus:ring-2 focus:ring-orange-500 text-slate-200 transition-all outline-none">
                 </div>
             </div>
 
             <div class="flex space-x-4 no-scrollbar overflow-x-auto pb-4">
-                <button onclick="filterCategory('All')" class="cat-btn px-6 py-3 bg-blue-600 rounded-2xl font-bold shadow-lg shadow-blue-900/20 whitespace-nowrap">All Items</button>
-                <button onclick="filterCategory('Coffee')" class="cat-btn px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition whitespace-nowrap text-slate-300">☕ Coffee</button>
-                <button onclick="filterCategory('Tea')" class="cat-btn px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition whitespace-nowrap text-slate-300">🍵 Tea</button>
-                <button onclick="filterCategory('Matcha')" class="cat-btn px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition whitespace-nowrap text-slate-300">Matcha</button>
-                <button onclick="filterCategory('Other')" class="cat-btn px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-semibold transition whitespace-nowrap text-slate-300">Other</button>
+                <button onclick="filterCategory('All')" 
+                        class="cat-btn px-8 py-3 bg-gradient-to-br from-orange-500 to-amber-600 text-slate-950 rounded-2xl font-black shadow-lg shadow-orange-900/40 whitespace-nowrap transform active:scale-95 transition-all">
+                    All Items
+                </button>
+
+                {% for category in categories %}
+                <button onclick="filterCategory('{{ category.name }}')" 
+                        class="cat-btn px-6 py-3 bg-slate-900 hover:bg-slate-800 rounded-2xl font-bold transition-all whitespace-nowrap text-slate-400 border border-slate-800 flex items-center gap-2">
+                    {{ category.name }}
+                </button>
+                {% endfor %}
             </div>
 
-            <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto pr-2 no-scrollbar">
+            <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 overflow-y-auto pr-2 no-scrollbar">
                 {% for product in products %}
                 <div class="product-item" data-category="{{ product.category }}">
-                    <button onclick="addToCart('{{ product.id }}', '{{ product.name }}', {{ product.base_price }}, '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" 
-                            class="group w-full bg-slate-800 p-4 rounded-3xl border-2 border-transparent hover:border-blue-500 hover:bg-slate-750 transition-all text-left flex flex-col justify-between h-48 shadow-xl relative overflow-hidden">
+                    <button onclick="addToCart('{{ product.id }}', '{{ product.name }}', {{ product.base_price }}, '{{ product.ice_upcharge }}', '{{ product.frappe_upcharge }}', '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" 
+                            class="group w-full bg-slate-900 p-5 rounded-[2rem] border-2 border-slate-800 hover:border-orange-500/50 hover:bg-slate-800/50 transition-all text-left flex flex-col justify-between h-52 shadow-xl relative overflow-hidden">
                         
                         {% if product.image %}
-                        <img src="{{ product.image.url }}" class="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-40 transition-opacity">
+                        <img src="{{ product.image.url }}" class="absolute inset-0 w-full h-full object-cover opacity-10 group-hover:opacity-20 transition-opacity">
                         {% endif %}
                         
                         <div class="relative z-10">
                             <div class="flex justify-between items-start">
-                                <span class="text-[9px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-1 rounded-md border border-blue-500/20">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-orange-400 bg-orange-500/10 px-2 py-1 rounded-lg border border-orange-500/20">
                                     {{ product.category }}
                                 </span>
                                 
-                                <div class="flex gap-1 opacity-40 group-hover:opacity-100 transition">
+                                <div class="flex gap-1.5 bg-black/20 p-1.5 rounded-full backdrop-blur-md opacity-60 group-hover:opacity-100 transition">
                                     {% if product.can_be_hot %}<i class="bi bi-thermometer-sun text-[10px] text-orange-400"></i>{% endif %}
-                                    {% if product.can_be_iced %}<i class="bi bi-snow text-[10px] text-blue-400"></i>{% endif %}
+                                    {% if product.can_be_iced %}<i class="bi bi-snow text-[10px] text-cyan-400"></i>{% endif %}
                                     {% if product.can_be_frappe %}<i class="bi bi-wind text-[10px] text-purple-400"></i>{% endif %}
                                 </div>
                             </div>
-                            <h3 class="text-lg font-bold mt-2 group-hover:text-white leading-tight">{{ product.name }}</h3>
+                            <h3 class="text-lg font-bold mt-3 group-hover:text-orange-400 transition-colors leading-tight">{{ product.name }}</h3>
                         </div>
 
                         <div class="relative z-10 flex justify-between items-end">
                             <div class="flex flex-col">
-                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Starts at</span>
+                                <span class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Price</span>
                                 <span class="text-2xl font-black text-white">${{ product.base_price }}</span>
                             </div>
-                            <div class="bg-slate-700 p-2 rounded-xl group-hover:bg-blue-600 group-hover:scale-110 transition-all shadow-lg">
-                                <i class="bi bi-plus-lg text-white"></i>
+                            <div class="bg-orange-500 p-2.5 rounded-2xl group-hover:bg-orange-400 group-hover:scale-110 group-hover:rotate-90 transition-all shadow-lg shadow-orange-900/20">
+                                <i class="bi bi-plus-lg text-slate-950 font-bold"></i>
                             </div>
                         </div>
                     </button>
@@ -81,118 +93,136 @@
 
         </div>
 
-        <div class="w-1/4 bg-slate-800 border-l border-slate-700 flex flex-col shadow-2xl">
-            <div class="p-6 border-b border-slate-700 flex justify-between items-center">
-                <h2 class="text-xl font-bold">Current Order</h2>
-                <button onclick="clearCart()" class="text-slate-400 hover:text-red-400"><i class="bi bi-trash3"></i></button>
+        <div class="w-1/4 bg-slate-900 border-l border-slate-800 flex flex-col shadow-2xl">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <h2 class="text-xl font-black uppercase tracking-tighter">Current Order</h2>
+                <button onclick="clearCart()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 text-slate-500 hover:bg-red-500/10 hover:text-red-500 transition-all">
+                    <i class="bi bi-trash3-fill"></i>
+                </button>
             </div>
 
-            <div class="p-4 bg-slate-900/50 m-4 rounded-2xl border border-slate-700">
-                <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Customer Loyalty</label>
+            <div class="p-5 bg-gradient-to-br from-slate-800 to-slate-900 m-4 rounded-[1.5rem] border border-slate-700/50 shadow-inner">
+                <label class="block text-[10px] font-black uppercase text-orange-500/60 mb-3 tracking-[0.2em]">Customer Loyalty</label>
                 <div class="flex gap-2">
-                    <input type="text" id="customer-phone" placeholder="Phone..." 
-                           class="flex-grow bg-slate-800 border-none rounded-lg p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none text-slate-200">
-                    <button onclick="searchCustomer()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg transition">
+                    <input type="text" id="customer-phone" placeholder="Enter Phone..." 
+                           class="flex-grow bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none text-slate-200">
+                    <button onclick="searchCustomer()" class="bg-orange-500 hover:bg-orange-400 text-slate-950 px-4 rounded-xl transition-all shadow-lg shadow-orange-900/20 font-bold">
                         <i class="bi bi-search"></i>
                     </button>
                 </div>
-                <div id="customer-display" class="mt-2 flex items-center justify-between hidden animate-fadeIn">
-                    <span class="text-xs font-bold text-blue-400"><i class="bi bi-person-fill"></i> <span id="customer-name-label"></span></span>
-                    <button onclick="removeCustomer()" class="text-slate-500 hover:text-red-500 text-xs font-black uppercase tracking-tighter">Remove</button>
+                <div id="customer-display" class="mt-4 flex items-center justify-between hidden p-2 bg-orange-500/5 rounded-xl border border-orange-500/10 animate-fadeIn">
+                    <span class="text-xs font-bold text-orange-400"><i class="bi bi-person-check-fill mr-1"></i> <span id="customer-name-label"></span></span>
+                    <button onclick="removeCustomer()" class="text-slate-500 hover:text-red-400 text-[10px] font-black uppercase">Forget</button>
                 </div>
             </div>
 
-            <div id="cart-list" class="flex-grow overflow-y-auto p-4 space-y-4 no-scrollbar">
-                <div class="text-center text-slate-500 mt-20 italic font-medium">Cart is empty</div>
+            <div id="cart-list" class="flex-grow overflow-y-auto p-4 space-y-3 no-scrollbar">
+                <div class="text-center text-slate-600 mt-20 italic">Cart is empty</div>
             </div>
 
-            <div class="p-6 bg-slate-850 space-y-3 border-t border-slate-700 bg-slate-900/40">
-                <div class="flex justify-between text-slate-400 text-sm">
-                    <span>Subtotal</span>
-                    <span id="subtotal">$0.00</span>
-                </div>
-                <div id="loyalty-discount-row" class="flex justify-between text-green-500 text-sm hidden font-bold">
-                    <span>Loyalty Discount (10%)</span>
-                    <span id="discount-amount">-$0.00</span>
-                </div>
-                <div class="flex justify-between text-slate-400 text-sm border-b border-slate-700 pb-2">
-                    <span>Tax (10%)</span>
-                    <span id="tax">$0.00</span>
-                </div>
-                <div class="flex justify-between text-3xl font-black text-blue-400 py-2">
-                    <span>Total</span>
-                    <span id="total-price">$0.00</span>
+            <div class="p-6 bg-slate-950/80 backdrop-blur-xl border-t border-slate-800 space-y-4">
+                <div class="space-y-2">
+                    <div class="flex justify-between text-slate-500 text-xs font-bold uppercase tracking-widest">
+                        <span>Subtotal</span>
+                        <span id="subtotal" class="text-slate-300">$0.00</span>
+                    </div>
+                    <div id="loyalty-discount-row" class="flex justify-between text-orange-500 text-xs font-black uppercase tracking-widest hidden">
+                        <span>Loyalty (-10%)</span>
+                        <span id="discount-amount">-$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-slate-500 text-xs font-bold uppercase tracking-widest">
+                        <span>Tax (10%)</span>
+                        <span id="tax" class="text-slate-300">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-slate-300 text-lg font-black border-t border-slate-800 pt-3 mt-2">
+                        <span class="text-slate-500 text-sm uppercase self-center">Total</span>
+                        <span id="total-price" class="text-4xl text-orange-500">$0.00</span>
+                    </div>
                 </div>
 
-                <button onclick="sendOrder()" class="w-full bg-green-500 hover:bg-green-400 text-slate-900 py-5 rounded-2xl font-black text-xl transition transform active:scale-95 shadow-lg shadow-green-900/20 mt-2">
+                <button onclick="sendOrder()" class="w-full bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-slate-950 py-5 rounded-[1.5rem] font-black text-xl transition transform active:scale-95 shadow-xl shadow-orange-950/40 uppercase tracking-widest">
                     PLACE ORDER
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="option-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="bg-slate-800 w-full max-w-md rounded-3xl p-8 border border-slate-700 relative shadow-2xl">
-            <button onclick="closeModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white transition"><i class="bi bi-x-lg text-xl"></i></button>
-            <h2 id="modal-product-name" class="text-2xl font-black mb-8 text-blue-500 tracking-tight">Customize</h2>
+    <div id="option-modal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8 border border-slate-800 relative orange-glow">
+            <button onclick="closeModal()" class="absolute top-8 right-8 text-slate-500 hover:text-white transition"><i class="bi bi-x-lg text-xl"></i></button>
+            <h2 id="modal-product-name" class="text-3xl font-black mb-1 text-white tracking-tight">Customize</h2>
+            <p class="text-orange-500 text-xs font-black uppercase tracking-[0.3em] mb-8">Premium Selection</p>
             
-            <div class="mb-8">
+            <div class="mb-6">
                 <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Select Size</p>
                 <div class="grid grid-cols-3 gap-3">
-                    <button id="size-Small" onclick="selectSize('Small', -0.5)" class="size-btn bg-slate-700 py-3 rounded-xl transition font-black text-sm">Small</button>
-                    <button id="size-Medium" onclick="selectSize('Medium', 0)" class="size-btn bg-slate-700 py-3 rounded-xl transition font-black text-sm">Medium</button>
-                    <button id="size-Large" onclick="selectSize('Large', 1.0)" class="size-btn bg-slate-700 py-3 rounded-xl transition font-black text-sm">Large</button>
+                    <button id="size-Small" onclick="selectSize('Small')" class="size-btn bg-slate-800 text-slate-400 py-3 rounded-xl transition font-black text-sm border border-slate-700 hover:border-orange-500/30">Small</button>
+                    <button id="size-Medium" onclick="selectSize('Medium')" class="size-btn bg-slate-800 text-slate-400 py-3 rounded-xl transition font-black text-sm border border-slate-700 hover:border-orange-500/30">Medium</button>
+                    <button id="size-Large" onclick="selectSize('Large')" class="size-btn bg-slate-800 text-slate-400 py-3 rounded-xl transition font-black text-sm border border-slate-700 hover:border-orange-500/30">Large</button>
                 </div>
             </div>
 
-            <div class="mb-8">
+            <div class="mb-6">
                 <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Drink Type</p>
                 <div class="grid grid-cols-3 gap-3">
-                    <button id="type-Hot" onclick="selectType('Hot')" class="type-btn bg-slate-700 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
-                        <i class="bi bi-thermometer-sun text-orange-400"></i> Hot
+                    <button id="type-Hot" onclick="selectType('Hot')" class="type-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
+                        <i class="bi bi-thermometer-sun text-orange-400 text-lg"></i> Hot
                     </button>
-                    <button id="type-Iced" onclick="selectType('Iced')" class="type-btn bg-slate-700 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
-                        <i class="bi bi-snow text-blue-400"></i> Iced
+                    <button id="type-Iced" onclick="selectType('Iced')" class="type-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
+                        <i class="bi bi-snow text-cyan-400 text-lg"></i> Iced
                     </button>
-                    <button id="type-Frappe" onclick="selectType('Frappe')" class="type-btn bg-slate-700 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
-                        <i class="bi bi-wind text-purple-400"></i> Frappe
+                    <button id="type-Frappe" onclick="selectType('Frappe')" class="type-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
+                        <i class="bi bi-wind text-purple-400 text-lg"></i> Frappe
                     </button>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Sugar Level</p>
+                <div class="grid grid-cols-4 gap-2">
+                    <button id="sugar-0%" onclick="selectSugar('0%')" class="sugar-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-2 rounded-xl text-xs font-black transition">0%</button>
+                    <button id="sugar-25%" onclick="selectSugar('25%')" class="sugar-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-2 rounded-xl text-xs font-black transition">25%</button>
+                    <button id="sugar-50%" onclick="selectSugar('50%')" class="sugar-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-2 rounded-xl text-xs font-black transition">50%</button>
+                    <button id="sugar-75%" onclick="selectSugar('75%')" class="sugar-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-2 rounded-xl text-xs font-black transition">75%</button>
+                    <button id="sugar-100%" onclick="selectSugar('100%')" class="sugar-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-2 rounded-xl text-xs font-black transition">100%</button>
                 </div>
             </div>
 
             <div class="mb-8">
-                <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Sugar Level</p>
-                <div class="grid grid-cols-4 gap-2">
-                    <button id="sugar-0%" onclick="selectSugar('0%')" class="sugar-btn bg-slate-700 py-2 rounded-xl text-xs font-black">0%</button>
-                    <button id="sugar-50%" onclick="selectSugar('50%')" class="sugar-btn bg-slate-700 py-2 rounded-xl text-xs font-black">50%</button>
-                    <button id="sugar-100%" onclick="selectSugar('100%')" class="sugar-btn bg-slate-700 py-2 rounded-xl text-xs font-black">100%</button>
-                    <button id="sugar-Extra" onclick="selectSugar('Extra')" class="sugar-btn bg-slate-700 py-2 rounded-xl text-xs font-black">Extra</button>
+                <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Quantity</p>
+                <div class="flex items-center justify-center gap-6 bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
+                    <button onclick="changeQty(-1)" class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-orange-500/20 hover:text-orange-400 hover:border hover:border-orange-500/50 transition flex items-center justify-center text-2xl font-bold"> <i class="bi bi-dash"></i> </button>
+                    <input type="number" id="modal-qty" value="1" min="1" class="bg-transparent text-center text-3xl font-black w-16 outline-none text-white pointer-events-none">
+                    <button onclick="changeQty(1)" class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-orange-500/20 hover:text-orange-400 hover:border hover:border-orange-500/50 transition flex items-center justify-center text-2xl font-bold"> <i class="bi bi-plus"></i> </button>
                 </div>
             </div>
 
-            <div class="flex gap-3 mt-10">
-                <button onclick="closeModal()" class="flex-1 bg-slate-700 py-4 rounded-2xl font-black text-slate-300 hover:bg-slate-600 transition">CANCEL</button>
-                <button onclick="addToCart('{{ product.id }}', '{{ product.name }}', {{ product.base_price }}, '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" ...>
+            <div class="flex gap-3 mt-4">
+                <button onclick="closeModal()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-black text-slate-400 hover:bg-slate-700 hover:text-white transition tracking-widest text-xs">CANCEL</button>
+                <button onclick="confirmCustomization()" class="flex-[2] bg-orange-500 hover:bg-orange-400 py-4 rounded-2xl font-black text-slate-950 transition shadow-lg shadow-orange-900/40 tracking-widest text-xs flex items-center justify-center gap-2">
+                    <i class="bi bi-cart-plus-fill text-lg"></i>
+                    <span id="confirm-btn-text">ADD TO CART — $0.00</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="register-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-        <div class="bg-slate-800 w-full max-w-sm rounded-3xl p-8 border border-slate-700 shadow-2xl">
-            <h2 class="text-2xl font-black mb-6 text-green-500 tracking-tight">New Regular</h2>
+    <div id="register-modal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-[60] p-4">
+        <div class="bg-slate-900 w-full max-w-sm rounded-[2.5rem] p-8 border border-slate-800 shadow-[0_0_50px_rgba(245,158,11,0.1)]">
+            <h2 class="text-2xl font-black mb-6 text-orange-500 tracking-tight">New Regular</h2>
             <div class="space-y-4">
                 <div>
                     <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Full Name</label>
-                    <input type="text" id="reg-name" placeholder="Enter Name" class="w-full bg-slate-900 border-none rounded-xl p-4 text-white outline-none focus:ring-2 focus:ring-green-500 transition">
+                    <input type="text" id="reg-name" placeholder="Enter Name" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white outline-none focus:ring-2 focus:ring-orange-500 transition">
                 </div>
                 <div>
                     <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Phone Number</label>
-                    <input type="text" id="reg-phone" placeholder="Enter Phone" class="w-full bg-slate-900 border-none rounded-xl p-4 text-white outline-none focus:ring-2 focus:ring-green-500 transition">
+                    <input type="text" id="reg-phone" placeholder="Enter Phone" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white outline-none focus:ring-2 focus:ring-orange-500 transition">
                 </div>
             </div>
             <div class="flex gap-3 mt-8">
-                <button onclick="toggleRegisterModal()" class="flex-1 bg-slate-700 py-4 rounded-2xl font-bold text-slate-300 hover:bg-slate-600 transition">CANCEL</button>
-                <button onclick="submitRegistration()" class="flex-1 bg-green-600 py-4 rounded-2xl font-black text-white shadow-lg shadow-green-600/20 hover:bg-green-500 transition">REGISTER</button>
+                <button onclick="toggleRegisterModal()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-bold text-slate-400 hover:bg-slate-700 hover:text-white transition">CANCEL</button>
+                <button onclick="submitRegistration()" class="flex-1 bg-orange-500 py-4 rounded-2xl font-black text-slate-950 shadow-lg shadow-orange-900/20 hover:bg-orange-400 transition">REGISTER</button>
             </div>
         </div>
     </div>
@@ -201,27 +231,28 @@
         let cart = [];
         let currentItem = null;
         let selectedCustomerId = null;
+        let currentBasePrice = 0;      
+        let currentIceUpcharge = 0;    
+        let currentFrappeUpcharge = 0; 
 
         function filterCategory(category) {
-            // 1. Update Button Visuals
-            document.querySelectorAll('.cat-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'font-bold', 'shadow-lg', 'shadow-blue-900/20');
-                btn.classList.add('bg-slate-800', 'font-semibold', 'text-slate-300');
+            // 1. Reset all buttons to default dark style
+            const buttons = document.querySelectorAll('.cat-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-gradient-to-br', 'from-orange-500', 'to-amber-600', 'text-slate-950', 'shadow-lg', 'font-black');
+                btn.classList.add('bg-slate-900', 'text-slate-400', 'border-slate-800', 'font-bold');
             });
 
-            // Highlight the clicked button (target the specific element)
-            event.currentTarget.classList.add('bg-blue-600', 'font-bold', 'shadow-lg', 'shadow-blue-900/20');
-            event.currentTarget.classList.remove('bg-slate-800', 'text-slate-300');
+            // 2. Apply active style to clicked button
+            const activeBtn = event.currentTarget;
+            activeBtn.classList.remove('bg-slate-900', 'text-slate-400', 'border-slate-800', 'font-bold');
+            activeBtn.classList.add('bg-gradient-to-br', 'from-orange-500', 'to-amber-600', 'text-slate-950', 'shadow-lg', 'font-black');
 
-            // 2. Filter the Items
+            // 3. Filter the grid items
             const items = document.querySelectorAll('.product-item');
-            
             items.forEach(item => {
                 if (category === 'All' || item.getAttribute('data-category') === category) {
                     item.classList.remove('hidden');
-                    // Adding a small fade-in animation
-                    item.style.opacity = '0';
-                    setTimeout(() => { item.style.opacity = '1'; item.style.transition = '0.3s'; }, 10);
                 } else {
                     item.classList.add('hidden');
                 }
@@ -290,87 +321,126 @@
         }
 
         // --- CORE POS LOGIC ---
-        
-        // Updated to accept availability flags
-        async function addToCart(id, name, basePrice, canHot, canIced, canFrappe) {
-            const response = await fetch(`/check-stock/${id}/`);
-            const data = await response.json();
-            if (!data.available) return alert("⚠️ Out of stock: " + data.message);
-
-            // Initialize current item with new 'type' field
-            currentItem = { 
-                id, name, basePrice, 
-                size: 'Medium', 
-                sugar: '100%', 
-                type: 'Hot', // Default
-                extraPrice: 0 
-            };
+        async function addToCart(id, name, basePrice, iceUp, frappeUp, canH, canI, canF) {
+            const modal = document.getElementById('option-modal');
+            if (modal) modal.classList.remove('hidden');
 
             document.getElementById('modal-product-name').innerText = name;
-            
-            // OPTIONAL 3: Dynamic Button Hiding
+
+            currentBasePrice = parseFloat(basePrice);
+            currentIceUpcharge = parseFloat(iceUp);
+            currentFrappeUpcharge = parseFloat(frappeUp);
+
+            currentItem = { 
+                id: id, 
+                name: name, 
+                size: 'Medium', 
+                sugar: '100%', 
+                type: 'Hot',
+                totalCalculatedPrice: currentBasePrice 
+            };
+
+            const qtyInput = document.getElementById('modal-qty');
+            if (qtyInput) qtyInput.value = 1;
+
             const btnHot = document.getElementById('type-Hot');
             const btnIced = document.getElementById('type-Iced');
             const btnFrappe = document.getElementById('type-Frappe');
 
-            btnHot.style.display = canHot === 'True' ? 'flex' : 'none';
-            btnIced.style.display = canIced === 'True' ? 'flex' : 'none';
-            btnFrappe.style.display = canFrappe === 'True' ? 'flex' : 'none';
+            if(btnHot) btnHot.style.display = canH === 'True' ? 'flex' : 'none';
+            if(btnIced) btnIced.style.display = canI === 'True' ? 'flex' : 'none';
+            if(btnFrappe) btnFrappe.style.display = canF === 'True' ? 'flex' : 'none';
 
-            // Auto-select the first available type
-            if (canHot === 'True') selectType('Hot');
-            else if (canIced === 'True') selectType('Iced');
-            else if (canFrappe === 'True') selectType('Frappe');
+            if (canH === 'True') selectType('Hot');
+            else if (canI === 'True') selectType('Iced');
+            else if (canF === 'True') selectType('Frappe');
 
-            document.getElementById('option-modal').classList.remove('hidden');
-            selectSize('Medium', 0);
+            selectSize('Medium'); 
             selectSugar('100%');
+            calculateDynamicPrice(); 
+
+            try {
+                const response = await fetch(`/check-stock/${id}/`);
+                const data = await response.json();
+                if (!data.available) {
+                    alert("⚠️ Out of stock: " + data.message);
+                    closeModal();
+                }
+            } catch (error) {
+                console.error("Stock check failed:", error);
+            }
         }
 
-        function selectSize(size, extra) {
+        // Apply Orange theme to selections
+        function selectSize(size) {
             currentItem.size = size;
-            currentItem.extraPrice = parseFloat(extra);
-            document.querySelectorAll('.size-btn').forEach(btn => btn.classList.replace('bg-blue-600', 'bg-slate-700'));
-            document.getElementById(`size-${size}`).classList.replace('bg-slate-700', 'bg-blue-600');
+            
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-500', 'text-slate-950', 'border-orange-500');
+                btn.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700');
+            });
+
+            const activeBtn = document.getElementById(`size-${size}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700');
+                activeBtn.classList.add('bg-orange-500', 'text-slate-950', 'border-orange-500');
+            }
+
+            calculateDynamicPrice();
         }
 
         function selectType(type) {
             currentItem.type = type;
             document.querySelectorAll('.type-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white', 'ring-2', 'ring-blue-400');
-                btn.classList.add('bg-slate-700');
+                btn.classList.remove('bg-orange-500', 'text-slate-950', 'ring-2', 'ring-orange-500', 'border-orange-500');
+                btn.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700');
             });
             const activeBtn = document.getElementById(`type-${type}`);
-            activeBtn.classList.replace('bg-slate-700', 'bg-blue-600');
-            activeBtn.classList.add('text-white', 'ring-2', 'ring-blue-400');
+            activeBtn.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700');
+            activeBtn.classList.add('bg-orange-500', 'text-slate-950', 'ring-2', 'ring-orange-500', 'border-orange-500');
         }
 
         function selectSugar(level) {
             currentItem.sugar = level;
-            document.querySelectorAll('.sugar-btn').forEach(btn => btn.classList.replace('bg-blue-600', 'bg-slate-700'));
-            document.getElementById(`sugar-${level}`).classList.replace('bg-slate-700', 'bg-blue-600');
+            document.querySelectorAll('.sugar-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-500', 'text-slate-950', 'border-orange-500');
+                btn.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700');
+            });
+            const activeBtn = document.getElementById(`sugar-${level}`);
+            activeBtn.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700');
+            activeBtn.classList.add('bg-orange-500', 'text-slate-950', 'border-orange-500');
         }
 
         function confirmCustomization() {
-            const finalPrice = currentItem.basePrice + currentItem.extraPrice;
-            // Added type to uniqueKey so Hot and Iced versions of same drink stay separate
+            const qtyInput = document.getElementById('modal-qty');
+            const qty = parseInt(qtyInput.value) || 1;
+
+            const sugarMap = {
+                '0%': 0.0, '25%': 0.25, '50%': 0.5, '75%': 0.75, '100%': 1.0, 'Extra': 1.5
+            };
+
+            const selectedSugarLevel = currentItem.sugar; 
+            const sugarMultiplier = sugarMap[selectedSugarLevel] || 0;
+
             const uniqueKey = `${currentItem.id}-${currentItem.size}-${currentItem.sugar}-${currentItem.type}`;
             const existing = cart.find(i => i.uniqueKey === uniqueKey);
             
             if (existing) {
-                existing.qty++;
+                existing.qty += qty;
             } else {
                 cart.push({
-                    uniqueKey,
+                    uniqueKey: uniqueKey,
                     id: currentItem.id,
                     name: currentItem.name,
                     size: currentItem.size,
-                    sugar: currentItem.sugar,
                     type: currentItem.type,
-                    price: finalPrice,
-                    qty: 1
+                    sugar: currentItem.sugar,
+                    sugar_multiplier: sugarMultiplier,
+                    price: currentItem.totalCalculatedPrice,
+                    qty: qty
                 });
             }
+
             closeModal();
             renderCart();
         }
@@ -378,23 +448,23 @@
         function renderCart() {
             const list = document.getElementById('cart-list');
             if (cart.length === 0) {
-                list.innerHTML = '<div class="text-center text-slate-500 mt-20 italic font-medium">Cart is empty</div>';
+                list.innerHTML = '<div class="text-center text-slate-600 mt-20 italic">Cart is empty</div>';
                 updateTotals(0);
                 return;
             }
 
             list.innerHTML = cart.map((item, index) => `
-                <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
+                <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-800 flex justify-between items-center hover:border-orange-500/30 transition-colors">
                     <div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 mb-1">
                             <p class="font-black text-sm text-white">${item.name}</p>
                             <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 font-black uppercase">${item.type}</span>
                         </div>
                         <p class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">${item.size} | ${item.sugar} Sugar</p>
                     </div>
                     <div class="text-right">
-                        <p class="font-black text-blue-400">$${(item.price * item.qty).toFixed(2)}</p>
-                        <p class="text-[10px] text-slate-600">${item.qty} units</p>
+                        <p class="font-black text-orange-400">$${(item.price * item.qty).toFixed(2)}</p>
+                        <p class="text-[10px] text-slate-500 font-bold">${item.qty} units</p>
                     </div>
                 </div>
             `).join('');
@@ -424,23 +494,67 @@
 
         async function sendOrder() {
             if (cart.length === 0) return;
+            
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
             const total = document.getElementById('total-price').innerText.replace('$', '');
 
-            const response = await fetch('/api/process-payment/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    items: cart,
-                    total: parseFloat(total),
-                    customer_id: selectedCustomerId
-                })
-            });
+            try {
+                const response = await fetch('/api/process-payment/', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        items: cart,
+                        total: parseFloat(total),
+                        customer_id: selectedCustomerId
+                    })
+                });
 
-            const result = await response.json();
-            if (result.status === 'success') {
-                alert(`Order Success! Points added to Regular.`);
-                clearCart();
-                removeCustomer();
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    alert(`Order #${result.order_id} Success!`);
+                    clearCart();
+                    removeCustomer();
+                } else {
+                    alert("Server Error: " + result.message); 
+                }
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                alert("Check your internet or server terminal.");
+            }
+        }
+        
+        function changeQty(amt) {
+            const qtyInput = document.getElementById('modal-qty');
+            let newQty = parseInt(qtyInput.value) + amt;
+            if (newQty < 1) newQty = 1;
+            qtyInput.value = newQty;
+            
+            calculateDynamicPrice();
+        }
+
+        function calculateDynamicPrice() {
+            if (!currentItem) return;
+
+            let price = currentBasePrice;
+
+            if (currentItem.type === 'Iced') price += currentIceUpcharge;
+            if (currentItem.type === 'Frappe') price += currentFrappeUpcharge;
+
+            if (currentItem.size === 'Medium') price = price * 1.2;
+            if (currentItem.size === 'Large') price = price * 1.5;
+
+            const qty = parseInt(document.getElementById('modal-qty').value) || 1;
+            let finalTotal = price * qty;
+
+            currentItem.totalCalculatedPrice = price; 
+
+            const confirmBtnText = document.getElementById('confirm-btn-text');
+            if (confirmBtnText) {
+                confirmBtnText.innerText = `ADD TO CART — $${finalTotal.toFixed(2)}`;
             }
         }
 

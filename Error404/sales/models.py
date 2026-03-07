@@ -7,23 +7,29 @@ class Category(models.Model):
         return self.name
 
 class Product(models.Model):
-    name = models.CharField(max_length=100)
-    base_price = models.DecimalField(max_digits=10, decimal_places=2)
-    image = models.ImageField(upload_to='products/', null=True, blank=True)
-    category = models.CharField(max_length=50, default="Coffee") # Optional: Coffee, Tea, etc.
-
     CATEGORIES = (
         ('Coffee', 'Coffee'),
         ('Tea', 'Tea'),
         ('Matcha', 'Matcha'),
         ('Other', 'Other'),
     )
+
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=20, choices=CATEGORIES, default='Coffee')
+    base_price = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.ImageField(upload_to='products/', null=True, blank=True)
+    
+    # Pricing Upcharges for the Modal
+    ice_upcharge = models.DecimalField(max_digits=6, decimal_places=2, default=0.50)
+    frappe_upcharge = models.DecimalField(max_digits=6, decimal_places=2, default=1.00)
 
+    # Type Toggles
     can_be_hot = models.BooleanField(default=True)
     can_be_iced = models.BooleanField(default=False)
     can_be_frappe = models.BooleanField(default=False)
+
+    # Inventory - Note: Ensure you have this field for reduce_stock to work
+    stock = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -63,13 +69,18 @@ class OrderItem(models.Model):
         return f"{self.quantity} x {self.product.name} ({self.drink_type})"
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=100) # e.g., "Whole Milk", "Espresso Beans"
-    stock_quantity = models.DecimalField(max_digits=10, decimal_places=2) 
-    unit = models.CharField(max_length=10, choices=[('g', 'Grams'), ('ml', 'Milliliters')])
+    name = models.CharField(max_length=100)
+    # Total volume/weight (e.g., 3000.00)
+    stock_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    # The "1500" value you set when creating the ingredient
+    initial_stock_per_item = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    # The integer count (e.g., 2)
+    items_count = models.IntegerField(default=1) 
+    unit = models.CharField(max_length=10)
 
     def __str__(self):
         return f"{self.name} ({self.stock_quantity}{self.unit})"
-
+    
 class Recipe(models.Model):
     SIZE_CHOICES = [
         ('Small', 'Small'),
