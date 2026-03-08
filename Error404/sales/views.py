@@ -23,14 +23,29 @@ def is_admin(user):
     return user.groups.filter(name='Admin').exists() or user.is_superuser
 
 def admin_dashboard(request):
-    # 1. Sales Analytics
+    # 1. Sales Analytics (Revenue)
     total_revenue = Order.objects.filter(is_completed=True).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-    order_count = Order.objects.count()
+    order_count = Order.objects.filter(is_completed=True).count()
+    
+    # 2. CALCULATE ACTUAL PROFIT
+    # Fixed: OrderItem uses product.base_price and the related_name 'recipes' in get_production_cost
+    total_profit = Decimal('0.00')
+    completed_orders = OrderItem.objects.filter(order__is_completed=True).select_related('product')
+    
+    for item in completed_orders:
+        cost_per_unit = item.product.get_production_cost()
+        # Fixed: Using product.base_price because 'price' field doesn't exist on OrderItem
+        sale_price = item.product.base_price 
+        
+        item_profit = sale_price - cost_per_unit
+        total_profit += (item_profit * item.quantity)
+
+    # 3. Popular Items
     popular_items = OrderItem.objects.values('product__name')\
         .annotate(total_qty=Sum('quantity'))\
         .order_by('-total_qty')[:5]
     
-    # 2. Hourly Sales (For the Chart.js graph)
+    # 4. Hourly Sales (For Chart.js)
     sales_by_hour = Order.objects.filter(is_completed=True)\
         .annotate(hour=ExtractHour('created_at'))\
         .values('hour')\
@@ -40,41 +55,36 @@ def admin_dashboard(request):
     labels = [f"{item['hour']}:00" for item in sales_by_hour]
     sales_data = [float(item['total']) for item in sales_by_hour]
 
-    # 3. Capacity Logic
+    # 5. Capacity Logic (Dynamic based on Ingredients)
     beans = Ingredient.objects.filter(name__icontains="Beans").first()
     milk = Ingredient.objects.filter(name__icontains="Milk").first()
     total_capacity = 0
-    
     if beans:
         total_capacity = int(beans.stock_quantity / 20) 
         if milk:
             total_capacity = min(total_capacity, int(milk.stock_quantity / 250))
 
-    # 4. Loyalty Leaderboard
+    # 6. Core Data & Inventory Alerts
     top_customers = Customer.objects.order_by('-points')[:5]
-
-    # 5. Core Data for Lists/Modals
     products = Product.objects.all()
     categories = Category.objects.all()
 
-    # 6. Final Context Assembly
-    # We put EVERYTHING into this dictionary
     context = {
         'total_revenue': total_revenue,
+        'total_profit': total_profit,
         'order_count': order_count,
         'popular_items': popular_items,
         'labels': labels,
         'sales_data': sales_data,
         'all_ingredients': Ingredient.objects.all(),
         'products': products,
-        'categories': categories, # This ensures your dropdown works!
+        'categories': categories,
         'top_customers': top_customers,
         'total_capacity': total_capacity,
-        'low_stock_products': [], 
+        'low_stock_products': Product.objects.filter(stock__lt=10),
         'low_stock_ingredients': Ingredient.objects.filter(stock_quantity__lt=500),
     }
 
-    # Pass the context dictionary here
     return render(request, 'admin_dashboard.html', context)
 
 def add_product(request):
@@ -194,25 +204,34 @@ def add_ingredient(request):
         name = request.POST.get('name')
         unit = request.POST.get('unit')
         
-        # 1. Get the Quantity (Items) from the form
-        # Make sure the name 'quantity_items' matches the name in your HTML input
+        # 1. Get the values from the form
         qty_items = int(request.POST.get('quantity_items', 1)) 
-        
-        # 2. Get the Stock per 1 Item
         stock_per_item = float(request.POST.get('stock_per_item', 0))
+        price_per_item = float(request.POST.get('price_per_item', 0)) # New field from HTML
         
-        # 3. Calculate the total stock quantity
+        # 2. Calculate the total stock quantity
         total_stock = qty_items * stock_per_item
         
-        # 4. Save BOTH values to the database
+        # 3. Calculate UNIT COST (e.g., cost per 1 gram)
+        # We divide Price by Stock per Item to get the cost of a single unit (g/ml)
+        unit_cost = 0
+        if stock_per_item > 0:
+            unit_cost = price_per_item / stock_per_item
+        
+        # 4. Save everything to the database
         Ingredient.objects.create(
             name=name,
             unit=unit,
-            items_count=qty_items,    # This saves the '10'
-            stock_quantity=total_stock # This saves the '10000'
+            items_count=qty_items,
+            stock_quantity=total_stock,
+            # Ensure your Model has these fields!
+            unit_cost=unit_cost,
+            last_purchase_price=price_per_item 
         )
+        
+        messages.success(request, f'Added {name} to inventory.')
         return redirect('inventory_list')
-    
+        
 def delete_ingredient(request, pk):
     if request.method == "POST":
         ingredient = get_object_or_404(Ingredient, pk=pk)

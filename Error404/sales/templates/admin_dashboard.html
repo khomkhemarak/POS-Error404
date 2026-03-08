@@ -88,21 +88,30 @@
             </button>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
             <div class="bg-slate-900 p-6 rounded-[2rem] border border-slate-800 shadow-xl relative overflow-hidden group hover:border-orange-500/30 transition">
                 <div class="absolute -right-6 -top-6 w-24 h-24 bg-orange-500/10 rounded-full blur-xl group-hover:bg-orange-500/20 transition"></div>
                 <p class="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-1 relative z-10">Total Revenue</p>
                 <h2 class="text-4xl font-black text-white relative z-10">${{ total_revenue|floatformat:2 }}</h2>
             </div>
+
+            <div class="bg-slate-900 p-6 rounded-[2rem] border border-emerald-500/20 shadow-xl relative overflow-hidden group hover:border-emerald-500/40 transition">
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition"></div>
+                <p class="text-emerald-500/60 font-black uppercase text-[10px] tracking-widest mb-1 relative z-10">Total Profit</p>
+                <h2 class="text-4xl font-black text-emerald-400 relative z-10">${{ total_profit|floatformat:2 }}</h2>
+            </div>
+
             <div class="bg-slate-900 p-6 rounded-[2rem] border border-slate-800 shadow-xl relative overflow-hidden group hover:border-amber-500/30 transition">
                 <div class="absolute -right-6 -top-6 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition"></div>
                 <p class="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-1 relative z-10">Total Orders</p>
                 <h2 class="text-4xl font-black text-white relative z-10">{{ order_count }}</h2>
             </div>
+
             <div class="bg-slate-900 p-6 rounded-[2rem] border border-slate-800 shadow-xl relative overflow-hidden group hover:border-orange-400/30 transition">
                 <p class="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-1">Cup Capacity</p>
                 <h2 class="text-4xl font-black text-orange-400">~{{ total_capacity }}</h2>
             </div>
+
             <div class="bg-slate-900 p-6 rounded-[2rem] border border-slate-800 shadow-xl relative overflow-hidden group hover:border-red-500/30 transition">
                 <p class="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-1">Active Alerts</p>
                 <h2 class="text-4xl font-black text-red-500">{{ low_stock_products.count|add:low_stock_ingredients.count }}</h2>
@@ -118,6 +127,8 @@
                     <div class="flex justify-between items-end">
                         <p class="text-2xl font-black text-white">{{ ing.stock_quantity|floatformat:0 }}<span class="text-xs font-bold text-slate-500 ml-1">{{ ing.unit }}</span></p>
                     </div>
+                    <div class="bg-gradient-to-r from-orange-600 to-amber-400 h-1.5 rounded-full" 
+                        style="width: {{ ing.stock_quantity|divisibleby:100 }}%;"> </div>
                     <div class="w-full bg-slate-800 h-1.5 rounded-full mt-4 overflow-hidden">
                         <div class="bg-gradient-to-r from-orange-600 to-amber-400 h-1.5 rounded-full" style="width: 70%;"></div>
                     </div>
@@ -188,20 +199,36 @@
                 <div class="relative flex items-center gap-4 bg-slate-950/50 p-3.5 rounded-2xl border border-slate-800 hover:border-orange-500/30 transition group overflow-hidden">
                     
                     {% if product.image %}
-                    <img src="{{ product.image.url }}" class="w-14 h-14 rounded-xl object-cover shadow-md group-hover:opacity-40 transition-all duration-300">
+                    <img src="{{ product.image.url }}" class="w-16 h-16 rounded-xl object-cover shadow-md group-hover:opacity-20 transition-all duration-300">
                     {% else %}
-                    <div class="w-14 h-14 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 group-hover:opacity-40 transition-all"><i class="bi bi-image"></i></div>
+                    <div class="w-16 h-16 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 group-hover:opacity-20 transition-all"><i class="bi bi-image"></i></div>
                     {% endif %}
 
-                    <div class="flex-grow group-hover:opacity-40 transition-all duration-300">
+                    <div class="flex-grow group-hover:opacity-20 transition-all duration-300">
                         <p class="font-bold text-slate-200 leading-tight group-hover:text-orange-400 transition">{{ product.name }}</p>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded uppercase font-black tracking-widest">{{ product.category.name }}</span>
-                            <p class="text-xs font-black text-white">${{ product.base_price }}</p>
+                        
+                        <div class="flex items-center gap-2 mt-1 mb-2">
+                            <span class="text-[9px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded uppercase font-black tracking-widest">{{ product.category }}</span>
+                            <p class="text-sm font-black text-white">${{ product.base_price }}</p>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-2 border-t border-slate-800/50">
+                            <div class="flex flex-col">
+                                <span class="text-[7px] font-black text-slate-600 uppercase tracking-tighter">Cost</span>
+                                <span class="text-[10px] font-bold text-slate-400">${{ product.get_production_cost|stringformat:".2f" }}</span>
+                            </div>
+                            <div class="h-4 w-[1px] bg-slate-800 mx-1"></div>
+                            <div class="flex flex-col">
+                                <span class="text-[7px] font-black text-emerald-600 uppercase tracking-tighter">Profit</span>
+                                <span class="text-[10px] font-black text-emerald-400">${{ product.get_profit_margin|stringformat:".2f" }}</span>
+                            </div>
+                            <div class="ml-auto text-right">
+                                <span class="text-[9px] font-black text-slate-700 italic block">{{ product.get_profit_percentage }}%</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="absolute inset-0 flex items-center justify-center gap-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-orange-500/10 backdrop-blur-sm">
+                    <div class="absolute inset-0 flex items-center justify-center gap-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-orange-500/5 backdrop-blur-[2px]">
                         <button onclick="openEditModal('{{ product.id }}', '{{ product.name }}', '{{ product.base_price }}', '{{ product.category }}')" 
                                 class="p-2.5 bg-slate-900 text-orange-500 rounded-xl border border-orange-500/50 hover:bg-orange-500 hover:text-slate-950 transition-all shadow-lg active:scale-90">
                             <i class="bi bi-pencil-fill"></i>
