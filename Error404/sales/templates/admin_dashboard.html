@@ -229,7 +229,15 @@
                     </div>
 
                     <div class="absolute inset-0 flex items-center justify-center gap-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-orange-500/5 backdrop-blur-[2px]">
-                        <button onclick="openEditModal('{{ product.id }}', '{{ product.name }}', '{{ product.base_price }}', '{{ product.category }}')" 
+                        <button onclick="openEditModal(
+                            '{{ product.id }}', 
+                            '{{ product.name|escapejs }}', 
+                            '{{ product.base_price }}', 
+                            '{{ product.category }}',
+                            {{ product.can_be_hot|yesno:'true,false' }},
+                            {{ product.can_be_iced|yesno:'true,false' }},
+                            {{ product.can_be_frappe|yesno:'true,false' }}
+                        )"
                                 class="p-2.5 bg-slate-900 text-orange-500 rounded-xl border border-orange-500/50 hover:bg-orange-500 hover:text-slate-950 transition-all shadow-lg active:scale-90">
                             <i class="bi bi-pencil-fill"></i>
                         </button>
@@ -287,6 +295,33 @@
                             </select>
                             <i class="bi bi-chevron-down absolute right-4 top-3.5 text-slate-500 pointer-events-none"></i>
                         </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-slate-500 mb-3 tracking-widest">Available Types</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer group">
+                            <input type="checkbox" name="can_be_hot" class="hidden peer" checked>
+                            <div class="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-800 bg-slate-950 peer-checked:border-orange-500 peer-checked:bg-orange-500/10 transition-all">
+                                <i class="bi bi-thermometer-sun text-slate-500 group-hover:text-orange-400 peer-checked:text-orange-500 mb-1"></i>
+                                <span class="text-[9px] font-black uppercase tracking-tighter text-slate-500 peer-checked:text-orange-500">Hot</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer group">
+                            <input type="checkbox" name="can_be_iced" class="hidden peer">
+                            <div class="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-800 bg-slate-950 peer-checked:border-blue-500 peer-checked:bg-blue-500/10 transition-all">
+                                <i class="bi bi-snow text-slate-500 group-hover:text-blue-400 peer-checked:text-blue-500 mb-1"></i>
+                                <span class="text-[9px] font-black uppercase tracking-tighter text-slate-500 peer-checked:text-blue-500">Ice</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer group">
+                            <input type="checkbox" name="can_be_frappe" class="hidden peer">
+                            <div class="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-800 bg-slate-950 peer-checked:border-purple-500 peer-checked:bg-purple-500/10 transition-all">
+                                <i class="bi bi-stars text-slate-500 group-hover:text-purple-400 peer-checked:text-purple-500 mb-1"></i>
+                                <span class="text-[9px] font-black uppercase tracking-tighter text-slate-500 peer-checked:text-purple-500">Frappe</span>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
@@ -415,27 +450,29 @@
             });
         }
 
-        function openEditModal(id, name, price, categoryId) {
-            // 1. Find the Modal and Form
-            const modal = document.getElementById('productModal'); // Ensure your modal has this ID
-            const form = document.getElementById('productForm');   // Ensure your <form> has this ID
+        function openEditModal(id, name, price, categoryId, canH, canI, canF) {
+            const modal = document.getElementById('productModal');
+            const form = document.getElementById('productForm');
             
-            // 2. Show the Modal
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
-            // 3. Update Visuals for 'Edit Mode'
             document.getElementById('modalTitle').innerText = "Edit Drink Details";
             const submitBtn = document.getElementById('modalSubmitBtn');
             submitBtn.innerText = "Update Product";
-            submitBtn.classList.replace('bg-orange-500', 'bg-blue-600'); // Optional: change color to blue for edit
 
-            // 4. Fill the Input Fields
+            // Fill standard fields
             form.querySelector('input[name="name"]').value = name;
             form.querySelector('input[name="price"]').value = price;
+            
+            // Fill Category (Note: This matches by the ID passed from the button)
             form.querySelector('select[name="category"]').value = categoryId;
 
-            // 5. Change Form Action to point to the Edit URL
+            // --- THE FIX: Fill the Checkboxes ---
+            form.querySelector('input[name="can_be_hot"]').checked = canH;
+            form.querySelector('input[name="can_be_iced"]').checked = canI;
+            form.querySelector('input[name="can_be_frappe"]').checked = canF;
+
             form.action = `/edit-product/${id}/`;
         }
 

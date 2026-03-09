@@ -94,13 +94,13 @@ def add_product(request):
         image = request.FILES.get('image')
         category_id = request.POST.get('category')
 
-        # Use get_object_or_404 to prevent a crash if the ID is missing
+        # Prevent crash if category is missing
         category_obj = get_object_or_404(Category, id=category_id)
         
-        # Catch the checkboxes
-        is_hot = 'type_hot' in request.POST
-        is_iced = 'type_iced' in request.POST
-        is_frappe = 'type_frappe' in request.POST
+        # Updated keys to match the HTML "name" attributes exactly
+        is_hot = 'can_be_hot' in request.POST
+        is_iced = 'can_be_iced' in request.POST
+        is_frappe = 'can_be_frappe' in request.POST
 
         Product.objects.create(
             name=name, 
@@ -109,10 +109,11 @@ def add_product(request):
             can_be_hot=is_hot,
             can_be_iced=is_iced,
             can_be_frappe=is_frappe,
-            # FIX: Pass the category name (string) instead of the object
+            # Pass the category name string to match your Product model choice field
             category=category_obj.name 
         )
-        messages.success(request, f'drink "{name}" added successfully!')
+        
+        messages.success(request, f'Drink "{name}" added successfully!')
         return redirect('admin_dashboard')
     
 def delete_product(request, product_id):
@@ -130,15 +131,19 @@ def edit_product(request, product_id):
         product.name = request.POST.get('name')
         product.base_price = request.POST.get('price')
         
-        # FIX IS HERE:
-        # Instead of getting the Category object, we just get the ID 
-        # or Name from the form to satisfy the CharField.
+        # Handle Category
         category_id = request.POST.get('category')
         category_obj = get_object_or_404(Category, id=category_id)
-        
-        # We assign the STRING name (e.g., "Coffee") to the CharField
         product.category = category_obj.name 
         
+        # --- THE MISSING LOGIC ---
+        # These lines check if the key exists in POST. 
+        # If unchecked, 'in' returns False, correctly updating your DB.
+        product.can_be_hot = 'can_be_hot' in request.POST
+        product.can_be_iced = 'can_be_iced' in request.POST
+        product.can_be_frappe = 'can_be_frappe' in request.POST
+        # -------------------------
+
         if request.FILES.get('image'):
             product.image = request.FILES.get('image')
             
@@ -266,20 +271,27 @@ def recipe_builder(request):
     if request.method == "POST":
         product_id = request.POST.get('product')
         ingredient_id = request.POST.get('ingredient')
-        size = request.POST.get('size') # Capture size
+        size = request.POST.get('size')  # Capture size from the form
         amount = request.POST.get('amount')
 
-        product = get_object_or_404(Product, id=product_id)
-        ingredient = get_object_or_404(Ingredient, id=ingredient_id)
+        # Ensure all required fields are present to avoid errors
+        if product_id and ingredient_id and amount:
+            product = get_object_or_404(Product, id=product_id)
+            ingredient = get_object_or_404(Ingredient, id=ingredient_id)
 
-        # Create or update the recipe for that specific size
-        Recipe.objects.update_or_create(
-            product=product,
-            ingredient=ingredient,
-            size=size,
-            defaults={'amount_needed': amount}
-        )
-        return redirect('recipe_builder')
+            # Create or update the recipe for that specific size
+            # Fix: Populate both amount_needed and quantity to satisfy model constraints
+            Recipe.objects.update_or_create(
+                product=product,
+                ingredient=ingredient,
+                size=size,
+                defaults={
+                    'amount_needed': Decimal(amount),
+                    'quantity': float(amount)  # Added to resolve NOT NULL constraint failed error
+                }
+            )
+            messages.success(request, f"Recipe for {product.name} ({size}) updated successfully!")
+            return redirect('recipe_builder')
 
     return render(request, 'recipe_builder.html', {
         'products': products,

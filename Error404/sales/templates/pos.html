@@ -55,8 +55,17 @@
             <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 overflow-y-auto pr-2 no-scrollbar">
                 {% for product in products %}
                 <div class="product-item" data-category="{{ product.category }}">
-                    <button onclick="addToCart('{{ product.id }}', '{{ product.name }}', {{ product.base_price }}, '{{ product.ice_upcharge }}', '{{ product.frappe_upcharge }}', '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" 
-                            class="group w-full bg-slate-900 p-5 rounded-[2rem] border-2 border-slate-800 hover:border-orange-500/50 hover:bg-slate-800/50 transition-all text-left flex flex-col justify-between h-52 shadow-xl relative overflow-hidden">
+                    <button onclick="addToCart(
+                        '{{ product.id }}', 
+                        '{{ product.name|escapejs }}', 
+                        '{{ product.base_price }}', 
+                        '{{ product.ice_upcharge }}', 
+                        '{{ product.frappe_upcharge }}', 
+                        {{ product.can_be_hot|yesno:'true,false' }}, 
+                        {{ product.can_be_iced|yesno:'true,false' }}, 
+                        {{ product.can_be_frappe|yesno:'true,false' }}
+                    )"                            
+                    class="group w-full bg-slate-900 p-5 rounded-[2rem] border-2 border-slate-800 hover:border-orange-500/50 hover:bg-slate-800/50 transition-all text-left flex flex-col justify-between h-52 shadow-xl relative overflow-hidden">
                         
                         {% if product.image %}
                         <img src="{{ product.image.url }}" class="absolute inset-0 w-full h-full object-cover opacity-10 group-hover:opacity-20 transition-opacity">
@@ -322,6 +331,8 @@
 
         // --- CORE POS LOGIC ---
         async function addToCart(id, name, basePrice, iceUp, frappeUp, canH, canI, canF) {
+            console.log("Adding to cart:", name, { canH, canI, canF }); // Debugging line
+
             const modal = document.getElementById('option-modal');
             if (modal) modal.classList.remove('hidden');
 
@@ -340,35 +351,24 @@
                 totalCalculatedPrice: currentBasePrice 
             };
 
-            const qtyInput = document.getElementById('modal-qty');
-            if (qtyInput) qtyInput.value = 1;
-
+            // Get the buttons
             const btnHot = document.getElementById('type-Hot');
             const btnIced = document.getElementById('type-Iced');
             const btnFrappe = document.getElementById('type-Frappe');
 
-            if(btnHot) btnHot.style.display = canH === 'True' ? 'flex' : 'none';
-            if(btnIced) btnIced.style.display = canI === 'True' ? 'flex' : 'none';
-            if(btnFrappe) btnFrappe.style.display = canF === 'True' ? 'flex' : 'none';
+            // Show or Hide based on the boolean values
+            if(btnHot) btnHot.style.display = (canH === true) ? 'flex' : 'none';
+            if(btnIced) btnIced.style.display = (canI === true) ? 'flex' : 'none';
+            if(btnFrappe) btnFrappe.style.display = (canF === true) ? 'flex' : 'none';
 
-            if (canH === 'True') selectType('Hot');
-            else if (canI === 'True') selectType('Iced');
-            else if (canF === 'True') selectType('Frappe');
+            // Logic to select the first available type automatically
+            if (canH === true) selectType('Hot');
+            else if (canI === true) selectType('Iced');
+            else if (canF === true) selectType('Frappe');
 
             selectSize('Medium'); 
             selectSugar('100%');
             calculateDynamicPrice(); 
-
-            try {
-                const response = await fetch(`/check-stock/${id}/`);
-                const data = await response.json();
-                if (!data.available) {
-                    alert("⚠️ Out of stock: " + data.message);
-                    closeModal();
-                }
-            } catch (error) {
-                console.error("Stock check failed:", error);
-            }
         }
 
         // Apply Orange theme to selections
