@@ -121,12 +121,15 @@
                             
                             <td class="p-5 min-w-[150px]">
                                 <div class="flex flex-col gap-2">
-                                    <div class="flex justify-between text-[9px] font-black uppercase tracking-widest">
-                                        <span class="text-slate-500">{{ ing.get_stock_percent|floatformat:0 }}%</span>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[11px] font-black {% if ing.is_low_stock %}text-red-400{% else %}text-orange-400{% endif %}">
+                                            {{ ing.stock_percent|floatformat:0 }}%
+                                        </span>
+                                        <span class="text-[8px] text-slate-600 font-bold uppercase tracking-widest">Capacity</span>
                                     </div>
                                     <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800 shadow-inner">
-                                        <div class="h-full transition-all duration-500 {% if ing.get_stock_percent < 20 %}bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]{% else %}bg-orange-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]{% endif %}" 
-                                            style="width: {{ ing.get_stock_percent }}%"></div>
+                                        <div class="h-full transition-all duration-500 {% if ing.is_low_stock %}bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]{% else %}bg-orange-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]{% endif %}" 
+                                            style="width: {{ ing.stock_percent }}%"></div>
                                     </div>
                                 </div>
                             </td>
@@ -139,7 +142,7 @@
                             </td>
                             
                             <td class="p-5 text-center">
-                                {% if ing.get_stock_percent < 20 %}
+                                {% if ing.is_low_stock %}
                                     <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse">
                                         LOW STOCK
                                     </span>

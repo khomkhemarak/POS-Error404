@@ -23,52 +23,44 @@ def is_admin(user):
     return user.groups.filter(name='Admin').exists() or user.is_superuser
 
 def admin_dashboard(request):
-    # 1. Sales Analytics (Revenue)
+    # 1. Sales Analytics
     total_revenue = Order.objects.filter(is_completed=True).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
     order_count = Order.objects.filter(is_completed=True).count()
     
-    # 2. CALCULATE ACTUAL PROFIT
-    # Fixed: OrderItem uses product.base_price and the related_name 'recipes' in get_production_cost
+    # 2. Profit Calculation
     total_profit = Decimal('0.00')
-    completed_orders = OrderItem.objects.filter(order__is_completed=True).select_related('product')
-    
-    for item in completed_orders:
-        cost_per_unit = item.product.get_production_cost()
-        # Fixed: Using product.base_price because 'price' field doesn't exist on OrderItem
-        sale_price = item.product.base_price 
-        
-        item_profit = sale_price - cost_per_unit
-        total_profit += (item_profit * item.quantity)
+    completed_items = OrderItem.objects.filter(order__is_completed=True).select_related('product')
+    for item in completed_items:
+        try:
+            cost_per_unit = item.product.get_production_cost()
+            sale_price = getattr(item, 'price', item.product.base_price) 
+            total_profit += (sale_price - cost_per_unit) * item.quantity
+        except: continue
 
-    # 3. Popular Items
-    popular_items = OrderItem.objects.values('product__name')\
-        .annotate(total_qty=Sum('quantity'))\
-        .order_by('-total_qty')[:5]
-    
-    # 4. Hourly Sales (For Chart.js)
-    sales_by_hour = Order.objects.filter(is_completed=True)\
-        .annotate(hour=ExtractHour('created_at'))\
-        .values('hour')\
-        .annotate(total=Sum('total_amount'))\
-        .order_by('hour')
-    
+    # 3. Popular Items & Charts
+    popular_items = OrderItem.objects.filter(order__is_completed=True).values('product__name').annotate(total_qty=Sum('quantity')).order_by('-total_qty')[:5]
+    sales_by_hour = Order.objects.filter(is_completed=True).annotate(hour=ExtractHour('created_at')).values('hour').annotate(total=Sum('total_amount')).order_by('hour')
     labels = [f"{item['hour']}:00" for item in sales_by_hour]
     sales_data = [float(item['total']) for item in sales_by_hour]
 
-    # 5. Capacity Logic (Dynamic based on Ingredients)
-    beans = Ingredient.objects.filter(name__icontains="Beans").first()
+    # 4. FIXED CAPACITY LOGIC
+    # We use lower dividers to represent real coffee usage
+    beans = Ingredient.objects.filter(name__icontains="Bean").first()
     milk = Ingredient.objects.filter(name__icontains="Milk").first()
-    total_capacity = 0
+    cups = Ingredient.objects.filter(name__icontains="Cup").aggregate(total=Sum('stock_quantity'))['total'] or 0
+    
+    capacity_list = []
     if beans:
-        total_capacity = int(beans.stock_quantity / 20) 
-        if milk:
-            total_capacity = min(total_capacity, int(milk.stock_quantity / 250))
+        capacity_list.append(int(beans.stock_quantity / 30)) # 30g per cup
+    if milk:
+        # Changed from 250 to 180 to give a more realistic capacity
+        capacity_list.append(int(milk.stock_quantity / 190)) 
+    if cups > 0:
+        capacity_list.append(int(cups))
 
-    # 6. Core Data & Inventory Alerts
-    top_customers = Customer.objects.order_by('-points')[:5]
-    products = Product.objects.all()
-    categories = Category.objects.all()
+    total_capacity = min(capacity_list) if capacity_list else 0
 
+    # 5. CONTEXT DATA
     context = {
         'total_revenue': total_revenue,
         'total_profit': total_profit,
@@ -76,13 +68,14 @@ def admin_dashboard(request):
         'popular_items': popular_items,
         'labels': labels,
         'sales_data': sales_data,
-        'all_ingredients': Ingredient.objects.all(),
-        'products': products,
-        'categories': categories,
-        'top_customers': top_customers,
+        'all_ingredients': Ingredient.objects.all().order_by('stock_quantity'),
+        'products': Product.objects.all(),
+        'categories': Category.objects.all(),
+        'top_customers': Customer.objects.order_by('-points')[:5],
         'total_capacity': total_capacity,
+        # ALERTS: Only alert if under 500g or 1000ml (1 Liter)
         'low_stock_products': Product.objects.filter(stock__lt=10),
-        'low_stock_ingredients': Ingredient.objects.filter(stock_quantity__lt=500),
+        'low_stock_ingredients': Ingredient.objects.filter(stock_quantity__lt=500), 
     }
 
     return render(request, 'admin_dashboard.html', context)

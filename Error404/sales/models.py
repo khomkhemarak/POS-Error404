@@ -117,18 +117,9 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.name} ({self.drink_type})"
 
+
+
 class Ingredient(models.Model):
-    name = models.CharField(max_length=100)
-    stock_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    initial_stock_per_item = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    items_count = models.IntegerField(default=1) 
-    unit = models.CharField(max_length=10)
-
-    unit_cost = models.DecimalField(max_digits=10, decimal_places=5, default=0.00)
-    last_purchase_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
-    is_packaging = models.BooleanField(default=False)
-    
     PACKAGING_CHOICES = (
         ('HOT_CUP', 'Hot Cup'),
         ('COLD_CUP', 'Cold Cup'),
@@ -137,31 +128,50 @@ class Ingredient(models.Model):
         ('CARRIER', 'Plastic Carrier'),
         ('NONE', 'None'),
     )
+
+    name = models.CharField(max_length=100)
+    stock_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    initial_stock_per_item = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) 
+    items_count = models.IntegerField(default=1) 
+    max_stock = models.DecimalField(max_digits=10, decimal_places=2, default=1000.00)
+    unit = models.CharField(max_length=10) 
+
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=5, default=0.00)
+    last_purchase_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    is_packaging = models.BooleanField(default=False)
     packaging_type = models.CharField(max_length=20, choices=PACKAGING_CHOICES, default='NONE')
 
     def __str__(self):
         return f"{self.name} ({self.stock_quantity}{self.unit})"
     
-    def get_stock_percent(self):
-        # Calculate total capacity based on your inputs
-        # Example: 2 bags * 1500g = 3000g total capacity
+    @property
+    def stock_percent(self):
+        """Calculates percentage based on total capacity (items * weight per item)"""
+        # Using Decimal for precise calculation
         total_capacity = self.initial_stock_per_item * self.items_count
-        
+
+        if total_capacity <= 0:
+            total_capacity = self.max_stock
+
         if total_capacity > 0:
-            return min((self.stock_quantity / total_capacity) * 100, 100)
+            percentage = (self.stock_quantity / total_capacity) * 100
+            return float(min(percentage, 100))
         return 0
 
     @property
     def is_low_stock(self):
-        # Alert if stock is below 20%
-        return self.get_stock_percent() < 20
+        """Alert if stock is below 20% of capacity"""
+        return self.stock_percent < 20
     
     def add_new_stock(self, new_items_count, price_paid):
+        added_quantity = new_items_count * self.initial_stock_per_item
         self.items_count += new_items_count
-        self.stock_quantity += (new_items_count * self.initial_stock_per_item)
+        self.stock_quantity += added_quantity
         self.last_purchase_price = price_paid
-        # Recalculate unit cost if price changed
-        self.unit_cost = price_paid / (new_items_count * self.initial_stock_per_item)
+        
+        if added_quantity > 0:
+            self.unit_cost = price_paid / added_quantity
         self.save()
         
 class Recipe(models.Model):
