@@ -69,6 +69,26 @@ class Product(models.Model):
             self.save()
             return True
         return False
+    
+    def get_total_production_cost(self, drink_type, is_takeout):
+        # 1. Start with the recipe cost (coffee beans, milk, syrup)
+        cost = self.get_base_recipe_cost() 
+        
+        # 2. Add Cup & Straw based on drink_type (Hot/Ice/Frappe)
+        if drink_type == 'Hot':
+            cost += Ingredient.objects.get(packaging_type='HOT_CUP').unit_cost
+            cost += Ingredient.objects.get(packaging_type='HOT_STRAW').unit_cost
+        else:
+            cost += Ingredient.objects.get(packaging_type='COLD_CUP').unit_cost
+            cost += Ingredient.objects.get(packaging_type='COLD_STRAW').unit_cost
+            
+        # 3. Add Plastic Carrier if it's Takeout
+        if is_takeout:
+            carrier = Ingredient.objects.filter(packaging_type='CARRIER').first()
+            if carrier:
+                cost += carrier.unit_cost
+                
+        return cost
         
 class ProductVariant(models.Model):
     # This handles things like Size: Large (+ $0.50)
@@ -99,26 +119,51 @@ class OrderItem(models.Model):
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=100)
-    # Total volume/weight (e.g., 3000.00)
     stock_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    # The "1500" value you set when creating the ingredient
     initial_stock_per_item = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    # The integer count (e.g., 2)
     items_count = models.IntegerField(default=1) 
     unit = models.CharField(max_length=10)
 
-    # The cost per 1 unit (e.g., cost per 1 gram)
     unit_cost = models.DecimalField(max_digits=10, decimal_places=5, default=0.00)
     last_purchase_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    is_packaging = models.BooleanField(default=False)
+    
+    PACKAGING_CHOICES = (
+        ('HOT_CUP', 'Hot Cup'),
+        ('COLD_CUP', 'Cold Cup'),
+        ('HOT_STRAW', 'Hot Straw'),
+        ('COLD_STRAW', 'Cold/Frappe Straw'),
+        ('CARRIER', 'Plastic Carrier'),
+        ('NONE', 'None'),
+    )
+    packaging_type = models.CharField(max_length=20, choices=PACKAGING_CHOICES, default='NONE')
 
     def __str__(self):
         return f"{self.name} ({self.stock_quantity}{self.unit})"
     
     def get_stock_percent(self):
-        # Assuming 5000 is your "Max/Full" stock for most items
-        max_stock = 5000 
-        return min((self.stock_quantity / max_stock) * 100, 100)
+        # Calculate total capacity based on your inputs
+        # Example: 2 bags * 1500g = 3000g total capacity
+        total_capacity = self.initial_stock_per_item * self.items_count
+        
+        if total_capacity > 0:
+            return min((self.stock_quantity / total_capacity) * 100, 100)
+        return 0
+
+    @property
+    def is_low_stock(self):
+        # Alert if stock is below 20%
+        return self.get_stock_percent() < 20
     
+    def add_new_stock(self, new_items_count, price_paid):
+        self.items_count += new_items_count
+        self.stock_quantity += (new_items_count * self.initial_stock_per_item)
+        self.last_purchase_price = price_paid
+        # Recalculate unit cost if price changed
+        self.unit_cost = price_paid / (new_items_count * self.initial_stock_per_item)
+        self.save()
+        
 class Recipe(models.Model):
     SIZE_CHOICES = [
         ('Small', 'Small'),

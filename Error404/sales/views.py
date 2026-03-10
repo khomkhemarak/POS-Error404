@@ -209,34 +209,40 @@ def add_ingredient(request):
         name = request.POST.get('name')
         unit = request.POST.get('unit')
         
-        # 1. Get the values from the form
+        # 1. Get values from the form
+        # We use .get(..., 0) to prevent errors if a field is empty
         qty_items = int(request.POST.get('quantity_items', 1)) 
         stock_per_item = float(request.POST.get('stock_per_item', 0))
-        price_per_item = float(request.POST.get('price_per_item', 0)) # New field from HTML
+        price_per_item = float(request.POST.get('price_per_item', 0))
         
+        # --- NEW: Get Packaging Info ---
+        pkg_type = request.POST.get('packaging_type', 'NONE')
+        is_pkg = pkg_type != 'NONE'
+
         # 2. Calculate the total stock quantity
         total_stock = qty_items * stock_per_item
         
-        # 3. Calculate UNIT COST (e.g., cost per 1 gram)
-        # We divide Price by Stock per Item to get the cost of a single unit (g/ml)
+        # 3. Calculate UNIT COST (e.g., cost per 1 gram or 1 straw)
         unit_cost = 0
         if stock_per_item > 0:
             unit_cost = price_per_item / stock_per_item
         
-        # 4. Save everything to the database
+        # 4. Save to Database
         Ingredient.objects.create(
             name=name,
             unit=unit,
             items_count=qty_items,
             stock_quantity=total_stock,
-            # Ensure your Model has these fields!
+            initial_stock_per_item=stock_per_item, # Added this to match your Model
             unit_cost=unit_cost,
-            last_purchase_price=price_per_item 
+            last_purchase_price=price_per_item,
+            is_packaging=is_pkg,
+            packaging_type=pkg_type
         )
         
-        messages.success(request, f'Added {name} to inventory.')
+        messages.success(request, f'Successfully added {name} to inventory.')
         return redirect('inventory_list')
-        
+            
 def delete_ingredient(request, pk):
     if request.method == "POST":
         ingredient = get_object_or_404(Ingredient, pk=pk)
@@ -257,6 +263,45 @@ def check_stock(request, product_id):
             })
             
     return JsonResponse({'available': True})
+
+@transaction.atomic
+def complete_checkout(request):
+    if request.method == "POST":
+        # 1. Get cart data from the request (JSON or Form)
+        cart_data = json.loads(request.POST.get('cart')) 
+        
+        for item in cart_data:
+            # item['type'] = 'Hot', 'Iced', or 'Frappe'
+            # item['service'] = 'Dine-in' or 'Takeout'
+            
+            # --- PACKAGING DEDUCTION LOGIC ---
+            
+            # A. Deduct the Cup
+            cup_type = 'HOT_CUP' if item['type'] == 'Hot' else 'COLD_CUP'
+            deduct_stock(cup_type, 1)
+            
+            # B. Deduct the Straw
+            straw_type = 'HOT_STRAW' if item['type'] == 'Hot' else 'COLD_STRAW'
+            deduct_stock(straw_type, 1)
+            
+            # C. Deduct the Carrier (ONLY if Takeout AND not Hot)
+            # Most cafes don't put hot drinks in plastic carriers unless requested, 
+            # but let's follow your logic for Ice/Frappe takeout:
+            if item['service'] == 'Takeout' and item['type'] != 'Hot':
+                deduct_stock('CARRIER', 1)
+
+            # D. Deduct regular ingredients (Coffee, Milk, etc.)
+            # product = Product.objects.get(id=item['id'])
+            # product.reduce_ingredients_stock() 
+
+        return JsonResponse({'status': 'success'})
+
+def deduct_stock(pkg_type, quantity):
+    """Helper function to find the right packaging and reduce stock"""
+    item = Ingredient.objects.filter(packaging_type=pkg_type).first()
+    if item:
+        item.stock_quantity -= quantity
+        item.save()
 
 #############################
 ####### Recipe Builder #######

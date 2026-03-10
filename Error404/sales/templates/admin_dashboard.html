@@ -78,14 +78,17 @@
         </div>
         {% endif %}
 
-        <header class="mb-10 flex justify-between items-center">
+        <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-                <h1 class="text-3xl font-black tracking-tight text-white">Business Overview</h1>
-                <p class="text-orange-500/70 font-bold uppercase tracking-widest text-[10px] mt-1">Real-time performance of Error404 Cafe</p>
+                <h1 class="text-3xl font-black tracking-tight text-white uppercase">Executive Overview</h1>
+                <p class="text-orange-500/70 font-bold uppercase tracking-widest text-[10px] mt-1">Real-time business performance & metrics</p>
             </div>
-            <button onclick="openAddModal()" class="bg-gradient-to-r ...">
-                        <i class="bi bi-plus-circle-fill text-lg"></i> Add New Drink
-            </button>
+
+            <div class="flex flex-wrap gap-3">
+                <button onclick="openAddModal()" class="bg-gradient-to-r from-orange-600 to-amber-500 text-slate-950 px-6 py-3.5 rounded-2xl font-black shadow-lg shadow-orange-900/20 hover:scale-105 transition flex items-center gap-2 text-[10px] uppercase tracking-widest">
+                    <i class="bi bi-plus-circle-fill text-lg"></i> Add New Drink
+                </button>
+            </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
@@ -374,25 +377,33 @@
     </div>
 
     <script>
-        
+        /**
+        * Toggles the visibility of the Product Modal.
+        * Switches between 'hidden' and 'flex' to show/hide the popup.
+        */
         function toggleProductModal() {
-            // Make sure this matches the new ID above
-            document.getElementById('productModal').classList.toggle('hidden');
-            document.getElementById('productModal').classList.toggle('flex');
+            const modal = document.getElementById('productModal');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
         }
-        // Updated Chart.js configuration for the Orange Theme
+
+        /**
+        * CHART.JS CONFIGURATION
+        * Initializes the sales revenue line chart with the Orange Theme.
+        * Data is injected from the Django backend using the |safe filter.
+        */
         const ctx = document.getElementById('salesChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: {{ labels|safe }},
+                labels: {{ labels|safe }}, // Dates or time periods
                 datasets: [{
                     label: 'Revenue ($)',
-                    data: {{ sales_data|safe }},
+                    data: {{ sales_data|safe }}, // Sales figures
                     borderColor: '#f97316', // Tailwind orange-500
-                    backgroundColor: 'rgba(249, 115, 22, 0.1)', // Light orange fill
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)', // Light orange area fill
                     fill: true,
-                    tension: 0.4,
+                    tension: 0.4, // Smoothness of the line
                     pointRadius: 5,
                     pointBackgroundColor: '#f97316',
                     pointBorderColor: '#020617', // slate-950
@@ -406,39 +417,43 @@
                 scales: {
                     y: { 
                         beginAtZero: true, 
-                        grid: { color: '#334155' }, // slate-700 lines
-                        ticks: { color: '#94a3b8' } // slate-400 text
+                        grid: { color: '#334155' }, // slate-700
+                        ticks: { color: '#94a3b8' } // slate-400
                     },
                     x: { 
                         grid: { display: false },
-                        ticks: { color: '#94a3b8' } // slate-400 text
+                        ticks: { color: '#94a3b8' } 
                     }
                 }
             }
         });
 
+        /**
+        * Filters the products displayed in the admin grid by category.
+        * Also updates the tab button styles to show which category is active.
+        */
         function filterCategory(category) {
             const buttons = document.querySelectorAll('.cat-btn');
             const currentBtn = event.currentTarget;
 
-            // 1. Reset all buttons to "Inactive" State
+            // 1. Reset all buttons to default "Inactive" dark style
             buttons.forEach(btn => {
                 btn.classList.remove('bg-gradient-to-br', 'from-orange-500', 'to-amber-600', 'shadow-lg', 'shadow-orange-900/40', 'text-slate-950', 'font-black');
                 btn.classList.add('bg-slate-900', 'text-slate-400', 'border-slate-800', 'font-bold');
             });
 
-            // 2. Set Clicked button to "Active" State
+            // 2. Apply "Active" Orange Gradient to the clicked tab
             currentBtn.classList.remove('bg-slate-900', 'text-slate-400', 'border-slate-800', 'font-bold');
             currentBtn.classList.add('bg-gradient-to-br', 'from-orange-500', 'to-amber-600', 'shadow-lg', 'shadow-orange-900/40', 'text-slate-950', 'font-black');
 
-            // 3. Filter the Product Grid
+            // 3. Show/Hide items in the grid based on data-category attribute
             const items = document.querySelectorAll('.product-item');
             items.forEach(item => {
                 const itemCategory = item.getAttribute('data-category');
                 
                 if (category === 'All' || itemCategory === category) {
                     item.classList.remove('hidden');
-                    // Subtle fade-in effect
+                    // Subtle fade-in animation logic
                     item.style.opacity = '0';
                     setTimeout(() => { 
                         item.style.opacity = '1'; 
@@ -450,6 +465,10 @@
             });
         }
 
+        /**
+        * Opens the Product Modal in "Edit Mode".
+        * Pre-fills the form with existing product data passed from the clicked row.
+        */
         function openEditModal(id, name, price, categoryId, canH, canI, canF) {
             const modal = document.getElementById('productModal');
             const form = document.getElementById('productForm');
@@ -458,25 +477,28 @@
             modal.classList.add('flex');
 
             document.getElementById('modalTitle').innerText = "Edit Drink Details";
-            const submitBtn = document.getElementById('modalSubmitBtn');
-            submitBtn.innerText = "Update Product";
+            document.getElementById('modalSubmitBtn').innerText = "Update Product";
 
-            // Fill standard fields
+            // Fill text and number inputs
             form.querySelector('input[name="name"]').value = name;
             form.querySelector('input[name="price"]').value = price;
             
-            // Fill Category (Note: This matches by the ID passed from the button)
+            // Match the dropdown category to the product's category ID
             form.querySelector('select[name="category"]').value = categoryId;
 
-            // --- THE FIX: Fill the Checkboxes ---
+            // Fill checkboxes (Hot/Iced/Frappe options)
             form.querySelector('input[name="can_be_hot"]').checked = canH;
             form.querySelector('input[name="can_be_iced"]').checked = canI;
             form.querySelector('input[name="can_be_frappe"]').checked = canF;
 
+            // Update form action URL to point to the edit endpoint
             form.action = `/edit-product/${id}/`;
         }
 
-        // Function to reset modal when adding a NEW drink
+        /**
+        * Opens the Product Modal in "Add Mode".
+        * Resets all fields to empty so a new drink can be created.
+        */
         function openAddModal() {
             const modal = document.getElementById('productModal');
             const form = document.getElementById('productForm');
@@ -486,45 +508,55 @@
             
             document.getElementById('modalTitle').innerText = "Create New Drink";
             document.getElementById('modalSubmitBtn').innerText = "Save Drink";
-            form.reset();
-            form.action = "{% url 'add_product' %}";
+            
+            form.reset(); // Clear all inputs
+            form.action = "{% url 'add_product' %}"; // Point to add endpoint
         }
 
-        // Auto-hide notifications after 4 seconds
+        /**
+        * Auto-hide system notifications (Django Messages).
+        * Slidess them out and removes them from the DOM after 4 seconds.
+        */
         document.addEventListener('DOMContentLoaded', () => {
             const notifications = document.querySelectorAll('.notification');
             notifications.forEach(note => {
                 setTimeout(() => {
                     note.style.transform = 'translateX(100px)';
                     note.style.opacity = '0';
-                    setTimeout(() => note.remove(), 500);
+                    setTimeout(() => note.remove(), 500); // Final removal after transition
                 }, 4000);
             });
         });
 
+        /**
+        * Opens the Delete Confirmation Modal.
+        * Sets the specific product name and updates the form URL for deletion.
+        */
         function openDeleteModal(id, name) {
             const modal = document.getElementById('deleteProductModal');
             const form = document.getElementById('deleteProdForm');
             const nameSpan = document.getElementById('deleteProdName');
 
-            // Set the product name in the text
-            nameSpan.innerText = name;
+            nameSpan.innerText = name; // Update UI to show what is being deleted
+            form.action = `/delete-product/${id}/`; // Set the target URL
 
-            // Set the form action dynamically: /delete-product/1/
-            form.action = `/delete-product/${id}/`;
-
-            // Show modal with a slight fade-in effect
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
 
+        /**
+        * Closes the Delete Confirmation Modal.
+        */
         function closeDeleteProductModal() {
             const modal = document.getElementById('deleteProductModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
 
-        // Close modal if user clicks outside the box
+        /**
+        * Listens for clicks on the window.
+        * If the user clicks on the dark background area of the Delete Modal, close it.
+        */
         window.onclick = function(event) {
             const modal = document.getElementById('deleteProductModal');
             if (event.target == modal) {
@@ -532,6 +564,26 @@
             }
         }
 
+        /**
+        * Opens the modal specifically for creating Packaging/Inventory items.
+        * Pre-fills the name based on common packaging types (Hot Cup, Cold Cup, etc).
+        */
+        function openPackagingModal(type) {
+            const modal = document.getElementById('productModal'); 
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            const nameInput = modal.querySelector('input[name="name"]');
+            
+            // Convenience pre-naming
+            if (type === 'HOT_CUP') nameInput.value = "Hot Paper Cup 8oz";
+            if (type === 'COLD_CUP') nameInput.value = "Plastic Cold Cup 16oz";
+            if (type === 'CARRIER') nameInput.value = "Plastic Cup Carrier";
+            
+            document.getElementById('modalTitle').innerText = "Add Packaging Item";
+            // Redirect form submission to the ingredient creation endpoint
+            document.getElementById('productForm').action = "{% url 'add_ingredient' %}"; 
+        }
     </script>
 </body>
 </html>
