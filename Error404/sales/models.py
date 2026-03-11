@@ -20,13 +20,17 @@ class Product(models.Model):
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     
+    # Upcharges for specific preparations
     ice_upcharge = models.DecimalField(max_digits=6, decimal_places=2, default=0.50)
     frappe_upcharge = models.DecimalField(max_digits=6, decimal_places=2, default=1.00)
 
+    # Availability toggles
     can_be_hot = models.BooleanField(default=True)
     can_be_iced = models.BooleanField(default=False)
     can_be_frappe = models.BooleanField(default=False)
 
+    # Note: Stock here usually refers to pre-made items. 
+    # For made-to-order drinks, we deduct from Ingredient stock instead.
     stock = models.IntegerField(default=0)
 
     def __str__(self):
@@ -34,61 +38,73 @@ class Product(models.Model):
     
     # --- CALCULATION METHODS ---
 
-    def get_production_cost(self):
-        """Calculates total cost based on Recipe Rules and Ingredient Unit Costs"""
+    def get_production_cost(self, size='Medium'):
+        """
+        Calculates total cost for a specific size based on Recipe 
+        (Ingredients + Packaging linked in the Recipe table).
+        """
         total_cost = Decimal('0.00')
         
-        # Use the correct related_name 'recipes' defined in your Recipe model
-        rules = self.recipes.all() 
+        # Pulls all recipe entries for this product and size
+        rules = self.recipes.filter(size=size) 
         
         for rule in rules:
-            # Calculate: amount_needed (Decimal) * ingredient unit_cost
-            # Note: Ensure Ingredient has a unit_cost field
-            cost_contribution = Decimal(str(rule.amount_needed)) * Decimal(str(rule.ingredient.unit_cost))
+            # Matches your Recipe model field 'quantity' and Ingredient 'unit_cost'
+            cost_contribution = rule.quantity * rule.ingredient.unit_cost
             total_cost += cost_contribution
             
         return total_cost
 
-    def get_profit_margin(self):
-        """Profit = Base Price - Production Cost"""
-        return self.base_price - self.get_production_cost()
+    def get_final_price(self, drink_type='Hot'):
+        """Calculates selling price including upcharges"""
+        price = self.base_price
+        if drink_type == 'Iced':
+            price += self.ice_upcharge
+        elif drink_type == 'Frappe':
+            price += self.frappe_upcharge
+        return price
 
-    def get_profit_percentage(self):
-        """Returns the profit as a percentage of the base price"""
-        cost = self.get_production_cost()
-        if self.base_price > 0:
-            percentage = (self.get_profit_margin() / self.base_price) * 100
-            return round(percentage, 1)
+    def get_profit_margin(self, size='Medium', drink_type='Hot'):
+        """Profit = Adjusted Price - Production Cost"""
+        return self.get_final_price(drink_type) - self.get_production_cost(size)
+
+    def get_profit_percentage(self, size='Medium', drink_type='Hot'):
+        """Returns profit % relative to the final selling price"""
+        price = self.get_final_price(drink_type)
+        if price > 0:
+            margin = self.get_profit_margin(size, drink_type)
+            return round((margin / price) * 100, 1)
         return 0
 
-    # --- STOCK LOGIC ---
+    # --- PACKAGING & LOGIC HELPERS ---
     
-    def reduce_stock(self, quantity):
-        if self.stock >= quantity:
-            self.stock -= quantity
-            self.save()
-            return True
-        return False
-    
-    def get_total_production_cost(self, drink_type, is_takeout):
-        # 1. Start with the recipe cost (coffee beans, milk, syrup)
-        cost = self.get_base_recipe_cost() 
+    def get_total_production_cost(self, size='Medium', drink_type='Hot', is_takeout=False):
+        """
+        Calculates cost including dynamic recipe ingredients and 
+        on-the-fly packaging (like plastic carriers).
+        """
+        # 1. Start with the recipe-linked cost (beans, milk, cups, straws)
+        cost = self.get_production_cost(size) 
         
-        # 2. Add Cup & Straw based on drink_type (Hot/Ice/Frappe)
-        if drink_type == 'Hot':
-            cost += Ingredient.objects.get(packaging_type='HOT_CUP').unit_cost
-            cost += Ingredient.objects.get(packaging_type='HOT_STRAW').unit_cost
-        else:
-            cost += Ingredient.objects.get(packaging_type='COLD_CUP').unit_cost
-            cost += Ingredient.objects.get(packaging_type='COLD_STRAW').unit_cost
-            
-        # 3. Add Plastic Carrier if it's Takeout
+        # 2. Add Plastic Carrier if it's Takeout (not usually in standard recipes)
         if is_takeout:
+            # We reference your Ingredient PACKAGING_CHOICES
+            from .models import Ingredient # Local import to avoid circularity
             carrier = Ingredient.objects.filter(packaging_type='CARRIER').first()
             if carrier:
                 cost += carrier.unit_cost
                 
         return cost
+
+    # --- STOCK LOGIC ---
+    
+    def reduce_stock(self, quantity):
+        """Used for pre-packaged retail items (e.g., bottled water)"""
+        if self.stock >= quantity:
+            self.stock -= quantity
+            self.save()
+            return True
+        return False
         
 class ProductVariant(models.Model):
     # This handles things like Size: Large (+ $0.50)
@@ -126,6 +142,8 @@ class Ingredient(models.Model):
         ('HOT_STRAW', 'Hot Straw'),
         ('COLD_STRAW', 'Cold/Frappe Straw'),
         ('CARRIER', 'Plastic Carrier'),
+        ('HOT_LID', 'Hot Lid'),
+        ('COLD_LID', 'Cold Lid'),
         ('NONE', 'None'),
     )
 
@@ -173,22 +191,45 @@ class Ingredient(models.Model):
         if added_quantity > 0:
             self.unit_cost = price_paid / added_quantity
         self.save()
-        
+
+    @property
+    def safe_price(self):
+        return self.unit_cost or Decimal('0.00')
+
 class Recipe(models.Model):
     SIZE_CHOICES = [
         ('Small', 'Small'),
         ('Medium', 'Medium'),
         ('Large', 'Large'),
     ]
+
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='recipes')
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    size = models.CharField(max_length=10, choices=SIZE_CHOICES, default='Medium') # New Field
-    amount_needed = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.FloatField() # e.g. 18.0 (grams or ml needed for 1 unit of product)
+    ingredient = models.ForeignKey('Ingredient', on_delete=models.CASCADE)
+    size = models.CharField(max_length=10, choices=SIZE_CHOICES, default='Medium')
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, help_text="Amount in g, ml, or pcs")
+
+    class Meta:
+        unique_together = ('product', 'ingredient', 'size')
 
     def __str__(self):
         return f"{self.product.name} ({self.size}) - {self.ingredient.name}"
-    
+
+    def deduct_stock(self, orders_count=1):
+        total_to_deduct = self.quantity * Decimal(str(orders_count))
+        if self.ingredient.stock_quantity >= total_to_deduct:
+            self.ingredient.stock_quantity -= total_to_deduct
+            self.ingredient.save()
+            return True
+        return False
+        
+class RecipeRequirement(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='requirements')
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    quantity_needed = models.DecimalField(max_digits=10, decimal_places=2) # e.g., 36 for beans, 1 for cup
+
+    def __str__(self):
+        return f"{self.quantity_needed} of {self.ingredient.name} for {self.recipe.name}"
+
 class StockHistory(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='history')
     amount_added = models.DecimalField(max_digits=10, decimal_places=2)

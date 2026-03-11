@@ -9,6 +9,7 @@
         .orange-glow { box-shadow: 0 0 40px rgba(245, 158, 11, 0.05); }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .size-chip.active { background-color: #f97316 !important; color: #020617 !important; border-color: #f97316 !important; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex min-h-screen font-sans">
@@ -21,21 +22,16 @@
             <a href="{% url 'admin_dashboard' %}" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
                 <i class="bi bi-speedometer2 text-lg"></i> Dashboard
             </a>
-
             <a href="{% url 'inventory_list' %}" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
                 <i class="bi bi-box-seam text-lg"></i> Inventory
             </a>
-
             <a href="{% url 'recipe_builder' %}" class="block p-3 bg-gradient-to-br from-orange-500 to-amber-600 text-slate-950 rounded-xl shadow-lg shadow-orange-900/40 flex items-center gap-3 transform transition hover:scale-105">
                 <i class="bi bi-journal-text text-lg"></i> Recipe Builder
             </a>
-
             <a href="/kitchen/" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
                 <i class="bi bi-cup-hot text-lg"></i> Kitchen View
             </a>
-
             <div class="border-t border-slate-800 my-4"></div>
-
             <a href="/pos/" class="block p-3 hover:bg-slate-800 rounded-xl transition text-slate-500 hover:text-orange-300 italic flex items-center gap-3">
                 <i class="bi bi-pc-display-horizontal text-lg"></i> Open POS interface →
             </a>
@@ -43,14 +39,22 @@
     </div>
 
     <div class="flex-grow p-8 overflow-y-auto custom-scrollbar">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded-xl {% if message.tags == 'success' %}bg-emerald-500/10 text-emerald-500 border border-emerald-500/20{% else %}bg-orange-500/10 text-orange-500 border border-orange-500/20{% endif %} font-bold text-sm">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <header class="mb-10 flex justify-between items-end">
             <div>
                 <h1 class="text-3xl font-black tracking-tight text-white">Recipe Builder</h1>
-                <p class="text-orange-500/70 font-bold uppercase tracking-widest text-[10px] mt-1">Define ingredient consumption per product size</p>
+                <p class="text-orange-500/70 font-bold uppercase tracking-widest text-[10px] mt-1">Define ingredient consumption and monitor margins</p>
             </div>
             <div class="text-right hidden lg:block bg-slate-900 px-6 py-3 rounded-2xl border border-slate-800">
                 <span class="text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-1">Active Rules</span>
-                <span class="text-2xl font-black text-orange-400">{{ recipes.count }}</span>
+                <span class="text-2xl font-black text-orange-400" id="activeRulesCount">{{ recipes.count }}</span>
             </div>
         </header>
 
@@ -68,6 +72,7 @@
                     <div>
                         <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Target Product</label>
                         <select name="product" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
+                            <option value="" disabled selected>Select a Product</option>
                             {% for p in products %}
                                 <option value="{{ p.id }}">{{ p.name }}</option>
                             {% endfor %}
@@ -77,9 +82,10 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Ingredient</label>
-                            <select name="ingredient" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
+                            <select name="ingredient" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold text-sm">
+                                <option value="" disabled selected>Select Ingredient</option>
                                 {% for i in ingredients %}
-                                    <option value="{{ i.id }}">{{ i.name }}</option>
+                                    <option value="{{ i.id }}">{{ i.name }} ({{ i.unit }})</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -87,7 +93,7 @@
                             <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Cup Size</label>
                             <select name="size" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
                                 <option value="Small">Small</option>
-                                <option value="Medium" selected>Medium</option>
+                                <option value="Medium">Medium</option>
                                 <option value="Large">Large</option>
                             </select>
                         </div>
@@ -96,7 +102,7 @@
                     <div>
                         <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Amount Needed</label>
                         <div class="relative flex items-center">
-                            <input type="number" step="0.01" name="amount" placeholder="0.00" required
+                            <input type="number" step="0.001" name="amount" placeholder="0.00" required
                                 class="w-full bg-slate-950 border border-slate-800 text-white p-4 pr-16 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition font-mono font-bold">
                             <span class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-600 font-black text-xs uppercase tracking-widest pointer-events-none">
                                 Qty
@@ -111,19 +117,38 @@
             </div>
 
             <div class="lg:col-span-2 space-y-6">
+                <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-900/50 p-4 rounded-3xl border border-slate-800 shadow-lg">
+                    <div class="relative w-full md:w-72">
+                        <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text" id="recipeSearch" onkeyup="runFilters()" placeholder="Search product or ingredient..." 
+                               class="w-full bg-slate-950 border border-slate-800 text-white pl-11 pr-4 py-2.5 rounded-2xl outline-none focus:ring-1 focus:ring-orange-500 transition text-sm">
+                    </div>
+                    
+                    <div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
+                        <button onclick="setSizeFilter('')" class="size-chip active px-4 py-2 rounded-xl border border-slate-800 text-xs font-black uppercase tracking-widest transition whitespace-nowrap">All Sizes</button>
+                        <button onclick="setSizeFilter('Small')" class="size-chip px-4 py-2 rounded-xl border border-slate-800 text-slate-500 text-xs font-black uppercase tracking-widest transition whitespace-nowrap">Small</button>
+                        <button onclick="setSizeFilter('Medium')" class="size-chip px-4 py-2 rounded-xl border border-slate-800 text-slate-500 text-xs font-black uppercase tracking-widest transition whitespace-nowrap">Medium</button>
+                        <button onclick="setSizeFilter('Large')" class="size-chip px-4 py-2 rounded-xl border border-slate-800 text-slate-500 text-xs font-black uppercase tracking-widest transition whitespace-nowrap">Large</button>
+                    </div>
+                </div>
+
                 <div class="bg-slate-900 rounded-[2rem] border border-slate-800 overflow-hidden shadow-xl">
-                    <table class="w-full text-left">
+                    <table class="w-full text-left" id="recipeTable">
                         <thead class="bg-slate-900/50 border-b border-slate-800">
                             <tr>
                                 <th class="p-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">Menu Item</th>
                                 <th class="p-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">Ingredient</th>
                                 <th class="p-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">Usage</th>
+                                <th class="p-5 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">Unit Cost</th>
                                 <th class="p-5"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800/50">
                             {% for r in recipes %}
-                            <tr class="hover:bg-slate-800/30 transition-colors group">
+                            <tr class="hover:bg-slate-800/30 transition-colors group recipe-row" 
+                                data-product="{{ r.product.name|lower }}" 
+                                data-ingredient="{{ r.ingredient.name|lower }}" 
+                                data-size="{{ r.size|lower }}">
                                 <td class="p-5">
                                     <div class="flex flex-col">
                                         <span class="font-black text-slate-200 group-hover:text-orange-400 transition">{{ r.product.name }}</span>
@@ -136,21 +161,34 @@
                                     <span class="text-slate-400 font-bold">{{ r.ingredient.name }}</span>
                                 </td>
                                 <td class="p-5">
-                                    <div class="flex items-center gap-2">
-                                        <span class="bg-slate-950 text-orange-400 px-4 py-2 rounded-xl font-mono font-black text-sm border border-slate-800 shadow-inner">
-                                            {{ r.amount_needed }} <small class="text-slate-600 font-bold ml-1">{{ r.ingredient.unit }}</small>
-                                        </span>
-                                    </div>
+                                    <span class="bg-slate-950 text-orange-400 px-3 py-1.5 rounded-lg font-mono font-black text-xs border border-slate-800 shadow-inner">
+                                        {{ r.quantity }} <small class="text-slate-600 font-bold ml-0.5">{{ r.ingredient.unit }}</small>
+                                    </span>
                                 </td>
                                 <td class="p-5 text-right">
-                                    <a href="#" onclick="return confirm('Remove this recipe rule?')" class="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all border border-red-500/20">
-                                        <i class="bi bi-trash3-fill"></i>
-                                    </a>
+                                    <span class="text-emerald-500 font-mono font-bold">
+                                        ${{ r.line_cost|stringformat:".2f" }}
+                                    </span>
+                                </td>
+                                <td class="p-5 text-right flex justify-end gap-2">
+                                    <button onclick="openCopyModal('{{ r.product.id }}', '{{ r.size }}', '{{ r.product.name }}')" 
+                                            class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-slate-950 transition-all border border-orange-500/20" 
+                                            title="Clone to another size">
+                                        <i class="bi bi-copy text-sm"></i>
+                                    </button>
+
+                                    <form method="POST" class="inline" onsubmit="return confirm('Remove {{ r.ingredient.name }} from {{ r.product.name }}?')">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="delete_recipe_id" value="{{ r.id }}">
+                                        <button type="submit" class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all border border-red-500/20">
+                                            <i class="bi bi-trash3-fill text-sm"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr>
-                                <td colspan="4" class="p-20 text-center">
+                            <tr id="noDataRow">
+                                <td colspan="5" class="p-20 text-center">
                                     <div class="flex flex-col items-center">
                                         <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4">
                                             <i class="bi bi-journal-x text-4xl text-slate-600"></i>
@@ -163,21 +201,105 @@
                         </tbody>
                     </table>
                 </div>
-                
-                <div class="bg-gradient-to-r from-orange-600/20 to-amber-500/10 rounded-[2rem] border border-orange-500/20 p-6 text-white flex items-center gap-6">
-                    <div class="w-14 h-14 shrink-0 rounded-2xl bg-orange-500 text-slate-950 flex items-center justify-center text-2xl shadow-lg shadow-orange-900/20">
-                        <i class="bi bi-lightbulb-fill"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs uppercase font-black text-orange-400 tracking-widest mb-1">Inventory Optimization</p>
-                        <p class="text-sm font-medium text-slate-300 leading-relaxed">
-                            Define recipes for <span class="text-white font-bold text-orange-300">all sizes (S, M, L)</span> to ensure stock 
-                            is deducted accurately. This powers your real-time "Healthy" status in Inventory.
-                        </p>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
+
+    <div id="copyModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-[2rem] max-w-sm w-full shadow-2xl orange-glow">
+            <h3 class="text-xl font-black text-white mb-2">Clone Recipe</h3>
+            <p id="modalDescription" class="text-slate-400 text-xs mb-6 uppercase tracking-widest font-bold">Copy ingredients to another size</p>
+            
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="copy_from_product_id" id="modal_product_id">
+                <input type="hidden" name="copy_from_size" id="modal_source_size">
+                
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Target Size</label>
+                    <select name="target_size" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 font-bold">
+                        <option value="Small">Small</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Large">Large</option>
+                    </select>
+                </div>
+                
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeCopyModal()" class="flex-1 bg-slate-800 text-slate-400 py-3 rounded-xl font-bold hover:bg-slate-700 transition">Cancel</button>
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-orange-600 to-amber-500 text-slate-950 py-3 rounded-xl font-black hover:from-orange-500 hover:to-amber-400 transition">CLONE</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Add this to the function that handles your "Save Recipe Rule" button
+        function handleSaveSuccess() {
+            // Assuming your form has id="recipeForm"
+            document.getElementById('recipeForm').reset();
+            
+            // If you are using a custom dropdown UI, you might need to manually set the value
+            document.querySelector('select[name="product"]').value = "";
+            document.querySelector('select[name="size"]').value = "";
+        }
+
+        let currentSizeFilter = '';
+
+        function setSizeFilter(size) {
+            currentSizeFilter = size.toLowerCase();
+            document.querySelectorAll('.size-chip').forEach(chip => {
+                const isAll = size === '' && chip.innerText.includes('All');
+                const isMatch = chip.innerText.toLowerCase().includes(size.toLowerCase()) && size !== '';
+                
+                if (isAll || isMatch) {
+                    chip.classList.add('active');
+                } else {
+                    chip.classList.remove('active');
+                }
+            });
+            runFilters();
+        }
+
+        function runFilters() {
+            const searchTerm = document.getElementById('recipeSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('.recipe-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const product = row.getAttribute('data-product');
+                const ingredient = row.getAttribute('data-ingredient');
+                const size = row.getAttribute('data-size');
+
+                const matchesSearch = product.includes(searchTerm) || ingredient.includes(searchTerm);
+                const matchesSize = currentSizeFilter === '' || size === currentSizeFilter;
+
+                if (matchesSearch && matchesSize) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            document.getElementById('activeRulesCount').innerText = visibleCount;
+        }
+
+        function openCopyModal(productId, size, productName) {
+            document.getElementById('modal_product_id').value = productId;
+            document.getElementById('modal_source_size').value = size;
+            document.getElementById('modalDescription').innerText = `Copy ${productName} (${size}) to:`;
+            document.getElementById('copyModal').classList.remove('hidden');
+        }
+
+        function closeCopyModal() {
+            document.getElementById('copyModal').classList.add('hidden');
+        }
+
+        window.onload = () => setSizeFilter('');
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('copyModal');
+            if (event.target == modal) closeCopyModal();
+        }
+    </script>
 </body>
 </html>

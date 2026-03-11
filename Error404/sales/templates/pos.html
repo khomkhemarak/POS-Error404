@@ -551,12 +551,23 @@
 
             /**
             * Sends the final order data to the server API to process payment and save to database.
+            * Includes 'service_type' to trigger correct packaging (Carrier) deduction.
             */
             async function sendOrder() {
-                if (cart.length === 0) return;
+                if (cart.length === 0) {
+                    alert("Your cart is empty!");
+                    return;
+                }
                 
                 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                const total = document.getElementById('total-price').innerText.replace('$', '');
+                const totalDisplay = document.getElementById('total-price').innerText;
+                const totalNumeric = parseFloat(totalDisplay.replace('$', ''));
+
+                // Loading State (Optional UI feedback)
+                const payBtn = event.currentTarget;
+                const originalText = payBtn.innerHTML;
+                payBtn.disabled = true;
+                payBtn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i>Processing...';
 
                 try {
                     const response = await fetch('/api/process-payment/', {
@@ -567,29 +578,33 @@
                         },
                         body: JSON.stringify({
                             items: cart,
-                            total: parseFloat(total),
-                            customer_id: selectedCustomerId
+                            total: totalNumeric,
+                            customer_id: selectedCustomerId,
+                            // This matches the variable used in selectService()
+                            service_type: currentService 
                         })
                     });
 
                     const result = await response.json();
                     
                     if (result.status === 'success') {
-                        alert(`Order #${result.order_id} Success!`);
+                        // Success Feedback
+                        alert(`Order #${result.order_id} Success!\nPackaging and Ingredients have been updated.`);
                         clearCart();
                         removeCustomer();
                     } else {
-                        alert("Server Error: " + result.message); 
+                        alert("Transaction Failed: " + result.message); 
                     }
                 } catch (error) {
                     console.error("Fetch Error:", error);
-                    alert("Check your internet or server terminal.");
+                    alert("Connection Error: Please check if the local server is running.");
+                } finally {
+                    // Reset Button State
+                    payBtn.disabled = false;
+                    payBtn.innerHTML = originalText;
                 }
             }
-            
-            /**
-            * Increments or decrements the quantity in the customization modal.
-            */
+
             function changeQty(amt) {
                 const qtyInput = document.getElementById('modal-qty');
                 let newQty = parseInt(qtyInput.value) + amt;
@@ -649,7 +664,8 @@
             * Secondary service type handler used to toggle between Dine-in and Takeout themes.
             */
             function setServiceType(type) {
-                selectedService = type;
+                // FIX: Update the global variable so the backend receives 'Takeout'
+                currentService = type; 
                 
                 const dineBtn = document.getElementById('btn-dine-in');
                 const takeBtn = document.getElementById('btn-takeout');
@@ -658,11 +674,11 @@
                     dineBtn.className = "service-option flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-orange-500 bg-orange-500/10 text-orange-500 transition-all";
                     takeBtn.className = "service-option flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-slate-800 bg-slate-950 text-slate-500 transition-all";
                 } else {
+                    // Highlighting for Takeout
                     takeBtn.className = "service-option flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-500/10 text-emerald-500 transition-all";
                     dineBtn.className = "service-option flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-slate-800 bg-slate-950 text-slate-500 transition-all";
                 }
             }
-
             /**
             * Completely empties the cart and refreshes the display.
             */

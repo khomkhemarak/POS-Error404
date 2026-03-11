@@ -74,6 +74,12 @@
             <button onclick="openPackagingModal('CARRIER')" class="flex items-center gap-2 whitespace-nowrap bg-slate-900 border border-slate-800 px-5 py-3 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:border-orange-500/50 hover:text-orange-500 transition shadow-lg group">
                 <i class="bi bi-bag-check-fill text-slate-600 group-hover:text-orange-500"></i> + Carriers
             </button>
+            <button onclick="openPackagingModal('HOT_LID')" class="flex items-center gap-2 whitespace-nowrap bg-slate-900 border border-slate-800 px-5 py-3 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:border-orange-500/50 hover:text-orange-500 transition shadow-lg group">
+                <i class="bi bi-bag-check-fill text-slate-600 group-hover:text-orange-500"></i> + Hot Lid
+            </button>
+            <button onclick="openPackagingModal('COLD_LID')" class="flex items-center gap-2 whitespace-nowrap bg-slate-900 border border-slate-800 px-5 py-3 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:border-orange-500/50 hover:text-orange-500 transition shadow-lg group">
+                <i class="bi bi-bag-check-fill text-slate-600 group-hover:text-orange-500"></i> + Cold Lid
+            </button>
         </div>
 
         <div class="flex items-center gap-6 mb-8 border-b border-slate-800/50 pb-4">
@@ -102,6 +108,7 @@
                             <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 w-1/4">Ingredient/Packaging Name</th>
                             <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Stock Level</th>
                             <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Current Qty</th>
+                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Price/Unit</th>
                             <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Status</th>
                             <th class="p-5 pr-16 font-black text-[10px] uppercase tracking-widest text-slate-500 text-right">Actions</th>
                         </tr>
@@ -121,11 +128,8 @@
                             
                             <td class="p-5 min-w-[150px]">
                                 <div class="flex flex-col gap-2">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-[11px] font-black {% if ing.is_low_stock %}text-red-400{% else %}text-orange-400{% endif %}">
-                                            {{ ing.stock_percent|floatformat:0 }}%
-                                        </span>
-                                        <span class="text-[8px] text-slate-600 font-bold uppercase tracking-widest">Capacity</span>
+                                    <div class="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                                        <span class="{% if ing.is_low_stock %}text-red-400{% else %}text-orange-400{% endif %}">{{ ing.stock_percent|floatformat:0 }}%</span>
                                     </div>
                                     <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800 shadow-inner">
                                         <div class="h-full transition-all duration-500 {% if ing.is_low_stock %}bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]{% else %}bg-orange-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]{% endif %}" 
@@ -140,16 +144,19 @@
                                     {% if ing.packaging_type != 'NONE' %}pcs{% else %}{{ ing.unit }}{% endif %}
                                 </span>
                             </td>
+
+                            <td class="p-5 text-center">
+                                <div class="flex flex-col">
+                                    <span class="text-emerald-400 font-mono font-bold">${{ ing.last_purchase_price|floatformat:2 }}</span>
+                                    <span class="text-[8px] text-slate-500 uppercase font-black tracking-tighter">Per Box/Item</span>
+                                </div>
+                            </td>
                             
                             <td class="p-5 text-center">
                                 {% if ing.is_low_stock %}
-                                    <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse">
-                                        LOW STOCK
-                                    </span>
+                                    <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse">LOW STOCK</span>
                                 {% else %}
-                                    <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                        HEALTHY
-                                    </span>
+                                    <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">HEALTHY</span>
                                 {% endif %}
                             </td>
 
@@ -160,12 +167,9 @@
                                             class="bg-orange-500 hover:bg-orange-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-black transition shadow-lg shadow-orange-900/20 uppercase tracking-wider">
                                         Update
                                     </button>
-
-                                    <button type="button" 
-                                            onclick="openDeleteModal('{{ ing.id }}', '{{ ing.name }}')"
-                                            class="p-2 text-slate-500 hover:text-red-400 transition border border-transparent hover:border-red-500/30 hover:bg-red-500/10 rounded-xl">
+                                    <button type="button" onclick="openDeleteModal('{{ ing.id }}', '{{ ing.name }}')" class="p-2 text-slate-500 hover:text-red-400 transition border border-transparent hover:border-red-500/30 hover:bg-red-500/10 rounded-xl">
                                         <i class="bi bi-trash3-fill"></i>
-                                    </button>                                
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -307,6 +311,8 @@
                         <option value="HOT_STRAW">Hot Straw</option>
                         <option value="COLD_STRAW">Cold/Frappe Straw</option>
                         <option value="CARRIER">Plastic Carrier</option>
+                        <option value="HOT_LID">Hot Lid</option>
+                        <option value="COLD_LID">Cold Lid</option>
                     </select>
                 </div>
                 
@@ -541,11 +547,13 @@
             
             let itemName = "";
             switch(type) {
-                case 'HOT_CUP': itemName = "Hot Paper Cup"; break;
-                case 'COLD_CUP': itemName = "Cold Plastic Cup"; break;
-                case 'HOT_STRAW': itemName = "Hot Drink Stirrer"; break;
-                case 'COLD_STRAW': itemName = "Frappe Straw"; break;
+                case 'HOT_CUP': itemName = "Paper Cup"; break;
+                case 'COLD_CUP': itemName = "Plastic Cup"; break;
+                case 'HOT_STRAW': itemName = "Hot Drink"; break;
+                case 'COLD_STRAW': itemName = "Cold Straw"; break;
                 case 'CARRIER': itemName = "Cup Carrier"; break;
+                case 'HOT_LID': itemName = "Hot Lid"; break;
+                case 'COLD_LID': itemName = "Cold Lid"; break;
                 default:
                     itemName = type.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ');
             }

@@ -249,7 +249,7 @@ def check_stock(request, product_id):
     recipes = Recipe.objects.filter(product=product)
     
     for recipe in recipes:
-        if recipe.ingredient.stock_quantity < recipe.amount_needed:
+        if recipe.ingredient.stock_quantity < recipe.recipe.quantity:
             return JsonResponse({
                 'available': False, 
                 'message': f"Not enough {recipe.ingredient.name}!"
@@ -300,36 +300,65 @@ def deduct_stock(pkg_type, quantity):
 ####### Recipe Builder #######
 #############################
 
-
 def recipe_builder(request):
-    products = Product.objects.all()
-    ingredients = Ingredient.objects.all()
-    recipes = Recipe.objects.all().order_by('product__name', 'size')
-
+    products = Product.objects.all().order_by('name')
+    ingredients = Ingredient.objects.all().order_by('name')
+    
     if request.method == "POST":
+        # --- 1. HANDLE CLONE/COPY LOGIC ---
+        copy_from_product_id = request.POST.get('copy_from_product_id')
+        copy_from_size = request.POST.get('copy_from_size')
+        target_size = request.POST.get('target_size')
+
+        if copy_from_product_id and copy_from_size and target_size:
+            source_recipes = Recipe.objects.filter(product_id=copy_from_product_id, size=copy_from_size)
+            if source_recipes.exists():
+                for item in source_recipes:
+                    Recipe.objects.update_or_create(
+                        product=item.product,
+                        ingredient=item.ingredient,
+                        size=target_size,
+                        defaults={'quantity': Decimal(amount)}
+                    )
+                messages.success(request, f"Successfully cloned {copy_from_size} recipe to {target_size}!")
+            else:
+                messages.error(request, "No source recipe found to copy.")
+            return redirect('recipe_builder')
+
+        # --- 2. HANDLE DELETE LOGIC ---
+        delete_id = request.POST.get('delete_recipe_id')
+        if delete_id:
+            get_object_or_404(Recipe, id=delete_id).delete()
+            messages.info(request, "Ingredient removed from recipe.")
+            return redirect('recipe_builder')
+
+        # --- 3. HANDLE CREATE/UPDATE LOGIC ---
         product_id = request.POST.get('product')
         ingredient_id = request.POST.get('ingredient')
-        size = request.POST.get('size')  # Capture size from the form
+        size = request.POST.get('size') 
         amount = request.POST.get('amount')
 
-        # Ensure all required fields are present to avoid errors
         if product_id and ingredient_id and amount:
-            product = get_object_or_404(Product, id=product_id)
-            ingredient = get_object_or_404(Ingredient, id=ingredient_id)
-
-            # Create or update the recipe for that specific size
-            # Fix: Populate both amount_needed and quantity to satisfy model constraints
-            Recipe.objects.update_or_create(
-                product=product,
-                ingredient=ingredient,
-                size=size,
-                defaults={
-                    'amount_needed': Decimal(amount),
-                    'quantity': float(amount)  # Added to resolve NOT NULL constraint failed error
-                }
-            )
-            messages.success(request, f"Recipe for {product.name} ({size}) updated successfully!")
+            try:
+                product = get_object_or_404(Product, id=product_id)
+                ingredient = get_object_or_404(Ingredient, id=ingredient_id)
+                Recipe.objects.update_or_create(
+                    product=product,
+                    ingredient=ingredient,
+                    size=size,
+                    defaults={'quantity': Decimal(amount)}
+                )
+                messages.success(request, f"Updated {ingredient.name} for {product.name} ({size})")
+            except Exception as e:
+                messages.error(request, f"Error: {str(e)}")
             return redirect('recipe_builder')
+
+    # --- 4. PREPARE DATA FOR DISPLAY (GET Request) ---
+    recipes = Recipe.objects.select_related('product', 'ingredient').all().order_by('product__name', 'size')
+    
+    # Calculate costs only when we are actually going to render the page
+    for r in recipes:
+        r.line_cost = (r.ingredient.unit_cost or Decimal('0.00')) * r.quantity
 
     return render(request, 'recipe_builder.html', {
         'products': products,
@@ -399,10 +428,13 @@ def process_payment(request):
         cart_items = data.get('items', [])
         total_price = data.get('total')
         customer_id = data.get('customer_id') 
+        # Crucial: This reads 'Takeout' or 'Dine-in' sent from pos.html
+        service_type = data.get('service_type', 'Dine-in')
 
         with transaction.atomic():
             new_order = Order.objects.create(total_amount=total_price, is_completed=True)
 
+            # 1. LOYALTY POINTS LOGIC
             if customer_id:
                 try:
                     customer = Customer.objects.select_for_update().get(id=customer_id)
@@ -414,11 +446,14 @@ def process_payment(request):
                 except (Customer.DoesNotExist, ValueError):
                     pass 
 
+            # 2. PROCESS EACH ITEM IN CART
             for item in cart_items:
                 product = Product.objects.get(id=item.get('id'))
-                target_size = item.get('size', 'Medium')
+                target_size = item.get('size', 'Medium') 
+                drink_type = item.get('type', 'Hot')     
                 qty = int(item.get('qty', 1))
                 
+                # --- A. DEDUCT BEVERAGE INGREDIENTS (Coffee, Milk, etc.) ---
                 recipe_items = Recipe.objects.filter(product=product, size=target_size)
                 if not recipe_items.exists() and target_size != 'Medium':
                     recipe_items = Recipe.objects.filter(product=product, size='Medium')
@@ -432,24 +467,64 @@ def process_payment(request):
 
                     for recipe in recipe_items:
                         ingredient = Ingredient.objects.select_for_update().get(id=recipe.ingredient.id)
+                        usage = Decimal(str(recipe.quantity)) * qty
                         
-                        usage = Decimal(str(recipe.amount_needed)) * qty
                         if "sugar" in ingredient.name.lower() or "syrup" in ingredient.name.lower():
                             usage = usage * multiplier
                             
-                        # Update raw stock (Decimal - Decimal)
                         ingredient.stock_quantity = max(Decimal('0.00'), ingredient.stock_quantity - usage)
-                        
-                        # LOGIC: Decrease item count if stock falls below the threshold
-                        # Example: 2999.00 // 1500.00 = 1 (drops from 2 to 1)
                         if ingredient.initial_stock_per_item > 0:
-                            ingredient.items_count = int(ingredient.stock_quantity // ingredient.initial_stock_per_item)                        
+                            ingredient.items_count = int(ingredient.stock_quantity // ingredient.initial_stock_per_item)
                         ingredient.save()
 
+                # --- B. SMART PACKAGING DEDUCTION ---
+                # Step 1: Map temperature to packaging categories
+                if drink_type == 'Hot':
+                    cup_cat, lid_cat, straw_cat = 'HOT_CUP', 'HOT_LID', 'HOT_STRAW'
+                else:
+                    cup_cat, lid_cat, straw_cat = 'COLD_CUP', 'COLD_LID', 'COLD_STRAW'
+
+                # Step 2: Helper function for smart deduction
+                def deduct_packaging(pkg_type, size_filter=None):
+                    query = Ingredient.objects.filter(packaging_type=pkg_type)
+                    
+                    # Only apply size filter for Cups. Lids and Straws are Universal.
+                    if size_filter and pkg_type in ['HOT_CUP', 'COLD_CUP']:
+                        query = query.filter(name__icontains=size_filter)
+                    
+                    target_ing = query.first()
+                    if target_ing:
+                        target_ing = Ingredient.objects.select_for_update().get(id=target_ing.id)
+                        target_ing.stock_quantity = max(Decimal('0.00'), target_ing.stock_quantity - qty)
+                        if target_ing.initial_stock_per_item > 0:
+                            target_ing.items_count = int(target_ing.stock_quantity // target_ing.initial_stock_per_item)
+                        target_ing.save()
+
+                # Step 3: Run Deductions
+                deduct_packaging(cup_cat, target_size) # Cup matches size (Small/Medium/Large)
+                deduct_packaging(lid_cat)              # Lid is Universal
+                deduct_packaging(straw_cat)            # Straw is Universal
+
+                # --- 4. DEDUCT CARRIER (Only if Takeout is selected) ---
+                if service_type == 'Takeout':
+                    # This looks for the ingredient you labeled as 'CARRIER' in Django Admin
+                    carrier = Ingredient.objects.filter(packaging_type='CARRIER').first()
+                    if carrier:
+                        carrier = Ingredient.objects.select_for_update().get(id=carrier.id)
+                        # Deduct 1 carrier per drink (qty)
+                        carrier.stock_quantity = max(Decimal('0.00'), carrier.stock_quantity - qty)
+                        
+                        # Update the box/bag count
+                        if carrier.initial_stock_per_item > 0:
+                            carrier.items_count = int(carrier.stock_quantity // carrier.initial_stock_per_item)
+                        
+                        carrier.save()
+
+                # 5. RECORD ORDER ITEM
                 OrderItem.objects.create(
                     order=new_order, product=product, quantity=qty,
                     size=target_size, sugar=item.get('sugar', '100%'),
-                    drink_type=item.get('type', 'Hot') 
+                    drink_type=drink_type 
                 )
 
         return JsonResponse({'status': 'success', 'order_id': new_order.id})
@@ -462,7 +537,7 @@ def process_order_stock(order_item):
     recipe_ingredients = Recipe.objects.filter(product=order_item.product)
 
     for item in recipe_ingredients:
-        reduction_amount = item.amount * order_item.qty
+        reduction_amount = item.quantity * order_item.qty
         
         # Check if the ingredient is a sugar/sweetener type
         if "sugar" in item.ingredient.name.lower() or "syrup" in item.ingredient.name.lower():
