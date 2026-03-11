@@ -165,12 +165,13 @@ class Ingredient(models.Model):
     
     @property
     def stock_percent(self):
-        """Calculates percentage based on total capacity (items * weight per item)"""
-        # Using Decimal for precise calculation
-        total_capacity = self.initial_stock_per_item * self.items_count
-
-        if total_capacity <= 0:
-            total_capacity = self.max_stock
+        """
+        Calculates percentage based on max_stock. 
+        This prevents the 'low percent' bug when you have high lifetime items_count.
+        """
+        # If max_stock is set (e.g. 500 cups), use that as 100%
+        # Otherwise, fall back to your current items_count logic
+        total_capacity = self.max_stock if self.max_stock > 0 else (self.initial_stock_per_item * self.items_count)
 
         if total_capacity > 0:
             percentage = (self.stock_quantity / total_capacity) * 100
@@ -183,13 +184,21 @@ class Ingredient(models.Model):
         return self.stock_percent < 20
     
     def add_new_stock(self, new_items_count, price_paid):
+        """
+        Updates stock quantity and cost.
+        Note: We keep items_count for history, but stock_percent now uses max_stock.
+        """
         added_quantity = new_items_count * self.initial_stock_per_item
+        
+        # 1. Update quantities
         self.items_count += new_items_count
         self.stock_quantity += added_quantity
         self.last_purchase_price = price_paid
         
+        # 2. Update Unit Cost (Price paid divided by number of units added)
         if added_quantity > 0:
             self.unit_cost = price_paid / added_quantity
+            
         self.save()
 
     @property

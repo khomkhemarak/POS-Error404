@@ -83,13 +83,13 @@
         </div>
 
         <div class="flex items-center gap-6 mb-8 border-b border-slate-800/50 pb-4">
-            <button onclick="filterInventory('all')" id="filter-all" class="text-sm font-black uppercase tracking-widest text-orange-500 border-b-2 border-orange-500 pb-4 -mb-4.5 transition-all">
+            <button type="button" onclick="filterInventory('all')" id="filter-all" class="text-sm font-black uppercase tracking-widest transition-all">
                 All Items
             </button>
-            <button onclick="filterInventory('ingredients')" id="filter-ingredients" class="text-sm font-black uppercase tracking-widest text-slate-500 hover:text-slate-300 pb-4 -mb-4.5 transition-all">
+            <button type="button" onclick="filterInventory('ingredients')" id="filter-ingredients" class="text-sm font-black uppercase tracking-widest text-slate-500 hover:text-slate-300 pb-4 -mb-4.5 transition-all">
                 Ingredients
             </button>
-            <button onclick="filterInventory('packaging')" id="filter-packaging" class="text-sm font-black uppercase tracking-widest text-slate-500 hover:text-slate-300 pb-4 -mb-4.5 transition-all">
+            <button type="button" onclick="filterInventory('packaging')" id="filter-packaging" class="text-sm font-black uppercase tracking-widest text-slate-500 hover:text-slate-300 pb-4 -mb-4.5 transition-all">
                 Packaging & Supplies
             </button>
         </div>
@@ -439,24 +439,29 @@
         function filterInventory(filter) {
             currentFilter = filter;
             
+            // SAVE the filter to browser memory
+            localStorage.setItem('activeInventoryFilter', filter);
+            
             const searchTerm = document.getElementById('inventorySearch').value.toLowerCase();
             const rows = document.querySelectorAll('.inventory-row');
             const noResults = document.getElementById('no-results');
+            
             const tabs = {
                 all: document.getElementById('filter-all'),
                 ingredients: document.getElementById('filter-ingredients'),
                 packaging: document.getElementById('filter-packaging')
             };
 
-            // Update Tab UI Colors
+            // Update Tab UI Colors (Remove active styles from all, add to chosen)
             Object.values(tabs).forEach(tab => {
                 if (tab) {
-                    tab.classList.remove('text-orange-500', 'border-orange-500');
+                    tab.classList.remove('text-orange-500', 'border-b-2', 'border-orange-500', 'pb-4', '-mb-4.5');
                     tab.classList.add('text-slate-500');
                 }
             });
+
             if (tabs[filter]) {
-                tabs[filter].classList.add('text-orange-500', 'border-orange-500');
+                tabs[filter].classList.add('text-orange-500', 'border-b-2', 'border-orange-500', 'pb-4', '-mb-4.5');
                 tabs[filter].classList.remove('text-slate-500');
             }
 
@@ -480,7 +485,6 @@
                 }
             });
 
-            // Toggle "No Results" Placeholder
             if (visibleCount === 0) {
                 noResults.classList.remove('hidden');
             } else {
@@ -488,7 +492,17 @@
             }
         }
 
-        // 3. MODAL MANAGEMENT
+        // 3. ON PAGE LOAD: Restore the last used filter
+        window.onload = function() {
+            const savedFilter = localStorage.getItem('activeInventoryFilter');
+            if (savedFilter) {
+                filterInventory(savedFilter);
+            } else {
+                filterInventory('all'); // Default
+            }
+        };
+
+        // 4. MODAL MANAGEMENT (Keep your existing functions below)
         function toggleModal() {
             const modal = document.getElementById('ingredient-modal');
             modal.classList.toggle('hidden');
@@ -502,7 +516,6 @@
         function togglePackagingModal() {
             const modal = document.getElementById('packaging-modal');
             modal.classList.toggle('hidden');
-            // Reset flex display if using Tailwind flex for centering
             if(!modal.classList.contains('hidden')) {
                 modal.classList.add('flex');
             } else {
@@ -535,7 +548,6 @@
             document.getElementById('deleteModal').classList.add('hidden');
         }
 
-        // 4. PACKAGING SPECIFIC LOGIC
         function openPackagingModal(type) {
             const modal = document.getElementById('packaging-modal');
             const typeSelect = document.getElementById('pkg-type-select');
@@ -566,7 +578,6 @@
             modal.classList.add('flex');
         }
 
-        // 5. CALCULATOR LOGIC
         function calculateTotal() {
             const qty = parseFloat(document.getElementById('calc-qty').value) || 0;
             const stockPerItem = parseFloat(document.getElementById('calc-stock').value) || 0;
@@ -575,7 +586,6 @@
             document.getElementById('total-display').innerText = `${total}${unit} (${qty})`;
         }
 
-        // 6. SINGLE CLICK LISTENER
         window.onclick = function(event) {
             const modals = {
                 'ingredient-modal': toggleModal,
@@ -583,7 +593,6 @@
                 'updateStockModal': closeModal,
                 'deleteModal': closeDeleteModal
             };
-            
             if (modals[event.target.id]) {
                 modals[event.target.id]();
             }

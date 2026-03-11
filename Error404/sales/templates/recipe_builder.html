@@ -67,11 +67,11 @@
                     <h3 class="text-xl font-black text-white">Link Ingredient</h3>
                 </div>
 
-                <form method="POST" class="space-y-6">
+                <form id="recipeForm" method="POST" class="space-y-6">
                     {% csrf_token %}
                     <div>
                         <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Target Product</label>
-                        <select name="product" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
+                        <select name="product" required class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
                             <option value="" disabled selected>Select a Product</option>
                             {% for p in products %}
                                 <option value="{{ p.id }}">{{ p.name }}</option>
@@ -82,7 +82,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Ingredient</label>
-                            <select name="ingredient" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold text-sm">
+                            <select name="ingredient" required class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold text-sm">
                                 <option value="" disabled selected>Select Ingredient</option>
                                 {% for i in ingredients %}
                                     <option value="{{ i.id }}">{{ i.name }} ({{ i.unit }})</option>
@@ -91,7 +91,8 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Cup Size</label>
-                            <select name="size" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
+                            <select name="size" required class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
+                                <option value="" disabled selected>Select Size</option>
                                 <option value="Small">Small</option>
                                 <option value="Medium">Medium</option>
                                 <option value="Large">Large</option>
@@ -125,7 +126,7 @@
                     </div>
                     
                     <div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
-                        <button onclick="setSizeFilter('')" class="size-chip active px-4 py-2 rounded-xl border border-slate-800 text-xs font-black uppercase tracking-widest transition whitespace-nowrap">All Sizes</button>
+                        <button type="button" id="all-sizes-btn" onclick="setSizeFilter('')" class="size-chip active px-4 py-2 rounded-xl border border-slate-800 text-xs font-black uppercase tracking-widest transition-all duration-200 whitespace-nowrap">All Sizes</button>
                         <button onclick="setSizeFilter('Small')" class="size-chip px-4 py-2 rounded-xl border border-slate-800 text-slate-500 text-xs font-black uppercase tracking-widest transition whitespace-nowrap">Small</button>
                         <button onclick="setSizeFilter('Medium')" class="size-chip px-4 py-2 rounded-xl border border-slate-800 text-slate-500 text-xs font-black uppercase tracking-widest transition whitespace-nowrap">Medium</button>
                         <button onclick="setSizeFilter('Large')" class="size-chip px-4 py-2 rounded-xl border border-slate-800 text-slate-500 text-xs font-black uppercase tracking-widest transition whitespace-nowrap">Large</button>
@@ -233,42 +234,69 @@
     </div>
 
     <script>
-        // Add this to the function that handles your "Save Recipe Rule" button
-        function handleSaveSuccess() {
-            // Assuming your form has id="recipeForm"
-            document.getElementById('recipeForm').reset();
-            
-            // If you are using a custom dropdown UI, you might need to manually set the value
-            document.querySelector('select[name="product"]').value = "";
-            document.querySelector('select[name="size"]').value = "";
+        // --- FORM RESET LOGIC ---
+        const recipeForm = document.getElementById('recipeForm');
+        
+        if (recipeForm) {
+            recipeForm.addEventListener('submit', function(e) {
+                // Delay reset so data sends, but the filter will be remembered by localStorage
+                setTimeout(() => {
+                    this.reset();
+                    this.querySelectorAll('select').forEach(select => {
+                        select.selectedIndex = 0;
+                    });
+                }, 50);
+            });
         }
 
+        // --- PERSISTENT FILTER LOGIC ---
         let currentSizeFilter = '';
 
+        /**
+        * Sets the filter and SAVES it to localStorage
+        */
         function setSizeFilter(size) {
             currentSizeFilter = size.toLowerCase();
-            document.querySelectorAll('.size-chip').forEach(chip => {
-                const isAll = size === '' && chip.innerText.includes('All');
-                const isMatch = chip.innerText.toLowerCase().includes(size.toLowerCase()) && size !== '';
+            
+            // Save selection to browser memory so it stays after refresh
+            localStorage.setItem('activeRecipeFilter', size);
+
+            // Get all buttons
+            const allChips = document.querySelectorAll('.size-chip');
+            const allSizesBtn = document.getElementById('all-sizes-btn');
+
+            allChips.forEach(chip => {
+                // Reset everyone to "inactive" state first
+                chip.classList.remove('active');
+                chip.classList.add('text-slate-500', 'border-slate-800');
                 
-                if (isAll || isMatch) {
+                // 1. If we clicked "All Sizes" (size is empty '')
+                if (size === '' && chip === allSizesBtn) {
                     chip.classList.add('active');
-                } else {
-                    chip.classList.remove('active');
+                    chip.classList.remove('text-slate-500');
+                } 
+                // 2. If we clicked a specific size (Small, Medium, Large)
+                else if (size !== '' && chip.innerText.toLowerCase().trim() === size.toLowerCase()) {
+                    chip.classList.add('active');
+                    chip.classList.remove('text-slate-500');
                 }
             });
+
             runFilters();
         }
 
+        /**
+        * Applies the search and size filters to the table rows
+        */
         function runFilters() {
             const searchTerm = document.getElementById('recipeSearch').value.toLowerCase();
             const rows = document.querySelectorAll('.recipe-row');
             let visibleCount = 0;
 
             rows.forEach(row => {
-                const product = row.getAttribute('data-product');
-                const ingredient = row.getAttribute('data-ingredient');
-                const size = row.getAttribute('data-size');
+                const product = row.getAttribute('data-product') || "";
+                const ingredient = row.getAttribute('data-ingredient') || "";
+                const size = row.getAttribute('data-size') || "";
 
                 const matchesSearch = product.includes(searchTerm) || ingredient.includes(searchTerm);
                 const matchesSize = currentSizeFilter === '' || size === currentSizeFilter;
@@ -283,6 +311,19 @@
             document.getElementById('activeRulesCount').innerText = visibleCount;
         }
 
+        /**
+        * ON PAGE LOAD: Check if there is a saved filter in localStorage
+        */
+        window.onload = () => {
+            const savedFilter = localStorage.getItem('activeRecipeFilter');
+            if (savedFilter !== null) {
+                setSizeFilter(savedFilter);
+            } else {
+                setSizeFilter(''); // Default to All
+            }
+        };
+
+        // --- MODAL LOGIC ---
         function openCopyModal(productId, size, productName) {
             document.getElementById('modal_product_id').value = productId;
             document.getElementById('modal_source_size').value = size;
@@ -293,8 +334,6 @@
         function closeCopyModal() {
             document.getElementById('copyModal').classList.add('hidden');
         }
-
-        window.onload = () => setSizeFilter('');
 
         window.onclick = function(event) {
             let modal = document.getElementById('copyModal');
