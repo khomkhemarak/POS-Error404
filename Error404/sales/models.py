@@ -17,89 +17,94 @@ class Product(models.Model):
 
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=20, choices=CATEGORIES, default='Coffee')
-    base_price = models.DecimalField(max_digits=10, decimal_places=2)
+    base_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Base Price for SMALL HOT (Tax Inclusive)")
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     
-    # Upcharges for specific preparations
-    ice_upcharge = models.DecimalField(max_digits=6, decimal_places=2, default=0.50)
-    frappe_upcharge = models.DecimalField(max_digits=6, decimal_places=2, default=1.00)
+    # Pricing increments
+    ice_upcharge = models.DecimalField(max_digits=6, decimal_places=2, default=0.25)
+    frappe_upcharge = models.DecimalField(max_digits=6, decimal_places=2, default=0.50)
 
     # Availability toggles
     can_be_hot = models.BooleanField(default=True)
     can_be_iced = models.BooleanField(default=False)
     can_be_frappe = models.BooleanField(default=False)
 
-    # Note: Stock here usually refers to pre-made items. 
-    # For made-to-order drinks, we deduct from Ingredient stock instead.
     stock = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
     
-    # --- CALCULATION METHODS ---
+    # --- DASHBOARD HELPER PROPERTIES (Default to Small/Hot) ---
 
-    def get_production_cost(self, size='Medium'):
-        """
-        Calculates total cost for a specific size based on Recipe 
-        (Ingredients + Packaging linked in the Recipe table).
-        """
-        total_cost = Decimal('0.00')
-        
-        # Pulls all recipe entries for this product and size
-        rules = self.recipes.filter(size=size) 
-        
-        for rule in rules:
-            # Matches your Recipe model field 'quantity' and Ingredient 'unit_cost'
-            cost_contribution = rule.quantity * rule.ingredient.unit_cost
-            total_cost += cost_contribution
-            
-        return total_cost
+    @property
+    def price(self):
+        """Returns baseline price for dashboard display"""
+        return self.base_price
 
-    def get_final_price(self, drink_type='Hot'):
-        """Calculates selling price including upcharges"""
-        price = self.base_price
+    @property
+    def total_cost(self):
+        """Returns baseline production cost for dashboard display"""
+        return self.get_production_cost(size='Small')
+
+    @property
+    def net_revenue(self):
+        """Returns baseline revenue after 10% tax for dashboard display"""
+        return round(self.base_price / Decimal('1.10'), 2)
+
+    @property
+    def margin_percentage(self):
+        """Calculates profit margin % for dashboard bars"""
+        net = self.net_revenue
+        if net <= 0: return 0
+        profit = net - self.total_cost
+        return round((profit / net) * 100, 1)
+
+    # --- PRICING & TAX LOGIC ---
+
+    def get_final_price(self, size='Small', drink_type='Hot'):
+        """The total price the customer pays (Tax Inclusive)"""
+        # Look for size variants (assuming a related name 'variants' on a ProductVariant model)
+        variant = getattr(self, 'variants', None)
+        if variant:
+            v_obj = variant.filter(attribute_value=size).first()
+            price = self.base_price + (v_obj.price_modifier if v_obj else 0)
+        else:
+            price = self.base_price
+
         if drink_type == 'Iced':
             price += self.ice_upcharge
         elif drink_type == 'Frappe':
             price += self.frappe_upcharge
+            
         return price
 
-    def get_profit_margin(self, size='Medium', drink_type='Hot'):
-        """Profit = Adjusted Price - Production Cost"""
-        return self.get_final_price(drink_type) - self.get_production_cost(size)
+    # --- PROFIT CALCULATION METHODS ---
 
-    def get_profit_percentage(self, size='Medium', drink_type='Hot'):
-        """Returns profit % relative to the final selling price"""
-        price = self.get_final_price(drink_type)
-        if price > 0:
-            margin = self.get_profit_margin(size, drink_type)
-            return round((margin / price) * 100, 1)
-        return 0
+    def get_net_revenue(self, size='Small', drink_type='Hot'):
+        """Extracts revenue AFTER 10% tax"""
+        total_price = self.get_final_price(size, drink_type)
+        return total_price / Decimal('1.10')
 
-    # --- PACKAGING & LOGIC HELPERS ---
-    
-    def get_total_production_cost(self, size='Medium', drink_type='Hot', is_takeout=False):
-        """
-        Calculates cost including dynamic recipe ingredients and 
-        on-the-fly packaging (like plastic carriers).
-        """
-        # 1. Start with the recipe-linked cost (beans, milk, cups, straws)
-        cost = self.get_production_cost(size) 
-        
-        # 2. Add Plastic Carrier if it's Takeout (not usually in standard recipes)
-        if is_takeout:
-            # We reference your Ingredient PACKAGING_CHOICES
-            from .models import Ingredient # Local import to avoid circularity
-            carrier = Ingredient.objects.filter(packaging_type='CARRIER').first()
-            if carrier:
-                cost += carrier.unit_cost
-                
-        return cost
+    def get_profit_margin(self, size='Small', drink_type='Hot'):
+        """Profit = (Price / 1.10) - Production Cost"""
+        net_revenue = self.get_net_revenue(size, drink_type)
+        production_cost = self.get_production_cost(size)
+        return net_revenue - production_cost
 
-    # --- STOCK LOGIC ---
-    
+    # --- PRODUCTION COST & STOCK LOGIC ---
+
+    def get_production_cost(self, size='Small'):
+        """Calculates cost of ingredients and packaging for a specific size"""
+        total_cost = Decimal('0.00')
+        # Assuming related name 'recipes' on a Recipe model
+        rules = self.recipes.filter(size=size) 
+        for rule in rules:
+            # Multiplies recipe quantity by the unit_cost we built in the Ingredient model
+            total_cost += rule.quantity * rule.ingredient.unit_cost
+        return total_cost
+
     def reduce_stock(self, quantity):
-        """Used for pre-packaged retail items (e.g., bottled water)"""
+        """Manual reduction for pre-packaged goods"""
         if self.stock >= quantity:
             self.stock -= quantity
             self.save()
@@ -121,6 +126,19 @@ class Order(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_completed = models.BooleanField(default=False)
     customer = models.ForeignKey('Customer', on_delete=models.SET_NULL, null=True, blank=True)
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=10.0) # 10%
+
+    @property
+    def tax_amount(self):
+        """Calculates tax hidden inside the total price"""
+        tax_divisor = 1 + (self.tax_rate / 100)
+        subtotal = self.total_amount / tax_divisor
+        return self.total_amount - subtotal
+
+    @property
+    def subtotal(self):
+        """Total minus the tax"""
+        return self.total_amount - self.tax_amount
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
@@ -132,7 +150,6 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name} ({self.drink_type})"
-
 
 
 class Ingredient(models.Model):
@@ -154,6 +171,7 @@ class Ingredient(models.Model):
     max_stock = models.DecimalField(max_digits=10, decimal_places=2, default=1000.00)
     unit = models.CharField(max_length=10) 
 
+    # unit_cost is the "Heart" of your profit summary
     unit_cost = models.DecimalField(max_digits=10, decimal_places=5, default=0.00)
     last_purchase_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
@@ -165,13 +183,8 @@ class Ingredient(models.Model):
     
     @property
     def stock_percent(self):
-        """
-        Calculates percentage based on max_stock. 
-        This prevents the 'low percent' bug when you have high lifetime items_count.
-        """
-        # If max_stock is set (e.g. 500 cups), use that as 100%
-        # Otherwise, fall back to your current items_count logic
-        total_capacity = self.max_stock if self.max_stock > 0 else (self.initial_stock_per_item * self.items_count)
+        capacity_from_boxes = self.initial_stock_per_item * self.items_count
+        total_capacity = capacity_from_boxes if capacity_from_boxes > 0 else self.max_stock
 
         if total_capacity > 0:
             percentage = (self.stock_quantity / total_capacity) * 100
@@ -180,30 +193,26 @@ class Ingredient(models.Model):
 
     @property
     def is_low_stock(self):
-        """Alert if stock is below 20% of capacity"""
         return self.stock_percent < 20
     
     def add_new_stock(self, new_items_count, price_paid):
-        """
-        Updates stock quantity and cost.
-        Note: We keep items_count for history, but stock_percent now uses max_stock.
-        """
-        added_quantity = new_items_count * self.initial_stock_per_item
+        """When you buy more, this automatically lowers/raises your product margins"""
+        added_quantity = Decimal(str(new_items_count)) * self.initial_stock_per_item
         
-        # 1. Update quantities
         self.items_count += new_items_count
         self.stock_quantity += added_quantity
         self.last_purchase_price = price_paid
         
-        # 2. Update Unit Cost (Price paid divided by number of units added)
         if added_quantity > 0:
-            self.unit_cost = price_paid / added_quantity
+            # Updating the cost-per-unit ensures the Product margin is always live
+            self.unit_cost = Decimal(str(price_paid)) / added_quantity
             
         self.save()
 
     @property
     def safe_price(self):
-        return self.unit_cost or Decimal('0.00')
+        """Ensures the calculation never breaks even if cost is missing"""
+        return self.unit_cost if self.unit_cost else Decimal('0.00')
 
 class Recipe(models.Model):
     SIZE_CHOICES = [

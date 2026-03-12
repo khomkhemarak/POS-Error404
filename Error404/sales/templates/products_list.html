@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Intelligence | Error404</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .orange-glow { box-shadow: 0 0 40px rgba(245, 158, 11, 0.1); }
+        .glass-sidebar { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex min-h-screen">
+
+    <aside class="w-72 glass-sidebar border-r border-slate-800/50 hidden lg:flex flex-col sticky top-0 h-screen z-50">
+        <div class="p-8">
+            <div class="flex items-center gap-3 group">
+                <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <i class="bi bi-terminal-fill text-slate-950 text-xl"></i>
+                </div>
+                <span class="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-400">
+                    Error404
+                </span>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-4 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-2xl transition-all group">
+                <i class="bi bi-grid-1x2-fill group-hover:text-orange-500"></i>
+                <span class="font-bold text-sm uppercase tracking-widest">Dashboard</span>
+            </a>
+            <a href="{% url 'product_list' %}" class="flex items-center gap-4 px-4 py-3 bg-gradient-to-r from-orange-500/10 to-transparent border-l-4 border-orange-500 text-orange-500 rounded-r-2xl transition-all">
+                <i class="bi bi-cup-hot-fill"></i>
+                <span class="font-bold text-sm uppercase tracking-widest">Menu Items</span>
+            </a>
+        </nav>
+
+        <div class="p-4">
+            <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-3xl orange-glow">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">System Status</p>
+                <div class="flex items-center gap-2 text-emerald-400 text-xs font-bold">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    Operational
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 w-full min-h-screen relative">
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-500/5 rounded-full blur-[120px] -z-10"></div>
+        
+        <div class="space-y-8 p-4 md:p-8 lg:p-10 w-full max-w-[1600px] mx-auto">
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-400">
+                        Menu Intelligence
+                    </h1>
+                    <p class="text-slate-500 text-xs font-black uppercase tracking-[0.3em] mt-2 italic">Catalog & Profitability Analysis</p>
+                </div>
+                
+                <a href="{% url 'add_product' %}" class="flex items-center justify-center gap-3 bg-gradient-to-br from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-slate-950 font-black px-8 py-4 rounded-2xl transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] hover:shadow-[0_15px_40px_rgba(245,158,11,0.4)] transform hover:-translate-y-1">
+                    <i class="bi bi-plus-lg text-xl"></i>
+                    <span>ADD NEW DRINK</span>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-slate-900/60 border border-slate-800/50 p-8 rounded-[2.5rem] shadow-2xl backdrop-blur-md group hover:border-orange-500/30 transition-all">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="p-4 bg-orange-500/10 rounded-2xl border border-orange-500/20 text-orange-400 group-hover:bg-orange-500 group-hover:text-slate-950 transition-all">
+                            <i class="bi bi-graph-up-arrow text-2xl"></i>
+                        </div>
+                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Avg. Profit Margin</span>
+                    </div>
+                    <h3 class="text-5xl font-black text-white mb-2">{{ avg_margin|floatformat:1 }}%</h3>
+                    <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
+                        <div class="h-full bg-gradient-to-r from-orange-500 to-amber-400" style="width: {{ avg_margin }}%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/60 border border-slate-800/50 p-8 rounded-[2.5rem] shadow-2xl backdrop-blur-md group hover:border-orange-500/30 transition-all">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="p-4 bg-amber-500/10 rounded-2xl border border-amber-500/20 text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all">
+                            <i class="bi bi-box-seam text-2xl"></i>
+                        </div>
+                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Products</span>
+                    </div>
+                    <h3 class="text-5xl font-black text-white mb-2">{{ products.count }}</h3>
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-tighter">Active SKUs In Inventory</p>
+                </div>
+
+                <div class="bg-slate-900/60 border border-slate-800/50 p-6 rounded-[2.5rem] shadow-2xl backdrop-blur-md flex flex-col justify-center">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Margin History</p>
+                    <div class="h-[80px] w-full">
+                        <canvas id="miniChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/40 border border-slate-800/60 rounded-[3rem] overflow-hidden shadow-2xl backdrop-blur-xl">
+                <div class="p-8 border-b border-slate-800/50 flex flex-col md:flex-row gap-4 justify-between bg-slate-900/20">
+                    <div class="relative flex-1">
+                        <i class="bi bi-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text" placeholder="Search product name..." class="w-full bg-slate-950/50 border border-slate-800 rounded-2xl py-4 pl-14 pr-6 text-slate-200 focus:outline-none focus:border-orange-500/50 transition-all">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 border-b border-slate-800">
+                                <th class="p-8">Product Details</th>
+                                <th class="p-8 text-center">Cost</th>
+                                <th class="p-8 text-center">Price</th>
+                                <th class="p-8 text-center">Profitability</th>
+                                <th class="p-8 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/50">
+                            {% for product in products %}
+                            <tr class="hover:bg-orange-500/[0.03] transition-all group">
+                                <td class="p-8">
+                                    <div class="flex items-center gap-5">
+                                        <div class="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-orange-500 group-hover:border-orange-500/50 group-hover:orange-glow transition-all">
+                                            <i class="bi bi-cup-hot-fill text-3xl"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-black text-white text-xl tracking-tight leading-none mb-1">{{ product.name }}</p>
+                                            <p class="text-[10px] text-orange-500/80 font-black uppercase tracking-widest">{{ product.category.name|default:"MENU ITEM" }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="p-8 text-center font-mono text-slate-400">${{ product.total_cost|floatformat:2 }}</td>
+                                <td class="p-8 text-center">
+                                    <span class="text-2xl font-black text-white font-mono">${{ product.price|floatformat:2 }}</span>
+                                </td>
+                                <td class="p-8">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <div class="flex justify-between w-32 font-black text-[10px]">
+                                            <span class="text-emerald-400">+${{ product.net_revenue|floatformat:2 }}</span>
+                                            <span class="text-orange-500">{{ product.margin_percentage|floatformat:0 }}%</span>
+                                        </div>
+                                        <div class="w-32 bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800">
+                                            <div class="h-full bg-gradient-to-r from-orange-500 to-amber-500" style="width: {{ product.margin_percentage }}%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="p-8 text-right">
+                                    <div class="flex justify-end gap-3">
+                                        <a href="{% url 'edit_product' product.id %}" class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-orange-500 hover:border-orange-500/50 transition-all">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <button class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-red-500 hover:border-red-500/50 transition-all">
+                                            <i class="bi bi-trash3-fill"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Filtering Logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('productSearch');
+            const categoryFilter = document.getElementById('categoryFilter');
+            const rows = document.querySelectorAll('.product-row');
+
+            function filterTable() {
+                const query = searchInput.value.toLowerCase();
+                const category = categoryFilter.value.toLowerCase();
+
+                rows.forEach(row => {
+                    const name = row.querySelector('.productName').innerText.toLowerCase();
+                    const catText = row.querySelector('.productCategory').innerText.toLowerCase();
+                    const matchesSearch = name.includes(query);
+                    const matchesCategory = category === "" || catText.includes(category);
+                    row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+                });
+            }
+            if(searchInput) searchInput.addEventListener('input', filterTable);
+            if(categoryFilter) categoryFilter.addEventListener('change', filterTable);
+        });
+
+        // Modal Logic
+        function openDeleteModal(productId, productName) {
+            document.getElementById('deleteItemName').innerText = productName;
+            document.getElementById('deleteForm').action = `/delete-product/${productId}/`;
+            const modal = document.getElementById('deleteModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Chart.js Theme Update
+        document.addEventListener('DOMContentLoaded', function() {
+            const chartElement = document.getElementById('marginChart');
+            if (chartElement) {
+                const ctx = chartElement.getContext('2d');
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(245, 158, 11, 0.15)');
+                gradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
+
+                // Handle empty chart data gracefully
+                const chartLabels = {{ chart_labels|safe|default:"[]" }};
+                const chartData = {{ chart_data|safe|default:"[]" }};
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartLabels.length ? chartLabels : ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        datasets: [{
+                            label: 'Avg Margin %',
+                            data: chartData.length ? chartData : [45, 48, 46, 50],
+                            borderColor: '#f59e0b',
+                            borderWidth: 3,
+                            backgroundColor: gradient,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            pointHoverRadius: 6,
+                            pointHoverBackgroundColor: '#f59e0b',
+                            pointHoverBorderColor: '#0f172a',
+                            pointHoverBorderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#0f172a',
+                                titleFont: { family: 'Inter', weight: 'bold' },
+                                padding: 12,
+                                cornerRadius: 10,
+                                displayColors: false
+                            }
+                        },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                            y: { 
+                                grid: { color: 'rgba(51, 65, 85, 0.3)' }, 
+                                ticks: { color: '#64748b', callback: v => v + '%' } 
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

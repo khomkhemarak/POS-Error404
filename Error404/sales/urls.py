@@ -24,4 +24,5 @@ urlpatterns = [
     path('inventory/', views.inventory_list, name='inventory_list'),
     path('inventory/add/', views.add_ingredient, name='add_ingredient'),
     path('inventory/delete/<int:pk>/', views.delete_ingredient, name='delete_ingredient'),
+    path('products/', views.product_list_view, name='product_list'),
 ]

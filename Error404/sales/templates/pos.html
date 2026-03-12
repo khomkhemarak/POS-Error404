@@ -140,10 +140,9 @@
                             <span id="discount-amount">-$0.00</span>
                         </div>
                         <div class="flex justify-between text-slate-500 text-xs font-bold uppercase tracking-widest">
-                            <span>Tax (10%)</span>
-                            <span id="tax" class="text-slate-300">$0.00</span>
-                        </div>
-                        <div class="flex justify-between text-slate-300 text-lg font-black border-t border-slate-800 pt-3 mt-2">
+                            <span>Tax (Included 10%)</span>
+                            <span id="tax" class="text-slate-400">$0.00</span>
+                        </div>                        <div class="flex justify-between text-slate-300 text-lg font-black border-t border-slate-800 pt-3 mt-2">
                             <span class="text-slate-500 text-sm uppercase self-center">Total</span>
                             <span id="total-price" class="text-4xl text-orange-500">$0.00</span>
                         </div>
@@ -531,7 +530,8 @@
             */
             function updateTotals(subtotal) {
                 let discount = 0;
-                // Apply 10% discount if a loyalty customer is selected
+                
+                // 1. Apply 10% discount if a loyalty customer is selected
                 if (selectedCustomerId) {
                     discount = subtotal * 0.10; 
                     document.getElementById('loyalty-discount-row').classList.remove('hidden');
@@ -539,13 +539,23 @@
                     document.getElementById('loyalty-discount-row').classList.add('hidden');
                 }
 
-                const afterDiscount = subtotal - discount;
-                const tax = afterDiscount * 0.10;
-                const total = afterDiscount + tax;
+                // 2. The 'Total' is the price after discount
+                const total = subtotal - discount;
 
+                // 3. Calculate Tax hidden INSIDE the total (Inclusive Tax)
+                // Formula: Tax = Total - (Total / 1.10)
+                const taxRate = 0.10;
+                const tax = total - (total / (1 + taxRate));
+
+                // 4. Update the UI
+                // Subtotal here acts as the 'Net Price' before tax
                 document.getElementById('subtotal').innerText = `$${subtotal.toFixed(2)}`;
                 document.getElementById('discount-amount').innerText = `-$${discount.toFixed(2)}`;
+                
+                // This shows "Tax (Included)"
                 document.getElementById('tax').innerText = `$${tax.toFixed(2)}`;
+                
+                // The total price remains exactly what was calculated after the discount
                 document.getElementById('total-price').innerText = `$${total.toFixed(2)}`;
             }
 

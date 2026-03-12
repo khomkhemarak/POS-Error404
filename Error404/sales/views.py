@@ -1,19 +1,34 @@
 import json
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from .models import Category, Order, OrderItem, Product, Ingredient, Recipe, StockHistory, Customer
-from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Sum, Count
-from django.db.models import F
-from django.db import transaction
-from django.db.models.functions import ExtractHour
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.decorators import login_required
+import math
 from decimal import Decimal
-from django.contrib import messages
-from django.utils import timezone
 from datetime import timedelta
+
+# Django Core
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
+from django.utils import timezone
+from django.contrib import messages
+
+# Database & Querying
+from django.db import transaction
+from django.db.models import Sum, Count, F, Avg
+from django.db.models.functions import ExtractHour, TruncDay
+
+# Decorators
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required, user_passes_test
+
+# Local App Models
+from .models import (
+    Category, 
+    Order, 
+    OrderItem, 
+    Product, 
+    Ingredient, 
+    Recipe, 
+    StockHistory, 
+    Customer
+)
 
 #############################
 ####### Admin View ##########
@@ -151,6 +166,49 @@ def pos_screen(request):
         'categories': Category.objects.all(), # This line is required!
     })
 
+def product_list_view(request):
+    products = Product.objects.all()
+    
+    # --- 1. Summary Cards Logic ---
+    total_margin = sum(p.margin_percentage for p in products)
+    count = products.count()
+    avg_margin = total_margin / count if count > 0 else 0
+    
+    # --- 2. Chart Data Logic (Last 30 Days) ---
+    today = timezone.now()
+    last_month = today - timedelta(days=30)
+    
+    # We fetch daily average margins from your Sales history
+    # Note: If you don't have a Sale model yet, use the 'labels' and 'data' lists below
+    chart_labels = []
+    chart_data = []
+    
+    # Example: Generating last 7-30 days of data
+    for i in range(30, -1, -1):
+        date = today - timedelta(days=i)
+        chart_labels.append(date.strftime('%b %d'))
+        # This is where you'd query: Sale.objects.filter(created_at__date=date)...
+        # For now, we'll use a placeholder that fluctuates around your current avg_margin
+        import random
+        variation = random.uniform(-5, 5)
+        chart_data.append(float(avg_margin) + variation)
+
+    # Example threshold, adjust as needed
+    low_stock_threshold = 10
+    low_stock_products = Product.objects.filter(stock__lte=low_stock_threshold)
+    low_stock_ingredients = Ingredient.objects.filter(stock_quantity__lte=low_stock_threshold)
+    context = {
+        'products': products,
+        'avg_margin': avg_margin,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
+        'low_stock_products': low_stock_products,
+        'low_stock_ingredients': low_stock_ingredients,
+        'all_ingredients': Ingredient.objects.all,
+        # ... keep your other context variables
+    }
+    return render(request, 'products_list.html', context)
+
 ######## inventory page ########
 
 def inventory_list(request):
@@ -180,7 +238,7 @@ def inventory_list(request):
 
             # 4. Recalculate the Item Count for display
             if ingredient.initial_stock_per_item > 0:
-                ingredient.items_count = int(ingredient.stock_quantity // ingredient.initial_stock_per_item)
+                ingredient.items_count = math.ceil(ingredient.stock_quantity / ingredient.initial_stock_per_item)
 
             ingredient.save()
             
@@ -290,15 +348,20 @@ def complete_checkout(request):
         return JsonResponse({'status': 'success'})
 
 def deduct_stock(pkg_type, quantity):
-    """Helper function to find the right packaging and reduce stock"""
     item = Ingredient.objects.filter(packaging_type=pkg_type).first()
     if item:
-        item.stock_quantity -= quantity
+        item.stock_quantity -= Decimal(str(quantity))
+        
+        # Update the box count here too!
+        if item.initial_stock_per_item > 0:
+            import math
+            item.items_count = math.ceil(item.stock_quantity / item.initial_stock_per_item)
+            
         item.save()
 
-#############################
+##############################
 ####### Recipe Builder #######
-#############################
+##############################
 
 def recipe_builder(request):
     products = Product.objects.all().order_by('name')
@@ -428,12 +491,10 @@ def process_payment(request):
         cart_items = data.get('items', [])
         total_price = data.get('total')
         customer_id = data.get('customer_id') 
-        # Crucial: This reads 'Takeout' or 'Dine-in' sent from pos.html
         service_type = data.get('service_type', 'Dine-in')
 
         with transaction.atomic():
             new_order = Order.objects.create(total_amount=total_price, is_completed=True)
-
             # 1. LOYALTY POINTS LOGIC
             if customer_id:
                 try:
@@ -453,8 +514,10 @@ def process_payment(request):
                 drink_type = item.get('type', 'Hot')     
                 qty = int(item.get('qty', 1))
                 
-                # --- A. DEDUCT BEVERAGE INGREDIENTS (Coffee, Milk, etc.) ---
+                # --- A. DEDUCT BEVERAGE INGREDIENTS (Coffee, Milk, Sugar, etc.) ---
                 recipe_items = Recipe.objects.filter(product=product, size=target_size)
+                
+                # Fallback to Medium if specific size recipe doesn't exist
                 if not recipe_items.exists() and target_size != 'Medium':
                     recipe_items = Recipe.objects.filter(product=product, size='Medium')
 
@@ -469,12 +532,16 @@ def process_payment(request):
                         ingredient = Ingredient.objects.select_for_update().get(id=recipe.ingredient.id)
                         usage = Decimal(str(recipe.quantity)) * qty
                         
+                        # Apply sugar multiplier logic
                         if "sugar" in ingredient.name.lower() or "syrup" in ingredient.name.lower():
                             usage = usage * multiplier
                             
                         ingredient.stock_quantity = max(Decimal('0.00'), ingredient.stock_quantity - usage)
+                        
+                        # FIX: Use math.ceil to prevent 10% stock display bug
                         if ingredient.initial_stock_per_item > 0:
-                            ingredient.items_count = int(ingredient.stock_quantity // ingredient.initial_stock_per_item)
+                            ingredient.items_count = math.ceil(ingredient.stock_quantity / ingredient.initial_stock_per_item)
+                        
                         ingredient.save()
 
                 # --- B. SMART PACKAGING DEDUCTION ---
@@ -488,7 +555,7 @@ def process_payment(request):
                 def deduct_packaging(pkg_type, size_filter=None):
                     query = Ingredient.objects.filter(packaging_type=pkg_type)
                     
-                    # Only apply size filter for Cups. Lids and Straws are Universal.
+                    # Only apply size filter for Cups.
                     if size_filter and pkg_type in ['HOT_CUP', 'COLD_CUP']:
                         query = query.filter(name__icontains=size_filter)
                     
@@ -496,27 +563,28 @@ def process_payment(request):
                     if target_ing:
                         target_ing = Ingredient.objects.select_for_update().get(id=target_ing.id)
                         target_ing.stock_quantity = max(Decimal('0.00'), target_ing.stock_quantity - qty)
+                        
+                        # FIX: Use math.ceil to keep "Boxes" count accurate
                         if target_ing.initial_stock_per_item > 0:
-                            target_ing.items_count = int(target_ing.stock_quantity // target_ing.initial_stock_per_item)
+                            target_ing.items_count = math.ceil(target_ing.stock_quantity / target_ing.initial_stock_per_item)
+                        
                         target_ing.save()
 
                 # Step 3: Run Deductions
-                deduct_packaging(cup_cat, target_size) # Cup matches size (Small/Medium/Large)
-                deduct_packaging(lid_cat)              # Lid is Universal
-                deduct_packaging(straw_cat)            # Straw is Universal
+                deduct_packaging(cup_cat, target_size)
+                deduct_packaging(lid_cat)
+                deduct_packaging(straw_cat)
 
-                # --- 4. DEDUCT CARRIER (Only if Takeout is selected) ---
+                # --- 4. DEDUCT CARRIER (Takeout) ---
                 if service_type == 'Takeout':
-                    # This looks for the ingredient you labeled as 'CARRIER' in Django Admin
                     carrier = Ingredient.objects.filter(packaging_type='CARRIER').first()
                     if carrier:
                         carrier = Ingredient.objects.select_for_update().get(id=carrier.id)
-                        # Deduct 1 carrier per drink (qty)
                         carrier.stock_quantity = max(Decimal('0.00'), carrier.stock_quantity - qty)
                         
-                        # Update the box/bag count
+                        # FIX: Use math.ceil
                         if carrier.initial_stock_per_item > 0:
-                            carrier.items_count = int(carrier.stock_quantity // carrier.initial_stock_per_item)
+                            carrier.items_count = math.ceil(carrier.stock_quantity / carrier.initial_stock_per_item)
                         
                         carrier.save()
 

@@ -108,7 +108,10 @@
                             <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 w-1/4">Ingredient/Packaging Name</th>
                             <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Stock Level</th>
                             <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Current Qty</th>
-                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Price/Unit</th>
+                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">
+                                Price Breakdown
+                                <span class="block text-[7px] text-orange-500/50 font-medium normal-case tracking-tight">Bulk vs. Unit Cost</span>
+                            </th>
                             <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Status</th>
                             <th class="p-5 pr-16 font-black text-[10px] uppercase tracking-widest text-slate-500 text-right">Actions</th>
                         </tr>
@@ -148,7 +151,12 @@
                             <td class="p-5 text-center">
                                 <div class="flex flex-col">
                                     <span class="text-emerald-400 font-mono font-bold">${{ ing.last_purchase_price|floatformat:2 }}</span>
-                                    <span class="text-[8px] text-slate-500 uppercase font-black tracking-tighter">Per Box/Item</span>
+                                    <span class="text-[8px] text-slate-500 uppercase font-black tracking-tighter mb-1">Per Box/Item</span>
+                                    
+                                    <div class="pt-1 border-t border-slate-800">
+                                        <span class="text-white font-mono text-[10px]">${{ ing.unit_cost|floatformat:4 }}</span>
+                                        <span class="text-[7px] text-orange-500/70 uppercase font-black tracking-tighter">/ {% if ing.packaging_type != 'NONE' %}pc{% else %}{{ ing.unit }}{% endif %}</span>
+                                    </div>
                                 </div>
                             </td>
                             
@@ -178,7 +186,7 @@
 
                     <tbody id="no-results" class="hidden">
                         <tr>
-                            <td colspan="5" class="py-24 text-center">
+                            <td colspan="6" class="py-24 text-center">
                                 <div class="flex flex-col items-center justify-center">
                                     <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-slate-700">
                                         <i class="bi bi-search text-2xl text-slate-500"></i>
