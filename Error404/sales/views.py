@@ -166,48 +166,28 @@ def pos_screen(request):
         'categories': Category.objects.all(), # This line is required!
     })
 
-def product_list_view(request):
-    products = Product.objects.all()
-    
-    # --- 1. Summary Cards Logic ---
-    total_margin = sum(p.margin_percentage for p in products)
-    count = products.count()
-    avg_margin = total_margin / count if count > 0 else 0
-    
-    # --- 2. Chart Data Logic (Last 30 Days) ---
-    today = timezone.now()
-    last_month = today - timedelta(days=30)
-    
-    # We fetch daily average margins from your Sales history
-    # Note: If you don't have a Sale model yet, use the 'labels' and 'data' lists below
-    chart_labels = []
-    chart_data = []
-    
-    # Example: Generating last 7-30 days of data
-    for i in range(30, -1, -1):
-        date = today - timedelta(days=i)
-        chart_labels.append(date.strftime('%b %d'))
-        # This is where you'd query: Sale.objects.filter(created_at__date=date)...
-        # For now, we'll use a placeholder that fluctuates around your current avg_margin
-        import random
-        variation = random.uniform(-5, 5)
-        chart_data.append(float(avg_margin) + variation)
+def monitoring_kitchen(request):
+    # 1. Get the orders (Using is_completed based on your previous error)
+    active_orders = Order.objects.filter(is_completed=False).order_by('created_at')
+    done_orders = Order.objects.filter(is_completed=True).order_by('-created_at')[:20]
 
-    # Example threshold, adjust as needed
-    low_stock_threshold = 10
-    low_stock_products = Product.objects.filter(stock__lte=low_stock_threshold)
-    low_stock_ingredients = Ingredient.objects.filter(stock_quantity__lte=low_stock_threshold)
+    # 2. Get the missing dashboard variables (Adjust logic to match your main dashboard)
+    # This assumes 'stock' is the field and 10 is your threshold
+    low_stock_products = Product.objects.filter(stock__lt=10) 
+    low_stock_ingredients = Ingredient.objects.filter(stock_quantity__lt=10)
+    all_ingredients = Ingredient.objects.all()
+
+    # 3. Pass everything to the template
     context = {
-        'products': products,
-        'avg_margin': avg_margin,
-        'chart_labels': chart_labels,
-        'chart_data': chart_data,
+        'pending_orders': active_orders,
+        'completed_orders': done_orders,
         'low_stock_products': low_stock_products,
         'low_stock_ingredients': low_stock_ingredients,
-        'all_ingredients': Ingredient.objects.all,
-        # ... keep your other context variables
+        'all_ingredients': all_ingredients,
+        # Add any other missing variables like 'order_count' if the sidebar needs them
     }
-    return render(request, 'products_list.html', context)
+
+    return render(request, 'monitoring_kitchen.html', context)
 
 ######## inventory page ########
 
@@ -628,6 +608,57 @@ def complete_order(request, order_id):
         
     # Redirect back to the kitchen screen
     return redirect('kitchen_view')
+
+#############################
+####### Manager View ########
+#############################
+
+def is_manager(user):
+    # This checks if the user is an admin OR in the 'Managers' group
+    return user.is_staff or user.groups.filter(name='Managers').exists()
+
+def product_list_view(request):
+    products = Product.objects.all()
+    
+    # --- 1. Summary Cards Logic ---
+    total_margin = sum(p.margin_percentage for p in products)
+    count = products.count()
+    avg_margin = total_margin / count if count > 0 else 0
+    
+    # --- 2. Chart Data Logic (Last 30 Days) ---
+    today = timezone.now()
+    last_month = today - timedelta(days=30)
+    
+    # We fetch daily average margins from your Sales history
+    # Note: If you don't have a Sale model yet, use the 'labels' and 'data' lists below
+    chart_labels = []
+    chart_data = []
+    
+    # Example: Generating last 7-30 days of data
+    for i in range(30, -1, -1):
+        date = today - timedelta(days=i)
+        chart_labels.append(date.strftime('%b %d'))
+        # This is where you'd query: Sale.objects.filter(created_at__date=date)...
+        # For now, we'll use a placeholder that fluctuates around your current avg_margin
+        import random
+        variation = random.uniform(-5, 5)
+        chart_data.append(float(avg_margin) + variation)
+
+    # Example threshold, adjust as needed
+    low_stock_threshold = 10
+    low_stock_products = Product.objects.filter(stock__lte=low_stock_threshold)
+    low_stock_ingredients = Ingredient.objects.filter(stock_quantity__lte=low_stock_threshold)
+    context = {
+        'products': products,
+        'avg_margin': avg_margin,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
+        'low_stock_products': low_stock_products,
+        'low_stock_ingredients': low_stock_ingredients,
+        'all_ingredients': Ingredient.objects.all,
+        # ... keep your other context variables
+    }
+    return render(request, 'products_list.html', context)
 
 #############################
 ####### Kitchen View ########

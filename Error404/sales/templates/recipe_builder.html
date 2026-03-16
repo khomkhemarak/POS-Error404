@@ -2,292 +2,253 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Error404 | Recipe Builder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        .orange-glow { box-shadow: 0 0 40px rgba(245, 158, 11, 0.05); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .size-chip.active { background-color: #f97316 !important; color: #020617 !important; border-color: #f97316 !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Flat 2.0 Bento Styling */
+        .bento-card {
+            background: #ffffff;
+            border: 2px solid #f1f5f9;
+            transition: all 0.2s ease;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        .size-chip.active { 
+            background-color: #f97316 !important; 
+            color: white !important; 
+            border-color: #f97316 !important; 
+        }
+        
+        /* Subtle elevation for Flat 2.0 */
+        .interactive-hover:hover {
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 flex min-h-screen font-sans">
+<body class="bg-[#f8fafc] text-slate-900 flex flex-col md:flex-row min-h-screen">
 
-    <div class="w-64 bg-slate-900 border-r border-slate-800 p-6 hidden md:flex flex-col">
-        <h1 class="text-3xl font-black bg-gradient-to-r from-orange-500 to-amber-300 bg-clip-text text-transparent mb-10">
-            Error<span class="text-white">404</span>
-        </h1>
-        <nav class="space-y-3 font-semibold flex-grow">
-            <a href="{% url 'admin_dashboard' %}" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
-                <i class="bi bi-speedometer2 text-lg"></i> Dashboard
-            </a>
-            <a href="{% url 'inventory_list' %}" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
-                <i class="bi bi-box-seam text-lg"></i> Inventory
-            </a>
-            <a href="{% url 'recipe_builder' %}" class="block p-3 bg-gradient-to-br from-orange-500 to-amber-600 text-slate-950 rounded-xl shadow-lg shadow-orange-900/40 flex items-center gap-3 transform transition hover:scale-105">
-                <i class="bi bi-journal-text text-lg"></i> Recipe Builder
-            </a>
-            <a href="/kitchen/" class="block p-3 text-slate-400 hover:text-orange-400 hover:bg-slate-800 rounded-xl transition flex items-center gap-3">
-                <i class="bi bi-cup-hot text-lg"></i> Kitchen View
-            </a>
-            <div class="border-t border-slate-800 my-4"></div>
-            <a href="/pos/" class="block p-3 hover:bg-slate-800 rounded-xl transition text-slate-500 hover:text-orange-300 italic flex items-center gap-3">
-                <i class="bi bi-pc-display-horizontal text-lg"></i> Open POS interface →
-            </a>
-        </nav>
+    <div class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-[100]">
+        <h1 class="text-xl font-800 tracking-tighter text-orange-600">Error404</h1>
+        <button onclick="toggleSidebar()" class="text-2xl text-slate-600">
+            <i class="bi bi-list"></i>
+        </button>
     </div>
 
-    <div class="flex-grow p-8 overflow-y-auto custom-scrollbar">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="mb-4 p-4 rounded-xl {% if message.tags == 'success' %}bg-emerald-500/10 text-emerald-500 border border-emerald-500/20{% else %}bg-orange-500/10 text-orange-500 border border-orange-500/20{% endif %} font-bold text-sm">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 shrink-0 bg-white border-r border-slate-200 p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[150] md:sticky md:top-0 md:h-screen">
+        <div class="mb-10">
+            <h1 class="text-2xl font-800 tracking-tighter text-orange-600">Error404</h1>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management Suite</p>
+        </div>
+        
+        <nav class="space-y-1 flex-grow">
+            <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+                <i class="bi bi-grid-1x2"></i> Dashboard
+            </a>
+            <a href="{% url 'inventory_list' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+                <i class="bi bi-box-seam"></i> Inventory
+            </a>
+            <a href="#" class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100">
+                <i class="bi bi-journal-text"></i> Recipe Builder
+            </a>
+            <a href="#" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+                <i class="bi bi-cup-hot"></i> Kitchen
+            </a>
+        </nav>
+    </aside>
 
-        <header class="mb-10 flex justify-between items-end">
-            <div>
-                <h1 class="text-3xl font-black tracking-tight text-white">Recipe Builder</h1>
-                <p class="text-orange-500/70 font-bold uppercase tracking-widest text-[10px] mt-1">Define ingredient consumption and monitor margins</p>
+    <main class="flex-1 p-4 md:p-8 lg:p-10 max-w-[1400px] mx-auto w-full">
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="md:col-span-3 bento-card p-8 rounded-[2rem] flex flex-col justify-center">
+                <h1 class="text-3xl font-800 tracking-tight">Recipe Builder</h1>
+                <p class="text-slate-500 mt-1 font-medium">Link ingredients to menu items and calculate live margins.</p>
             </div>
-            <div class="text-right hidden lg:block bg-slate-900 px-6 py-3 rounded-2xl border border-slate-800">
-                <span class="text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-1">Active Rules</span>
-                <span class="text-2xl font-black text-orange-400" id="activeRulesCount">{{ recipes.count }}</span>
+            <div class="md:col-span-1 bento-card p-8 rounded-[2rem] flex flex-col items-center justify-center text-center border-orange-100 bg-orange-50/30">
+                <span class="text-[10px] font-800 uppercase text-orange-600/60 tracking-widest block mb-1">Active Rules</span>
+                <span class="text-4xl font-800 text-orange-600" id="activeRulesCount">{{ recipes.count }}</span>
             </div>
-        </header>
+        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 h-fit sticky top-8 orange-glow">
-                <div class="flex items-center gap-3 mb-8">
-                    <div class="w-10 h-10 bg-orange-500/10 text-orange-500 rounded-xl flex items-center justify-center border border-orange-500/20">
-                        <i class="bi bi-link-45deg text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-black text-white">Link Ingredient</h3>
-                </div>
-
-                <form id="recipeForm" method="POST" class="space-y-6">
-                    {% csrf_token %}
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Target Product</label>
-                        <select name="product" required class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
-                            <option value="" disabled selected>Select a Product</option>
-                            {% for p in products %}
-                                <option value="{{ p.id }}">{{ p.name }}</option>
-                            {% endfor %}
-                        </select>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bento-card p-8 rounded-[2.5rem] sticky top-8">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-10 h-10 bg-slate-900 text-white rounded-2xl flex items-center justify-center">
+                            <i class="bi bi-plus-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-800">New Rule</h3>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <form id="recipeForm" method="POST" class="space-y-5">
+                        {% csrf_token %}
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Ingredient</label>
-                            <select name="ingredient" required class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold text-sm">
-                                <option value="" disabled selected>Select Ingredient</option>
-                                {% for i in ingredients %}
-                                    <option value="{{ i.id }}">{{ i.name }} ({{ i.unit }})</option>
+                            <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Target Product</label>
+                            <select name="product" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold appearance-none">
+                                <option value="" disabled selected>Select Product...</option>
+                                {% for p in products %}
+                                    <option value="{{ p.id }}">{{ p.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Ingredient</label>
+                                <select name="ingredient" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold text-sm">
+                                    <option value="" disabled selected>Select...</option>
+                                    {% for i in ingredients %}
+                                        <option value="{{ i.id }}">{{ i.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Size</label>
+                                <select name="size" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold">
+                                    <option value="Small">Small</option>
+                                    <option value="Medium" selected>Medium</option>
+                                    <option value="Large">Large</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Cup Size</label>
-                            <select name="size" required class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer font-bold">
-                                <option value="" disabled selected>Select Size</option>
-                                <option value="Small">Small</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Large">Large</option>
-                            </select>
+                            <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Amount Needed</label>
+                            <input type="number" step="0.001" name="amount" placeholder="0.000" required
+                                class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-mono font-bold">
                         </div>
-                    </div>
 
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Amount Needed</label>
-                        <div class="relative flex items-center">
-                            <input type="number" step="0.001" name="amount" placeholder="0.00" required
-                                class="w-full bg-slate-950 border border-slate-800 text-white p-4 pr-16 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 transition font-mono font-bold">
-                            <span class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-600 font-black text-xs uppercase tracking-widest pointer-events-none">
-                                Qty
-                            </span>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full bg-gradient-to-r from-orange-600 to-amber-500 text-slate-950 py-4 rounded-2xl font-black shadow-lg shadow-orange-900/40 hover:from-orange-500 hover:to-amber-400 transition transform active:scale-95 uppercase tracking-widest text-xs">
-                        SAVE RECIPE RULE
-                    </button>
-                </form>
+                        <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-800 hover:bg-orange-600 transition-all transform active:scale-[0.98] uppercase tracking-widest text-xs">
+                            Add to Recipe
+                        </button>
+                    </form>
+                </div>
             </div>
 
-            <div class="lg:col-span-2 space-y-6">
-                <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-900/50 p-4 rounded-3xl border border-slate-800 shadow-lg">
-                    <div class="relative w-full md:w-72">
-                        <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                        <input type="text" id="recipeSearch" onkeyup="runFilters()" placeholder="Search product or ingredient..." 
-                               class="w-full bg-slate-950 border border-slate-800 text-white pl-11 pr-4 py-2.5 rounded-2xl outline-none focus:ring-1 focus:ring-orange-500 transition text-sm">
+            <div class="lg:col-span-8 space-y-4">
+                <div class="bento-card p-4 rounded-[2rem] flex flex-col md:flex-row gap-4 items-center">
+                    <div class="relative flex-1 w-full">
+                        <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="recipeSearch" onkeyup="runFilters()" placeholder="Filter recipes..." 
+                               class="w-full bg-slate-50 border-2 border-slate-50 pl-11 pr-4 py-3 rounded-xl outline-none focus:bg-white focus:border-slate-200 transition-all font-medium">
                     </div>
                     
-                    <div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
-                        <button type="button" id="all-sizes-btn" onclick="setSizeFilter('')" class="size-chip active px-4 py-2 rounded-xl border border-slate-800 text-xs font-black uppercase tracking-widest transition-all duration-200 whitespace-nowrap">All Sizes</button>
-                        <button onclick="setSizeFilter('Small')" class="size-chip px-4 py-2 rounded-xl border border-slate-800 text-slate-500 text-xs font-black uppercase tracking-widest transition whitespace-nowrap">Small</button>
-                        <button onclick="setSizeFilter('Medium')" class="size-chip px-4 py-2 rounded-xl border border-slate-800 text-slate-500 text-xs font-black uppercase tracking-widest transition whitespace-nowrap">Medium</button>
-                        <button onclick="setSizeFilter('Large')" class="size-chip px-4 py-2 rounded-xl border border-slate-800 text-slate-500 text-xs font-black uppercase tracking-widest transition whitespace-nowrap">Large</button>
+                    <div class="flex items-center gap-1 p-1 bg-slate-100 rounded-2xl">
+                        <button type="button" id="all-sizes-btn" onclick="setSizeFilter('')" class="size-chip px-4 py-2 rounded-xl text-xs font-800 uppercase tracking-widest transition-all">All</button>
+                        <button onclick="setSizeFilter('Small')" class="size-chip px-4 py-2 rounded-xl text-slate-500 text-xs font-800 uppercase tracking-widest transition-all">S</button>
+                        <button onclick="setSizeFilter('Medium')" class="size-chip px-4 py-2 rounded-xl text-slate-500 text-xs font-800 uppercase tracking-widest transition-all">M</button>
+                        <button onclick="setSizeFilter('Large')" class="size-chip px-4 py-2 rounded-xl text-slate-500 text-xs font-800 uppercase tracking-widest transition-all">L</button>
                     </div>
                 </div>
 
-                <div class="bg-slate-900 rounded-[2rem] border border-slate-800 overflow-hidden shadow-xl">
-                    <table class="w-full text-left" id="recipeTable">
-                        <thead class="bg-slate-900/50 border-b border-slate-800">
-                            <tr>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">Menu Item</th>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">Ingredient</th>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">Usage</th>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">Unit Cost</th>
-                                <th class="p-5"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-800/50">
-                            {% for r in recipes %}
-                            <tr class="hover:bg-slate-800/30 transition-colors group recipe-row" 
-                                data-product="{{ r.product.name|lower }}" 
-                                data-ingredient="{{ r.ingredient.name|lower }}" 
-                                data-size="{{ r.size|lower }}">
-                                <td class="p-5">
-                                    <div class="flex flex-col">
-                                        <span class="font-black text-slate-200 group-hover:text-orange-400 transition">{{ r.product.name }}</span>
-                                        <span class="text-[9px] w-fit font-black bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2 py-0.5 rounded-lg mt-1.5 uppercase tracking-widest">
-                                            {{ r.size }} Size
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="p-5">
-                                    <span class="text-slate-400 font-bold">{{ r.ingredient.name }}</span>
-                                </td>
-                                <td class="p-5">
-                                    <span class="bg-slate-950 text-orange-400 px-3 py-1.5 rounded-lg font-mono font-black text-xs border border-slate-800 shadow-inner">
-                                        {{ r.quantity }} <small class="text-slate-600 font-bold ml-0.5">{{ r.ingredient.unit }}</small>
-                                    </span>
-                                </td>
-                                <td class="p-5 text-right">
-                                    <span class="text-emerald-500 font-mono font-bold">
-                                        ${{ r.line_cost|stringformat:".2f" }}
-                                    </span>
-                                </td>
-                                <td class="p-5 text-right flex justify-end gap-2">
-                                    <button onclick="openCopyModal('{{ r.product.id }}', '{{ r.size }}', '{{ r.product.name }}')" 
-                                            class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-slate-950 transition-all border border-orange-500/20" 
-                                            title="Clone to another size">
-                                        <i class="bi bi-copy text-sm"></i>
-                                    </button>
-
-                                    <form method="POST" class="inline" onsubmit="return confirm('Remove {{ r.ingredient.name }} from {{ r.product.name }}?')">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="delete_recipe_id" value="{{ r.id }}">
-                                        <button type="submit" class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all border border-red-500/20">
-                                            <i class="bi bi-trash3-fill text-sm"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr id="noDataRow">
-                                <td colspan="5" class="p-20 text-center">
-                                    <div class="flex flex-col items-center">
-                                        <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                                            <i class="bi bi-journal-x text-4xl text-slate-600"></i>
+                <div class="bento-card rounded-[2.5rem] overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse" id="recipeTable">
+                            <thead>
+                                <tr class="border-b-2 border-slate-50">
+                                    <th class="p-6 text-[10px] font-800 uppercase text-slate-400 tracking-widest">Product</th>
+                                    <th class="p-6 text-[10px] font-800 uppercase text-slate-400 tracking-widest">Ingredient</th>
+                                    <th class="p-6 text-[10px] font-800 uppercase text-slate-400 tracking-widest text-right">Cost</th>
+                                    <th class="p-6"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                {% for r in recipes %}
+                                <tr class="hover:bg-slate-50/50 transition-colors recipe-row" 
+                                    data-product="{{ r.product.name|lower }}" 
+                                    data-ingredient="{{ r.ingredient.name|lower }}" 
+                                    data-size="{{ r.size|lower }}">
+                                    <td class="p-6">
+                                        <div class="font-bold text-slate-900">{{ r.product.name }}</div>
+                                        <div class="text-[9px] font-800 text-orange-500 uppercase tracking-widest">{{ r.size }}</div>
+                                    </td>
+                                    <td class="p-6">
+                                        <div class="font-semibold text-slate-600">{{ r.ingredient.name }}</div>
+                                        <div class="text-xs font-mono text-slate-400">{{ r.quantity }} {{ r.ingredient.unit }}</div>
+                                    </td>
+                                    <td class="p-6 text-right">
+                                        <span class="font-mono font-bold text-slate-900">${{ r.line_cost|stringformat:".2f" }}</span>
+                                    </td>
+                                    <td class="p-6 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <button onclick="openCopyModal('{{ r.product.id }}', '{{ r.size }}', '{{ r.product.name }}')" 
+                                                    class="w-10 h-10 rounded-xl border-2 border-slate-100 flex items-center justify-center text-slate-400 hover:border-orange-500 hover:text-orange-500 transition-all">
+                                                <i class="bi bi-copy"></i>
+                                            </button>
+                                            <form method="POST" class="inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="delete_recipe_id" value="{{ r.id }}">
+                                                <button type="submit" class="w-10 h-10 rounded-xl border-2 border-slate-100 flex items-center justify-center text-slate-400 hover:border-red-500 hover:text-red-500 transition-all">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
+                                            </form>
                                         </div>
-                                        <p class="text-slate-500 font-bold tracking-widest uppercase text-xs">No recipe rules defined yet.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div id="copyModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 p-8 rounded-[2rem] max-w-sm w-full shadow-2xl orange-glow">
-            <h3 class="text-xl font-black text-white mb-2">Clone Recipe</h3>
-            <p id="modalDescription" class="text-slate-400 text-xs mb-6 uppercase tracking-widest font-bold">Copy ingredients to another size</p>
+    <div id="copyModal" class="hidden fixed inset-0 bg-slate-900/20 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-[2.5rem] max-w-sm w-full border-2 border-slate-100 shadow-2xl">
+            <h3 class="text-2xl font-800 mb-1">Clone Recipe</h3>
+            <p id="modalDescription" class="text-slate-500 text-sm mb-6 font-medium">Transfer ingredients to another size.</p>
             
             <form method="POST" class="space-y-4">
                 {% csrf_token %}
                 <input type="hidden" name="copy_from_product_id" id="modal_product_id">
                 <input type="hidden" name="copy_from_size" id="modal_source_size">
                 
-                <div>
-                    <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Target Size</label>
-                    <select name="target_size" class="w-full bg-slate-950 border border-slate-800 text-white p-4 rounded-xl outline-none focus:ring-1 focus:ring-orange-500 font-bold">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-800 uppercase text-slate-400 tracking-widest ml-1">Target Size</label>
+                    <select name="target_size" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none font-bold">
                         <option value="Small">Small</option>
                         <option value="Medium">Medium</option>
                         <option value="Large">Large</option>
                     </select>
                 </div>
                 
-                <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="closeCopyModal()" class="flex-1 bg-slate-800 text-slate-400 py-3 rounded-xl font-bold hover:bg-slate-700 transition">Cancel</button>
-                    <button type="submit" class="flex-1 bg-gradient-to-r from-orange-600 to-amber-500 text-slate-950 py-3 rounded-xl font-black hover:from-orange-500 hover:to-amber-400 transition">CLONE</button>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeCopyModal()" class="flex-1 py-4 font-bold text-slate-400 hover:text-slate-600 transition">Cancel</button>
+                    <button type="submit" class="flex-1 bg-orange-600 text-white py-4 rounded-2xl font-800 hover:bg-orange-700 transition-all shadow-lg shadow-orange-200">Clone</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        // --- FORM RESET LOGIC ---
-        const recipeForm = document.getElementById('recipeForm');
-        
-        if (recipeForm) {
-            recipeForm.addEventListener('submit', function(e) {
-                // Delay reset so data sends, but the filter will be remembered by localStorage
-                setTimeout(() => {
-                    this.reset();
-                    this.querySelectorAll('select').forEach(select => {
-                        select.selectedIndex = 0;
-                    });
-                }, 50);
-            });
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
         }
 
-        // --- PERSISTENT FILTER LOGIC ---
         let currentSizeFilter = '';
 
-        /**
-        * Sets the filter and SAVES it to localStorage
-        */
         function setSizeFilter(size) {
             currentSizeFilter = size.toLowerCase();
-            
-            // Save selection to browser memory so it stays after refresh
-            localStorage.setItem('activeRecipeFilter', size);
-
-            // Get all buttons
             const allChips = document.querySelectorAll('.size-chip');
-            const allSizesBtn = document.getElementById('all-sizes-btn');
-
+            
             allChips.forEach(chip => {
-                // Reset everyone to "inactive" state first
                 chip.classList.remove('active');
-                chip.classList.add('text-slate-500', 'border-slate-800');
-                
-                // 1. If we clicked "All Sizes" (size is empty '')
-                if (size === '' && chip === allSizesBtn) {
-                    chip.classList.add('active');
-                    chip.classList.remove('text-slate-500');
-                } 
-                // 2. If we clicked a specific size (Small, Medium, Large)
-                else if (size !== '' && chip.innerText.toLowerCase().trim() === size.toLowerCase()) {
-                    chip.classList.add('active');
-                    chip.classList.remove('text-slate-500');
-                }
+                if (size === '' && chip.id === 'all-sizes-btn') chip.classList.add('active');
+                else if (chip.innerText.toLowerCase() === size.toLowerCase().charAt(0)) chip.classList.add('active');
             });
 
             runFilters();
         }
 
-        /**
-        * Applies the search and size filters to the table rows
-        */
         function runFilters() {
             const searchTerm = document.getElementById('recipeSearch').value.toLowerCase();
             const rows = document.querySelectorAll('.recipe-row');
@@ -311,23 +272,10 @@
             document.getElementById('activeRulesCount').innerText = visibleCount;
         }
 
-        /**
-        * ON PAGE LOAD: Check if there is a saved filter in localStorage
-        */
-        window.onload = () => {
-            const savedFilter = localStorage.getItem('activeRecipeFilter');
-            if (savedFilter !== null) {
-                setSizeFilter(savedFilter);
-            } else {
-                setSizeFilter(''); // Default to All
-            }
-        };
-
-        // --- MODAL LOGIC ---
         function openCopyModal(productId, size, productName) {
             document.getElementById('modal_product_id').value = productId;
             document.getElementById('modal_source_size').value = size;
-            document.getElementById('modalDescription').innerText = `Copy ${productName} (${size}) to:`;
+            document.getElementById('modalDescription').innerText = `Clone ${productName} (${size}) settings.`;
             document.getElementById('copyModal').classList.remove('hidden');
         }
 
@@ -335,10 +283,7 @@
             document.getElementById('copyModal').classList.add('hidden');
         }
 
-        window.onclick = function(event) {
-            let modal = document.getElementById('copyModal');
-            if (event.target == modal) closeCopyModal();
-        }
+        window.onload = () => setSizeFilter('');
     </script>
 </body>
 </html>

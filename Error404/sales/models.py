@@ -51,13 +51,25 @@ class Product(models.Model):
         """Returns baseline revenue after 10% tax for dashboard display"""
         return round(self.base_price / Decimal('1.10'), 2)
 
+
+
     @property
     def margin_percentage(self):
-        """Calculates profit margin % for dashboard bars"""
-        net = self.net_revenue
-        if net <= 0: return 0
-        profit = net - self.total_cost
-        return round((profit / net) * 100, 1)
+        """Calculates REAL profit margin % based on investment efficiency"""
+        net_revenue = self.net_revenue # Money kept after 10% tax
+        total_cost = self.total_cost   # Milk + Beans + Cup cost
+
+        if net_revenue <= 0 or total_cost <= 0:
+            return 0
+
+        # 1. Calculate Real Profit (Money in pocket)
+        real_profit = net_revenue - total_cost # Example: $1.36 - $0.54 = $0.82
+
+        # 2. Calculate Efficiency (Return on investment)
+        # Correct Formula: Real Profit / Total Cost
+        real_efficiency = (real_profit / total_cost) * 100 # Example: ($0.82 / $0.54) * 100
+
+        return round(real_efficiency, 1) # Example: Returns 151.8%
 
     # --- PRICING & TAX LOGIC ---
 
@@ -103,6 +115,11 @@ class Product(models.Model):
             total_cost += rule.quantity * rule.ingredient.unit_cost
         return total_cost
 
+    @property
+    def real_profit(self):
+        """Actual money kept after tax and production costs"""
+        return self.net_revenue - self.total_cost
+
     def reduce_stock(self, quantity):
         """Manual reduction for pre-packaged goods"""
         if self.stock >= quantity:
@@ -146,7 +163,16 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     size = models.CharField(max_length=20, default='Medium')
     sugar = models.CharField(max_length=20, default='100%')
-    drink_type = models.CharField(max_length=20, default='Hot') 
+    drink_type = models.CharField(max_length=20, default='Hot')
+
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('PREPARING', 'Preparing'),
+        ('READY', 'Ready'),
+        ('COMPLETED', 'Completed'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    is_completed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name} ({self.drink_type})"
