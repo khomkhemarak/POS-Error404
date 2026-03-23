@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -18,691 +21,720 @@
             opacity: 0;
             transform: scale(0.95);
         }
-        /* Custom Orange Glow for modal */
-        .orange-glow { box-shadow: 0 0 50px rgba(245, 158, 11, 0.1); }
+        
+        /* Flat 2.0 Bento Styling */
+        .bento-card {
+            background: #ffffff;
+            border: 2px solid #e2e8f0; /* slate-200 */
+        }
+        .btn-flat {
+            box-shadow: 4px 4px 0px 0px rgba(203,213,225,1); /* slate-300 */
+        }
+        .btn-flat-orange {
+            box-shadow: 4px 4px 0px 0px rgba(249,115,22,0.3);
+        }
+
+        .type {
+            display: inline-block;
+            overflow: hidden; /* Ensures the text is hidden until typed */
+            border-right: 3px solid #f97316; /* The cursor color (Orange-500) */
+            white-space: nowrap; /* Keeps the text on one line */
+            margin: 0;
+            animation: 
+                typing 4s steps(20) infinite,
+                blink .6s step-end infinite;
+        }
+
+        /* The typing effect */
+        @keyframes typing {
+            0%, 90%, 100% { width: 0; }
+            30%, 60% { width: 100%; }
+        }
+
+        /* The typewriter cursor effect */
+        @keyframes blink {
+            from, to { border-color: transparent; }
+            50% { border-color: #f97316; }
+        }
+
+        .keyboard-visible {transform: translateY(0) !important;}
+
+        #keyboard-grid button:active {
+            background-color: #f97316; /* Orange-500 */
+            border-bottom-width: 0px;
+            transform: translateY(4px);
+        }
     </style>
 </head>
-    <body class="bg-slate-950 text-slate-100 font-sans overflow-hidden">
+<body class="bg-[#f8fafc] text-slate-900 overflow-hidden">
 
-        {% csrf_token %}
-        <div class="flex h-screen w-full">
-            <div class="w-3/4 flex flex-col p-6 space-y-6">
-                <div class="flex justify-between items-center">
-                    <h1 class="text-3xl font-black bg-gradient-to-r from-orange-500 to-amber-300 bg-clip-text text-transparent">
-                        Error<span class="text-white">404</span> 
-                        <span class="text-xs font-light text-slate-500 tracking-widest ml-2 uppercase">Premium POS</span>
-                    </h1>
-                    <div class="relative w-1/3">
-                        <i class="bi bi-search absolute left-4 top-3 text-slate-500"></i>
-                        <input type="text" placeholder="Search menu..." class="w-full bg-slate-900 border border-slate-800 rounded-2xl py-3 pl-12 focus:ring-2 focus:ring-orange-500 text-slate-200 transition-all outline-none">
-                    </div>
-                </div>
-
-                <div class="flex space-x-4 no-scrollbar overflow-x-auto pb-4">
-                    <button onclick="filterCategory('All')" 
-                            class="cat-btn px-8 py-3 bg-gradient-to-br from-orange-500 to-amber-600 text-slate-950 rounded-2xl font-black shadow-lg shadow-orange-900/40 whitespace-nowrap transform active:scale-95 transition-all">
-                        All Items
-                    </button>
-
-                    {% for category in categories %}
-                    <button onclick="filterCategory('{{ category.name }}')" 
-                            class="cat-btn px-6 py-3 bg-slate-900 hover:bg-slate-800 rounded-2xl font-bold transition-all whitespace-nowrap text-slate-400 border border-slate-800 flex items-center gap-2">
-                        {{ category.name }}
-                    </button>
-                    {% endfor %}
-                </div>
-
-                <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 overflow-y-auto pr-2 no-scrollbar">
-                    {% for product in products %}
-                    <div class="product-item" data-category="{{ product.category }}">
-                        <button onclick="addToCart(
-                            '{{ product.id }}', 
-                            '{{ product.name|escapejs }}', 
-                            '{{ product.base_price }}', 
-                            '{{ product.ice_upcharge }}', 
-                            '{{ product.frappe_upcharge }}', 
-                            {{ product.can_be_hot|yesno:'true,false' }}, 
-                            {{ product.can_be_iced|yesno:'true,false' }}, 
-                            {{ product.can_be_frappe|yesno:'true,false' }}
-                        )"                            
-                        class="group w-full bg-slate-900 p-5 rounded-[2rem] border-2 border-slate-800 hover:border-orange-500/50 hover:bg-slate-800/50 transition-all text-left flex flex-col justify-between h-52 shadow-xl relative overflow-hidden">
-                            
-                            {% if product.image %}
-                            <img src="{{ product.image.url }}" class="absolute inset-0 w-full h-full object-cover opacity-10 group-hover:opacity-20 transition-opacity">
-                            {% endif %}
-                            
-                            <div class="relative z-10">
-                                <div class="flex justify-between items-start">
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-orange-400 bg-orange-500/10 px-2 py-1 rounded-lg border border-orange-500/20">
-                                        {{ product.category }}
-                                    </span>
-                                    
-                                    <div class="flex gap-1.5 bg-black/20 p-1.5 rounded-full backdrop-blur-md opacity-60 group-hover:opacity-100 transition">
-                                        {% if product.can_be_hot %}<i class="bi bi-thermometer-sun text-[10px] text-orange-400"></i>{% endif %}
-                                        {% if product.can_be_iced %}<i class="bi bi-snow text-[10px] text-cyan-400"></i>{% endif %}
-                                        {% if product.can_be_frappe %}<i class="bi bi-wind text-[10px] text-purple-400"></i>{% endif %}
-                                    </div>
-                                </div>
-                                <h3 class="text-lg font-bold mt-3 group-hover:text-orange-400 transition-colors leading-tight">{{ product.name }}</h3>
-                            </div>
-
-                            <div class="relative z-10 flex justify-between items-end">
-                                <div class="flex flex-col">
-                                    <span class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Price</span>
-                                    <span class="text-2xl font-black text-white">${{ product.base_price }}</span>
-                                </div>
-                                <div class="bg-orange-500 p-2.5 rounded-2xl group-hover:bg-orange-400 group-hover:scale-110 group-hover:rotate-90 transition-all shadow-lg shadow-orange-900/20">
-                                    <i class="bi bi-plus-lg text-slate-950 font-bold"></i>
-                                </div>
-                            </div>
-                        </button>
-                    </div>
-                    {% endfor %}
-                </div>
-
-            </div>
-
-            <div class="w-1/4 bg-slate-900 border-l border-slate-800 flex flex-col shadow-2xl">
-                <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-                    <h2 class="text-xl font-black uppercase tracking-tighter">Current Order</h2>
-                    <button onclick="clearCart()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 text-slate-500 hover:bg-red-500/10 hover:text-red-500 transition-all">
-                        <i class="bi bi-trash3-fill"></i>
-                    </button>
-                </div>
-
-                <div class="p-5 bg-gradient-to-br from-slate-800 to-slate-900 m-4 rounded-[1.5rem] border border-slate-700/50 shadow-inner">
-                    <label class="block text-[10px] font-black uppercase text-orange-500/60 mb-3 tracking-[0.2em]">Customer Loyalty</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="customer-phone" placeholder="Enter Phone..." 
-                            class="flex-grow bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none text-slate-200">
-                        <button onclick="searchCustomer()" class="bg-orange-500 hover:bg-orange-400 text-slate-950 px-4 rounded-xl transition-all shadow-lg shadow-orange-900/20 font-bold">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                    <div id="customer-display" class="mt-4 flex items-center justify-between hidden p-2 bg-orange-500/5 rounded-xl border border-orange-500/10 animate-fadeIn">
-                        <span class="text-xs font-bold text-orange-400"><i class="bi bi-person-check-fill mr-1"></i> <span id="customer-name-label"></span></span>
-                        <button onclick="removeCustomer()" class="text-slate-500 hover:text-red-400 text-[10px] font-black uppercase">Forget</button>
-                    </div>
-                </div>
-
-                <div id="cart-list" class="flex-grow overflow-y-auto p-4 space-y-3 no-scrollbar">
-                    <div class="text-center text-slate-600 mt-20 italic">Cart is empty</div>
-                </div>
-
-                <div class="p-6 bg-slate-950/80 backdrop-blur-xl border-t border-slate-800 space-y-4">
-                    <div class="space-y-2">
-                        <div class="flex justify-between text-slate-500 text-xs font-bold uppercase tracking-widest">
-                            <span>Subtotal</span>
-                            <span id="subtotal" class="text-slate-300">$0.00</span>
-                        </div>
-                        <div id="loyalty-discount-row" class="flex justify-between text-orange-500 text-xs font-black uppercase tracking-widest hidden">
-                            <span>Loyalty (-10%)</span>
-                            <span id="discount-amount">-$0.00</span>
-                        </div>
-                        <div class="flex justify-between text-slate-500 text-xs font-bold uppercase tracking-widest">
-                            <span>Tax (Included 10%)</span>
-                            <span id="tax" class="text-slate-400">$0.00</span>
-                        </div>                        <div class="flex justify-between text-slate-300 text-lg font-black border-t border-slate-800 pt-3 mt-2">
-                            <span class="text-slate-500 text-sm uppercase self-center">Total</span>
-                            <span id="total-price" class="text-4xl text-orange-500">$0.00</span>
-                        </div>
-                    </div>
-
-                    <button onclick="sendOrder()" class="w-full bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-slate-950 py-5 rounded-[1.5rem] font-black text-xl transition transform active:scale-95 shadow-xl shadow-orange-950/40 uppercase tracking-widest">
-                        PLACE ORDER
-                    </button>
+    {% csrf_token %}
+    <div class="flex h-screen w-full">
+        
+        <div class="w-3/4 flex flex-col p-6 space-y-6">
+            
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-[800] text-orange-600 tracking-tighter flex items-center gap-3">
+                    <span class="type">Error404</span>
+                    {% comment %} <span class="bg-orange-50 border border-orange-100 text-orange-500 px-2 py-1 rounded-md text-[10px] font-[800] tracking-widest uppercase">
+                        POS Terminal
+                    </span> {% endcomment %}
+                </h1>
+                <div class="relative w-1/3">
+                    <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="Search menu..." class="w-full bg-white border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 focus:border-orange-500 focus:bg-orange-50/30 text-slate-900 font-bold transition-all outline-none placeholder-slate-400">
                 </div>
             </div>
-        </div>
 
-        <div id="option-modal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div class="bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8 border border-slate-800 relative orange-glow">
-                <button onclick="closeModal()" class="absolute top-8 right-8 text-slate-500 hover:text-white transition"><i class="bi bi-x-lg text-xl"></i></button>
-                <h2 id="modal-product-name" class="text-3xl font-black mb-1 text-white tracking-tight">Customize</h2>
-                <p class="text-orange-500 text-xs font-black uppercase tracking-[0.3em] mb-8">Premium Selection</p>
-                
-                <div class="mb-6">
-                    <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Select Size</p>
-                    <div class="grid grid-cols-3 gap-3">
-                        <button id="size-Small" onclick="selectSize('Small')" class="size-btn bg-slate-800 text-slate-400 py-3 rounded-xl transition font-black text-sm border border-slate-700 hover:border-orange-500/30">Small</button>
-                        <button id="size-Medium" onclick="selectSize('Medium')" class="size-btn bg-slate-800 text-slate-400 py-3 rounded-xl transition font-black text-sm border border-slate-700 hover:border-orange-500/30">Medium</button>
-                        <button id="size-Large" onclick="selectSize('Large')" class="size-btn bg-slate-800 text-slate-400 py-3 rounded-xl transition font-black text-sm border border-slate-700 hover:border-orange-500/30">Large</button>
-                    </div>
-                </div>
+            <div class="flex space-x-3 no-scrollbar overflow-x-auto pb-2">
+                <button onclick="filterCategory('All')" 
+                        class="cat-btn px-6 py-3 bg-orange-50 border-2 border-orange-200 text-orange-600 rounded-2xl font-[800] whitespace-nowrap transition-all shadow-sm">
+                    All Items
+                </button>
 
-                <div class="mb-6">
-                    <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Drink Type</p>
-                    <div class="grid grid-cols-3 gap-3">
-                        <button id="type-Hot" onclick="selectType('Hot')" class="type-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
-                            <i class="bi bi-thermometer-sun text-orange-400 text-lg"></i> Hot
-                        </button>
-                        <button id="type-Iced" onclick="selectType('Iced')" class="type-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
-                            <i class="bi bi-snow text-cyan-400 text-lg"></i> Iced
-                        </button>
-                        <button id="type-Frappe" onclick="selectType('Frappe')" class="type-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-3 rounded-xl transition font-black text-xs flex flex-col items-center gap-1">
-                            <i class="bi bi-wind text-purple-400 text-lg"></i> Frappe
-                        </button>
-                    </div>
-                </div>
+                {% for category in categories %}
+                <button onclick="filterCategory('{{ category.name }}')" 
+                        class="cat-btn px-6 py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-500 rounded-2xl font-[800] transition-all whitespace-nowrap">
+                    {{ category.name }}
+                </button>
+                {% endfor %}
+            </div>
 
-                <div class="mb-6">
-                    <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Sugar Level</p>
-                    <div class="grid grid-cols-4 gap-2">
-                        <button id="sugar-0%" onclick="selectSugar('0%')" class="sugar-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-2 rounded-xl text-xs font-black transition">0%</button>
-                        <button id="sugar-25%" onclick="selectSugar('25%')" class="sugar-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-2 rounded-xl text-xs font-black transition">25%</button>
-                        <button id="sugar-50%" onclick="selectSugar('50%')" class="sugar-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-2 rounded-xl text-xs font-black transition">50%</button>
-                        <button id="sugar-75%" onclick="selectSugar('75%')" class="sugar-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-2 rounded-xl text-xs font-black transition">75%</button>
-                        <button id="sugar-100%" onclick="selectSugar('100%')" class="sugar-btn bg-slate-800 text-slate-400 border border-slate-700 hover:border-orange-500/30 py-2 rounded-xl text-xs font-black transition">100%</button>
-                    </div>
-                </div>
-
-                <div class="mb-8">
-                    <p class="text-slate-400 mb-4 font-black uppercase text-[10px] tracking-widest">Quantity</p>
-                    <div class="flex items-center justify-center gap-6 bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
-                        <button onclick="changeQty(-1)" class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-orange-500/20 hover:text-orange-400 hover:border hover:border-orange-500/50 transition flex items-center justify-center text-2xl font-bold"> <i class="bi bi-dash"></i> </button>
-                        <input type="number" id="modal-qty" value="1" min="1" class="bg-transparent text-center text-3xl font-black w-16 outline-none text-white pointer-events-none">
-                        <button onclick="changeQty(1)" class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-orange-500/20 hover:text-orange-400 hover:border hover:border-orange-500/50 transition flex items-center justify-center text-2xl font-bold"> <i class="bi bi-plus"></i> </button>
-                    </div>
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-[10px] font-black uppercase text-slate-500 mb-3 tracking-widest">Service Type</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button type="button" id="btn-dine-in" onclick="setServiceType('Dine-in')" 
-                            class="service-option flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-orange-500 bg-orange-500/10 text-orange-500 transition-all">
-                            <i class="bi bi-shop text-xl mb-1"></i>
-                            <span class="text-[10px] font-black uppercase">Dine-in</span>
-                        </button>
+            <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 overflow-y-auto pr-2 pb-6 no-scrollbar content-start">
+                {% for product in products %}
+                <div class="product-item" data-category="{{ product.category }}">
+                    <button onclick="addToCart(
+                        '{{ product.id }}', 
+                        '{{ product.name|escapejs }}', 
+                        '{{ product.base_price }}', 
+                        '{{ product.ice_upcharge }}', 
+                        '{{ product.frappe_upcharge }}', 
+                        {{ product.can_be_hot|yesno:'true,false' }}, 
+                        {{ product.can_be_iced|yesno:'true,false' }}, 
+                        {{ product.can_be_frappe|yesno:'true,false' }}
+                    )"                            
+                    class="group w-full bg-white p-5 rounded-[2rem] border-2 border-slate-200 hover:border-orange-400 transition-all text-left flex flex-col justify-between h-52 relative overflow-hidden shadow-sm hover:shadow-md">
                         
-                        <button type="button" id="btn-takeout" onclick="setServiceType('Takeout')" 
-                            class="service-option flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-slate-800 bg-slate-950 text-slate-500 hover:border-slate-700 transition-all">
-                            <i class="bi bi-bag-check text-xl mb-1"></i>
-                            <span class="text-[10px] font-black uppercase">Takeout</span>
-                        </button>
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" class="absolute inset-0 w-full h-full object-cover opacity-5 group-hover:opacity-10 transition-opacity grayscale group-hover:grayscale-0">
+                        {% endif %}
+                        
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start">
+                                <span class="text-[9px] font-[800] uppercase tracking-widest text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+                                    {{ product.category }}
+                                </span>
+                                
+                                <div class="flex gap-1.5 bg-white p-1.5 rounded-full border border-slate-100 shadow-sm opacity-80 group-hover:opacity-100 transition">
+                                    {% if product.can_be_hot %}<i class="bi bi-thermometer-sun text-[10px] text-orange-500"></i>{% endif %}
+                                    {% if product.can_be_iced %}<i class="bi bi-snow text-[10px] text-blue-500"></i>{% endif %}
+                                    {% if product.can_be_frappe %}<i class="bi bi-stars text-[10px] text-purple-500"></i>{% endif %}
+                                </div>
+                            </div>
+                            <h3 class="text-lg font-[800] mt-3 text-slate-900 group-hover:text-orange-600 transition-colors leading-tight">{{ product.name }}</h3>
+                        </div>
+
+                        <div class="relative z-10 flex justify-between items-end">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mb-0.5">Price</span>
+                                <span class="text-2xl font-[800] text-slate-900">${{ product.base_price }}</span>
+                            </div>
+                            <div class="w-10 h-10 bg-slate-50 border-2 border-slate-200 rounded-xl group-hover:bg-orange-500 group-hover:border-orange-500 group-hover:text-white text-slate-400 flex items-center justify-center transition-all">
+                                <i class="bi bi-plus-lg font-bold"></i>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="w-1/4 bg-white border-l-2 border-slate-200 flex flex-col shadow-[-10px_0_30px_rgba(0,0,0,0.02)] z-20">
+            
+            <div class="p-6 border-b-2 border-slate-100 flex justify-between items-center bg-white">
+                <h2 class="text-xl font-[800] uppercase tracking-tight text-slate-900">Current Order</h2>
+                <button onclick="clearCart()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border-2 border-slate-100 text-slate-400 hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-all">
+                    <i class="bi bi-trash3-fill"></i>
+                </button>
+            </div>
+
+            <div class="p-5 bg-slate-50 m-5 rounded-[2rem] border-2 border-slate-100">
+                <label class="block text-[10px] font-[800] uppercase text-slate-500 mb-3 tracking-widest">Customer Loyalty</label>
+                <div class="flex gap-2">
+                    <input type="text" id="customer-phone" placeholder="Phone Number..." 
+                        class="flex-grow bg-white border-2 border-slate-200 rounded-xl p-3 text-sm font-bold focus:border-orange-500 outline-none text-slate-900 placeholder-slate-400 transition-colors">
+                    <button onclick="searchCustomer()" class="bg-slate-900 hover:bg-orange-600 text-white px-4 rounded-xl transition-colors font-bold">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <div id="customer-display" class="mt-4 flex items-center justify-between hidden p-3 bg-emerald-50 rounded-xl border-2 border-emerald-100 animate-fadeIn">
+                    <span class="text-xs font-[800] text-emerald-700"><i class="bi bi-person-check-fill mr-1"></i> <span id="customer-name-label"></span></span>
+                    <button onclick="removeCustomer()" class="text-slate-400 hover:text-red-500 text-[10px] font-[800] uppercase tracking-widest"><i class="bi bi-x-circle-fill"></i></button>
+                </div>
+            </div>
+
+            <div id="cart-list" class="flex-grow overflow-y-auto px-5 pb-4 space-y-3 no-scrollbar">
+                <div class="text-center flex flex-col items-center justify-center h-full text-slate-400">
+                    <div class="w-16 h-16 bg-slate-50 border-2 border-slate-100 rounded-2xl flex items-center justify-center mb-4">
+                        <i class="bi bi-basket text-2xl"></i>
+                    </div>
+                    <p class="font-bold text-sm">Cart is empty</p>
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-50 border-t-2 border-slate-200 space-y-4">
+                <div class="space-y-2">
+                    <div class="flex justify-between text-slate-500 text-[10px] font-[800] uppercase tracking-widest">
+                        <span>Subtotal</span>
+                        <span id="subtotal" class="text-slate-700">$0.00</span>
+                    </div>
+                    <div id="loyalty-discount-row" class="flex justify-between text-emerald-600 text-[10px] font-[800] uppercase tracking-widest hidden">
+                        <span>Loyalty (-10%)</span>
+                        <span id="discount-amount">-$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-slate-500 text-[10px] font-[800] uppercase tracking-widest">
+                        <span>Tax (Incl. 10%)</span>
+                        <span id="tax" class="text-slate-400">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-end border-t-2 border-slate-200 pt-3 mt-2">
+                        <span class="text-slate-500 text-xs font-[800] uppercase tracking-widest mb-1">Total</span>
+                        <span id="total-price" class="text-4xl font-[800] text-slate-900 tracking-tight">$0.00</span>
                     </div>
                 </div>
 
-                <div class="flex gap-3 mt-4">
-                    <button onclick="closeModal()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-black text-slate-400 hover:bg-slate-700 hover:text-white transition tracking-widest text-xs">CANCEL</button>
-                    <button onclick="confirmCustomization()" class="flex-[2] bg-orange-500 hover:bg-orange-400 py-4 rounded-2xl font-black text-slate-950 transition shadow-lg shadow-orange-900/40 tracking-widest text-xs flex items-center justify-center gap-2">
-                        <i class="bi bi-cart-plus-fill text-lg"></i>
-                        <span id="confirm-btn-text">ADD TO CART — $0.00</span>
+                <button onclick="sendOrder()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-[800] text-lg transition-all active:translate-y-1 btn-flat hover:bg-orange-600 uppercase tracking-widest active:shadow-none">
+                    Place Order
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="option-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="bg-white w-full max-w-md rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.1)] relative">
+            
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 id="modal-product-name" class="text-2xl font-[800] mb-1 text-slate-900 tracking-tight leading-none">Customize</h2>
+                    <div class="h-1.5 w-12 bg-orange-500 mt-2 rounded-full"></div>
+                </div>
+                <button onclick="closeModal()" class="w-10 h-10 bg-slate-50 rounded-xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center border-2 border-slate-200">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Select Size</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <button id="size-Small" onclick="selectSize('Small')" class="size-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">Small</button>
+                    <button id="size-Medium" onclick="selectSize('Medium')" class="size-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">Medium</button>
+                    <button id="size-Large" onclick="selectSize('Large')" class="size-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">Large</button>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Drink Type</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <button id="type-Hot" onclick="selectType('Hot')" class="type-btn bg-white text-slate-500 border-2 border-slate-200 py-4 rounded-[1.5rem] transition-all font-[800] text-xs flex flex-col items-center gap-2">
+                        <i class="bi bi-thermometer-sun text-2xl"></i> Hot
+                    </button>
+                    <button id="type-Iced" onclick="selectType('Iced')" class="type-btn bg-white text-slate-500 border-2 border-slate-200 py-4 rounded-[1.5rem] transition-all font-[800] text-xs flex flex-col items-center gap-2">
+                        <i class="bi bi-snow text-2xl"></i> Iced
+                    </button>
+                    <button id="type-Frappe" onclick="selectType('Frappe')" class="type-btn bg-white text-slate-500 border-2 border-slate-200 py-4 rounded-[1.5rem] transition-all font-[800] text-xs flex flex-col items-center gap-2">
+                        <i class="bi bi-stars text-2xl"></i> Frappe
                     </button>
                 </div>
             </div>
-        </div>
 
-        <div id="register-modal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-[60] p-4">
-            <div class="bg-slate-900 w-full max-w-sm rounded-[2.5rem] p-8 border border-slate-800 shadow-[0_0_50px_rgba(245,158,11,0.1)]">
-                <h2 class="text-2xl font-black mb-6 text-orange-500 tracking-tight">New Regular</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Full Name</label>
-                        <input type="text" id="reg-name" placeholder="Enter Name" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white outline-none focus:ring-2 focus:ring-orange-500 transition">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Phone Number</label>
-                        <input type="text" id="reg-phone" placeholder="Enter Phone" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white outline-none focus:ring-2 focus:ring-orange-500 transition">
+            <div class="mb-6">
+                <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Sugar Level</p>
+                <div class="grid grid-cols-5 gap-2">
+                    <button id="sugar-0%" onclick="selectSugar('0%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">0%</button>
+                    <button id="sugar-25%" onclick="selectSugar('25%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">25%</button>
+                    <button id="sugar-50%" onclick="selectSugar('50%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">50%</button>
+                    <button id="sugar-75%" onclick="selectSugar('75%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">75%</button>
+                    <button id="sugar-100%" onclick="selectSugar('100%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">100%</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Quantity</p>
+                    <div class="flex items-center justify-between bg-slate-50 p-2 rounded-2xl border-2 border-slate-100">
+                        <button onclick="changeQty(-1)" class="w-10 h-10 rounded-xl bg-white border-2 border-slate-200 text-slate-500 hover:text-orange-600 hover:border-orange-200 transition-all flex items-center justify-center font-bold"> <i class="bi bi-dash"></i> </button>
+                        <input type="number" id="modal-qty" value="1" min="1" class="bg-transparent text-center text-xl font-[800] w-12 outline-none text-slate-900 pointer-events-none">
+                        <button onclick="changeQty(1)" class="w-10 h-10 rounded-xl bg-white border-2 border-slate-200 text-slate-500 hover:text-orange-600 hover:border-orange-200 transition-all flex items-center justify-center font-bold"> <i class="bi bi-plus"></i> </button>
                     </div>
                 </div>
+                <div>
+                    <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Service</p>
+                    <div class="flex gap-2 h-[56px]">
+                        <button type="button" id="btn-dine-in" onclick="setServiceType('Dine-in')" 
+                            class="flex-1 rounded-2xl border-2 border-orange-500 bg-orange-50 text-orange-600 transition-all font-[800] text-[10px] uppercase tracking-widest">
+                            Dine-In
+                        </button>
+                        <button type="button" id="btn-takeout" onclick="setServiceType('Takeout')" 
+                            class="flex-1 rounded-2xl border-2 border-slate-200 bg-white text-slate-400 transition-all font-[800] text-[10px] uppercase tracking-widest">
+                            To-Go
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="confirmCustomization()" class="w-full bg-orange-500 text-white py-5 rounded-2xl font-[800] transition-all active:translate-y-1 btn-flat-orange tracking-widest text-xs flex items-center justify-center gap-2 uppercase active:shadow-none">
+                    <i class="bi bi-cart-plus-fill text-lg"></i>
+                    <span id="confirm-btn-text">Add to Cart — $0.00</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="register-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex flex-col items-center justify-between p-6">
+    
+        <div class="flex-1 flex items-center justify-center w-full">
+            <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.1)]">
+                <h2 class="text-2xl font-[900] mb-6 text-slate-900 tracking-tight uppercase">New Regular</h2>
+                
+                <div class="space-y-4">
+                    <div id="container-name" class="bg-slate-50 p-4 rounded-2xl border-2 border-orange-500 transition-all cursor-pointer">
+                        <label class="block text-[10px] font-[800] uppercase text-slate-400 mb-1 tracking-widest">Full Name</label>
+                        <input type="text" id="reg-name" placeholder="Enter Name" 
+                            onfocus="setActiveInput('reg-name', 'abc')"
+                            oninput="formatInput(this, 'abc')"
+                            class="w-full bg-transparent text-slate-900 font-bold outline-none">
+                    </div>
+                    
+                    <div id="container-phone" class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all cursor-pointer">
+                        <label class="block text-[10px] font-[800] uppercase text-slate-400 mb-1 tracking-widest">Phone Number</label>
+                        <input type="text" id="reg-phone" placeholder="Enter Phone" 
+                            onfocus="setActiveInput('reg-phone', 'num')"
+                            oninput="formatInput(this, 'num')"
+                            class="w-full bg-transparent text-slate-900 font-bold outline-none">
+                    </div>
+                </div>
+
                 <div class="flex gap-3 mt-8">
-                    <button onclick="toggleRegisterModal()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-bold text-slate-400 hover:bg-slate-700 hover:text-white transition">CANCEL</button>
-                    <button onclick="submitRegistration()" class="flex-1 bg-orange-500 py-4 rounded-2xl font-black text-slate-950 shadow-lg shadow-orange-900/20 hover:bg-orange-400 transition">REGISTER</button>
+                    <button onclick="toggleRegisterModal()" class="flex-1 py-4 text-slate-400 font-[800] text-[10px] uppercase tracking-widest">Cancel</button>
+                    <button onclick="submitRegistration()" class="flex-[2] bg-slate-900 text-white py-4 rounded-2xl font-[800] hover:bg-orange-600 active:translate-y-1 transition-all text-[10px] uppercase tracking-widest">Register</button>
                 </div>
             </div>
         </div>
 
-        <script>
-            // --- GLOBAL STATE VARIABLES ---
-            let cart = []; // Stores the items currently added to the order
-            let currentItem = null; // Temporarily holds the product being customized in the modal
-            let selectedCustomerId = null; // Stores the ID of the logged-in loyalty customer
-            let currentBasePrice = 0; // Base price of the product from the database
-            let currentIceUpcharge = 0; // Additional cost if 'Iced' is selected
-            let currentFrappeUpcharge = 0; // Additional cost if 'Frappe' is selected
-            let currentService = 'Dine-in'; // Tracks if the order is for Dine-in or Takeout
+        <div id="keyboard-wrapper" class="w-full max-w-4xl transform transition-transform duration-300 translate-y-full">
+            <div class="bg-slate-900 p-4 rounded-t-[3rem] border-t-4 border-slate-800 shadow-[0_-20px_50px_rgba(0,0,0,0.3)]">
+                <div id="keyboard-grid" class="grid grid-cols-10 gap-2">
+                    </div>
+            </div>
+        </div>
+    </div>
 
-            /**
-            * Filters the product grid based on the selected category (Coffee, Tea, etc.)
-            * and updates the button styling to show which one is active.
-            */
-            function filterCategory(category) {
-                // 1. Reset all buttons to default dark style
-                const buttons = document.querySelectorAll('.cat-btn');
-                buttons.forEach(btn => {
-                    btn.classList.remove('bg-gradient-to-br', 'from-orange-500', 'to-amber-600', 'text-slate-950', 'shadow-lg', 'font-black');
-                    btn.classList.add('bg-slate-900', 'text-slate-400', 'border-slate-800', 'font-bold');
-                });
+    <script>
+        // --- GLOBAL STATE VARIABLES ---
+        let cart = []; 
+        let currentItem = null; 
+        let selectedCustomerId = null; 
+        let currentBasePrice = 0; 
+        let currentIceUpcharge = 0; 
+        let currentFrappeUpcharge = 0; 
+        let currentService = 'Dine-in'; 
+        let activeInputId = 'reg-name';
 
-                // 2. Apply active orange gradient style to the clicked button
-                const activeBtn = event.currentTarget;
-                activeBtn.classList.remove('bg-slate-900', 'text-slate-400', 'border-slate-800', 'font-bold');
-                activeBtn.classList.add('bg-gradient-to-br', 'from-orange-500', 'to-amber-600', 'text-slate-950', 'shadow-lg', 'font-black');
+        function filterCategory(category) {
+            const buttons = document.querySelectorAll('.cat-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-orange-50', 'border-orange-200', 'text-orange-600');
+                btn.classList.add('bg-white', 'border-slate-200', 'text-slate-500');
+            });
 
-                // 3. Show items that match the category, hide others
-                const items = document.querySelectorAll('.product-item');
-                items.forEach(item => {
-                    if (category === 'All' || item.getAttribute('data-category') === category) {
-                        item.classList.remove('hidden');
-                    } else {
-                        item.classList.add('hidden');
-                    }
-                });
-            }
+            const activeBtn = event.currentTarget;
+            activeBtn.classList.remove('bg-white', 'border-slate-200', 'text-slate-500');
+            activeBtn.classList.add('bg-orange-50', 'border-orange-200', 'text-orange-600');
 
-            // --- LOYALTY LOGIC ---
-
-            /**
-            * Fetches customer data from the API using the phone number provided in the input.
-            */
-            async function searchCustomer() {
-                const phone = document.getElementById('customer-phone').value;
-                if (!phone) return;
-
-                try {
-                    const response = await fetch(`/api/customer-lookup/?phone=${phone}`);
-                    const data = await response.json();
-
-                    if (data.status === 'success') {
-                        // If found, save ID and show the customer's name in the UI
-                        selectedCustomerId = data.id;
-                        document.getElementById('customer-name-label').innerText = data.name;
-                        document.getElementById('customer-display').classList.remove('hidden');
-                        renderCart(); // Re-render to apply potential loyalty discounts
-                    } else {
-                        // If not found, ask to register a new customer
-                        if(confirm("Customer not found. Register them now?")) {
-                            document.getElementById('reg-phone').value = phone;
-                            toggleRegisterModal();
-                        }
-                    }
-                } catch (error) {
-                    console.error("Search failed", error);
+            const items = document.querySelectorAll('.product-item');
+            items.forEach(item => {
+                if (category === 'All' || item.getAttribute('data-category') === category) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
                 }
-            }
+            });
+        }
 
-            /**
-            * Clears the selected customer and hides the customer display info.
-            */
-            function removeCustomer() {
-                selectedCustomerId = null;
-                document.getElementById('customer-phone').value = '';
-                document.getElementById('customer-display').classList.add('hidden');
-                renderCart();
-            }
+        async function searchCustomer() {
+            const phone = document.getElementById('customer-phone').value;
+            if (!phone) return;
 
-            /**
-            * Opens or closes the registration modal for new customers.
-            */
-            function toggleRegisterModal() {
-                document.getElementById('register-modal').classList.toggle('hidden');
-            }
-
-            /**
-            * Sends new customer data (name/phone) to the server to create a loyalty account.
-            */
-            async function submitRegistration() {
-                const name = document.getElementById('reg-name').value;
-                const phone = document.getElementById('reg-phone').value;
-
-                if(!name || !phone) return alert("Please fill in all fields.");
-
-                const response = await fetch('/api/register-customer/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, phone })
-                });
-
+            try {
+                const response = await fetch(`/api/customer-lookup/?phone=${phone}`);
                 const data = await response.json();
+
                 if (data.status === 'success') {
                     selectedCustomerId = data.id;
                     document.getElementById('customer-name-label').innerText = data.name;
                     document.getElementById('customer-display').classList.remove('hidden');
-                    toggleRegisterModal();
-                    renderCart();
-                    alert("Welcome to the club, " + data.name + "!");
+                    renderCart(); 
                 } else {
-                    alert("Error: " + data.message);
-                }
-            }
-
-            // --- CORE POS LOGIC ---
-
-            /**
-            * Opens the customization modal for a product and sets up available options 
-            * (Hot/Iced/Frappe) based on product settings.
-            */
-            async function addToCart(id, name, basePrice, iceUp, frappeUp, canH, canI, canF) {
-                const modal = document.getElementById('option-modal');
-                if (modal) modal.classList.remove('hidden');
-
-                document.getElementById('modal-product-name').innerText = name;
-
-                // Store prices for dynamic calculation
-                currentBasePrice = parseFloat(basePrice);
-                currentIceUpcharge = parseFloat(iceUp);
-                currentFrappeUpcharge = parseFloat(frappeUp);
-
-                // Initialize temporary item object
-                currentItem = { 
-                    id: id, 
-                    name: name, 
-                    size: 'Medium', 
-                    sugar: '100%', 
-                    type: 'Hot',
-                    totalCalculatedPrice: currentBasePrice 
-                };
-
-                // Show/Hide Hot, Iced, or Frappe buttons based on product capabilities
-                const btnHot = document.getElementById('type-Hot');
-                const btnIced = document.getElementById('type-Iced');
-                const btnFrappe = document.getElementById('type-Frappe');
-
-                if(btnHot) btnHot.style.display = (canH === true) ? 'flex' : 'none';
-                if(btnIced) btnIced.style.display = (canI === true) ? 'flex' : 'none';
-                if(btnFrappe) btnFrappe.style.display = (canF === true) ? 'flex' : 'none';
-
-                // Auto-select the first available preparation type
-                if (canH === true) selectType('Hot');
-                else if (canI === true) selectType('Iced');
-                else if (canF === true) selectType('Frappe');
-
-                selectSize('Medium'); 
-                selectSugar('100%');
-                calculateDynamicPrice(); 
-            }
-
-            /**
-            * Updates the selected size in the currentItem and updates button UI.
-            */
-            function selectSize(size) {
-                currentItem.size = size;
-                document.querySelectorAll('.size-btn').forEach(btn => {
-                    btn.classList.remove('bg-orange-500', 'text-slate-950', 'border-orange-500');
-                    btn.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700');
-                });
-
-                const activeBtn = document.getElementById(`size-${size}`);
-                if (activeBtn) {
-                    activeBtn.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700');
-                    activeBtn.classList.add('bg-orange-500', 'text-slate-950', 'border-orange-500');
-                }
-                calculateDynamicPrice();
-            }
-
-            /**
-            * Updates the selected type (Hot/Iced/Frappe) and updates button UI.
-            */
-            function selectType(type) {
-                currentItem.type = type;
-                document.querySelectorAll('.type-btn').forEach(btn => {
-                    btn.classList.remove('bg-orange-500', 'text-slate-950', 'ring-2', 'ring-orange-500', 'border-orange-500');
-                    btn.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700');
-                });
-                const activeBtn = document.getElementById(`type-${type}`);
-                activeBtn.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700');
-                activeBtn.classList.add('bg-orange-500', 'text-slate-950', 'ring-2', 'ring-orange-500', 'border-orange-500');
-                calculateDynamicPrice();
-            }
-
-            /**
-            * Updates the sugar level for the current item and updates button UI.
-            */
-            function selectSugar(level) {
-                currentItem.sugar = level;
-                document.querySelectorAll('.sugar-btn').forEach(btn => {
-                    btn.classList.remove('bg-orange-500', 'text-slate-950', 'border-orange-500');
-                    btn.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700');
-                });
-                const activeBtn = document.getElementById(`sugar-${level}`);
-                activeBtn.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700');
-                activeBtn.classList.add('bg-orange-500', 'text-slate-950', 'border-orange-500');
-            }
-
-            /**
-            * Finalizes the customization and pushes the item into the main cart array.
-            * It also checks if an identical item already exists to just increase quantity.
-            */
-            function confirmCustomization() {
-                const qtyInput = document.getElementById('modal-qty');
-                const qty = parseInt(qtyInput.value) || 1;
-
-                const sugarMap = { '0%': 0.0, '25%': 0.25, '50%': 0.5, '75%': 0.75, '100%': 1.0, 'Extra': 1.5 };
-                const sugarMultiplier = sugarMap[currentItem.sugar] || 0;
-
-                // Create a unique key to differentiate between same products with different options
-                const uniqueKey = `${currentItem.id}-${currentItem.size}-${currentItem.sugar}-${currentItem.type}`;
-                const existing = cart.find(i => i.uniqueKey === uniqueKey);
-                
-                if (existing) {
-                    existing.qty += qty;
-                } else {
-                    cart.push({
-                        uniqueKey: uniqueKey,
-                        id: currentItem.id,
-                        name: currentItem.name,
-                        size: currentItem.size,
-                        type: currentItem.type,
-                        sugar: currentItem.sugar,
-                        sugar_multiplier: sugarMultiplier,
-                        price: currentItem.totalCalculatedPrice,
-                        qty: qty
-                    });
-                }
-
-                closeModal();
-                renderCart();
-            }
-
-            /**
-            * Generates the HTML for the cart list and calculates the subtotal.
-            */
-            function renderCart() {
-                const list = document.getElementById('cart-list');
-                if (cart.length === 0) {
-                    list.innerHTML = '<div class="text-center text-slate-600 mt-20 italic">Cart is empty</div>';
-                    updateTotals(0);
-                    return;
-                }
-
-                list.innerHTML = cart.map((item, index) => `
-                    <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-800 flex justify-between items-center hover:border-orange-500/30 transition-colors">
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <p class="font-black text-sm text-white">${item.name}</p>
-                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 font-black uppercase">${item.type}</span>
-                            </div>
-                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">${item.size} | ${item.sugar} Sugar</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-black text-orange-400">$${(item.price * item.qty).toFixed(2)}</p>
-                            <p class="text-[10px] text-slate-500 font-bold">${item.qty} units</p>
-                        </div>
-                    </div>
-                `).join('');
-
-                const subtotal = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-                updateTotals(subtotal);
-            }
-
-            /**
-            * Calculates discount, tax, and final total, then updates the UI labels.
-            */
-            function updateTotals(subtotal) {
-                let discount = 0;
-                
-                // 1. Apply 10% discount if a loyalty customer is selected
-                if (selectedCustomerId) {
-                    discount = subtotal * 0.10; 
-                    document.getElementById('loyalty-discount-row').classList.remove('hidden');
-                } else {
-                    document.getElementById('loyalty-discount-row').classList.add('hidden');
-                }
-
-                // 2. The 'Total' is the price after discount
-                const total = subtotal - discount;
-
-                // 3. Calculate Tax hidden INSIDE the total (Inclusive Tax)
-                // Formula: Tax = Total - (Total / 1.10)
-                const taxRate = 0.10;
-                const tax = total - (total / (1 + taxRate));
-
-                // 4. Update the UI
-                // Subtotal here acts as the 'Net Price' before tax
-                document.getElementById('subtotal').innerText = `$${subtotal.toFixed(2)}`;
-                document.getElementById('discount-amount').innerText = `-$${discount.toFixed(2)}`;
-                
-                // This shows "Tax (Included)"
-                document.getElementById('tax').innerText = `$${tax.toFixed(2)}`;
-                
-                // The total price remains exactly what was calculated after the discount
-                document.getElementById('total-price').innerText = `$${total.toFixed(2)}`;
-            }
-
-            /**
-            * Sends the final order data to the server API to process payment and save to database.
-            * Includes 'service_type' to trigger correct packaging (Carrier) deduction.
-            */
-            async function sendOrder() {
-                if (cart.length === 0) {
-                    alert("Your cart is empty!");
-                    return;
-                }
-                
-                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                const totalDisplay = document.getElementById('total-price').innerText;
-                const totalNumeric = parseFloat(totalDisplay.replace('$', ''));
-
-                // Loading State (Optional UI feedback)
-                const payBtn = event.currentTarget;
-                const originalText = payBtn.innerHTML;
-                payBtn.disabled = true;
-                payBtn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i>Processing...';
-
-                try {
-                    const response = await fetch('/api/process-payment/', {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrftoken
-                        },
-                        body: JSON.stringify({
-                            items: cart,
-                            total: totalNumeric,
-                            customer_id: selectedCustomerId,
-                            // This matches the variable used in selectService()
-                            service_type: currentService 
-                        })
-                    });
-
-                    const result = await response.json();
-                    
-                    if (result.status === 'success') {
-                        // Success Feedback
-                        alert(`Order #${result.order_id} Success!\nPackaging and Ingredients have been updated.`);
-                        clearCart();
-                        removeCustomer();
-                    } else {
-                        alert("Transaction Failed: " + result.message); 
+                    if(confirm("Customer not found. Register them now?")) {
+                        document.getElementById('reg-phone').value = phone;
+                        toggleRegisterModal();
                     }
-                } catch (error) {
-                    console.error("Fetch Error:", error);
-                    alert("Connection Error: Please check if the local server is running.");
-                } finally {
-                    // Reset Button State
-                    payBtn.disabled = false;
-                    payBtn.innerHTML = originalText;
                 }
-            }
+            } catch (error) { console.error("Search failed", error); }
+        }
 
-            function changeQty(amt) {
-                const qtyInput = document.getElementById('modal-qty');
-                let newQty = parseInt(qtyInput.value) + amt;
-                if (newQty < 1) newQty = 1;
-                qtyInput.value = newQty;
+        function removeCustomer() {
+            selectedCustomerId = null;
+            document.getElementById('customer-phone').value = '';
+            document.getElementById('customer-display').classList.add('hidden');
+            renderCart();
+        }
+
+        // This function handles the formatting for BOTH physical and digital typing
+        function formatInput(el, mode) {
+            let val = el.value;
+            
+            if (mode === 'abc') {
+                // Auto-capitalize first letter of words (Title Case)
+                el.value = val.replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+            } else if (mode === 'num') {
+                // Remove any non-numeric characters typed from physical keyboard
+                el.value = val.replace(/\D/g, '');
+            }
+        }
+
+       function setActiveInput(id, mode) {
+            activeInputId = id;
+            
+            // Highlight the container UI
+            document.getElementById('container-name').className = id === 'reg-name' ? 'bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm transition-all' : 'bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all';
+            document.getElementById('container-phone').className = id === 'reg-phone' ? 'bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm transition-all' : 'bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all';
+            
+            renderKeyboard(mode);
+        }
+
+        function renderKeyboard(mode) {
+            const grid = document.getElementById('keyboard-grid');
+            grid.innerHTML = '';
+            
+            const layouts = {
+                abc: ['Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K','L','Z','X','C','V','B','N','M','SPACE','BKSP'],
+                num: ['1','2','3','4','5','6','7','8','9','0','BKSP']
+            };
+
+            const keys = layouts[mode];
+            grid.className = mode === 'num' ? 'grid grid-cols-3 gap-3 max-w-md mx-auto py-4' : 'grid grid-cols-10 gap-2 py-2';
+
+            keys.forEach(key => {
+                const btn = document.createElement('button');
+                btn.innerText = key;
                 
-                calculateDynamicPrice();
+                let btnClass = "p-4 sm:p-5 bg-slate-800 text-white rounded-2xl font-bold border-b-4 border-slate-950 active:border-b-0 active:translate-y-1 transition-all text-lg ";
+                if (key === 'SPACE') btnClass += "col-span-2 bg-slate-700";
+                if (key === 'BKSP') btnClass += "bg-orange-600 border-orange-800";
+
+                btn.className = btnClass;
+                btn.onclick = () => {
+                    const input = document.getElementById(activeInputId);
+                    if (key === 'BKSP') {
+                        input.value = input.value.slice(0, -1);
+                    } else if (key === 'SPACE') {
+                        input.value += ' ';
+                    } else {
+                        input.value += key;
+                    }
+                };
+                grid.appendChild(btn);
+            });
+        }
+        
+        function handleKeyPress(key) {
+            const input = document.getElementById(activeInputId);
+            
+            if (key === 'BKSP') {
+                input.value = input.value.slice(0, -1);
+            } else if (key === 'SPACE') {
+                input.value += ' ';
+            } else {
+                input.value += key;
             }
+            
+            // Trigger the formatting logic manually for digital buttons
+            formatInput(input, activeInputId === 'reg-name' ? 'abc' : 'num');
+            
+            // Keep focus on the input so physical typing can continue immediately
+            input.focus();
+        }
 
-            /**
-            * Calculates the real-time price based on selected type (Ice/Frappe), 
-            * size multipliers, and quantity.
-            */
-            function calculateDynamicPrice() {
-                if (!currentItem) return;
+        // Initial keyboard load
+        document.addEventListener('DOMContentLoaded', () => renderKeyboard('abc'));
 
-                let price = currentBasePrice;
-
-                // Add upcharges
-                if (currentItem.type === 'Iced') price += currentIceUpcharge;
-                if (currentItem.type === 'Frappe') price += currentFrappeUpcharge;
-
-                // Apply size multipliers
-                if (currentItem.size === 'Medium') price = price * 1.2;
-                if (currentItem.size === 'Large') price = price * 1.5;
-
-                const qty = parseInt(document.getElementById('modal-qty').value) || 1;
-                let finalTotal = price * qty;
-
-                currentItem.totalCalculatedPrice = price; 
-
-                // Update the big Add to Cart button text
-                const confirmBtnText = document.getElementById('confirm-btn-text');
-                if (confirmBtnText) {
-                    confirmBtnText.innerText = `ADD TO CART — $${finalTotal.toFixed(2)}`;
-                }
+        // Modify your existing toggle function to reset inputs
+        function toggleRegisterModal() {
+            const modal = document.getElementById('register-modal');
+            const wrapper = document.getElementById('keyboard-wrapper');
+            
+            if (modal.classList.contains('hidden')) {
+                // Opening
+                modal.classList.remove('hidden');
+                document.getElementById('reg-name').value = '';
+                document.getElementById('reg-phone').value = '';
+                setActiveInput('reg-name', 'abc');
+                // Small delay to trigger animation
+                setTimeout(() => wrapper.classList.add('keyboard-visible'), 10);
+            } else {
+                // Closing
+                wrapper.classList.remove('keyboard-visible');
+                setTimeout(() => modal.classList.add('hidden'), 300);
             }
+        }
 
-            /**
-            * Tracks the service method (Dine-in/Takeout) and updates UI border colors.
-            */
-            function selectService(type) {
-                currentService = type;
-                
-                // UI Highlight logic
-                document.querySelectorAll('.service-btn').forEach(btn => {
-                    btn.classList.replace('border-orange-500', 'border-slate-800');
-                    btn.classList.replace('text-orange-500', 'text-slate-400');
+        async function submitRegistration() {
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
+
+            if(!name || !phone) return alert("Please fill in all fields.");
+
+            const response = await fetch('/api/register-customer/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, phone })
+            });
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                selectedCustomerId = data.id;
+                document.getElementById('customer-name-label').innerText = data.name;
+                document.getElementById('customer-display').classList.remove('hidden');
+                toggleRegisterModal();
+                renderCart();
+            } else {
+                alert("Error: " + data.message);
+            }
+        }
+
+        async function addToCart(id, name, basePrice, iceUp, frappeUp, canH, canI, canF) {
+            const modal = document.getElementById('option-modal');
+            if (modal) modal.classList.remove('hidden');
+
+            document.getElementById('modal-product-name').innerText = name;
+
+            currentBasePrice = parseFloat(basePrice);
+            currentIceUpcharge = parseFloat(iceUp);
+            currentFrappeUpcharge = parseFloat(frappeUp);
+
+            currentItem = { 
+                id: id, name: name, size: 'Medium', sugar: '100%', type: 'Hot',
+                totalCalculatedPrice: currentBasePrice 
+            };
+
+            const btnHot = document.getElementById('type-Hot');
+            const btnIced = document.getElementById('type-Iced');
+            const btnFrappe = document.getElementById('type-Frappe');
+
+            if(btnHot) btnHot.style.display = (canH === true) ? 'flex' : 'none';
+            if(btnIced) btnIced.style.display = (canI === true) ? 'flex' : 'none';
+            if(btnFrappe) btnFrappe.style.display = (canF === true) ? 'flex' : 'none';
+
+            if (canH === true) selectType('Hot');
+            else if (canI === true) selectType('Iced');
+            else if (canF === true) selectType('Frappe');
+
+            selectSize('Medium'); 
+            selectSugar('100%');
+            calculateDynamicPrice(); 
+        }
+
+        function selectSize(size) {
+            currentItem.size = size;
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-50', 'text-orange-600', 'border-orange-500');
+                btn.classList.add('bg-white', 'text-slate-500', 'border-slate-200');
+            });
+            const activeBtn = document.getElementById(`size-${size}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
+                activeBtn.classList.add('bg-orange-50', 'text-orange-600', 'border-orange-500');
+            }
+            calculateDynamicPrice();
+        }
+
+        function selectType(type) {
+            currentItem.type = type;
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-50', 'text-orange-600', 'border-orange-500');
+                btn.classList.add('bg-white', 'text-slate-500', 'border-slate-200');
+            });
+            const activeBtn = document.getElementById(`type-${type}`);
+            activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
+            activeBtn.classList.add('bg-orange-50', 'text-orange-600', 'border-orange-500');
+            calculateDynamicPrice();
+        }
+
+        function selectSugar(level) {
+            currentItem.sugar = level;
+            document.querySelectorAll('.sugar-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-50', 'text-orange-600', 'border-orange-500');
+                btn.classList.add('bg-white', 'text-slate-500', 'border-slate-200');
+            });
+            const activeBtn = document.getElementById(`sugar-${level}`);
+            activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
+            activeBtn.classList.add('bg-orange-50', 'text-orange-600', 'border-orange-500');
+        }
+
+        function confirmCustomization() {
+            const qtyInput = document.getElementById('modal-qty');
+            const qty = parseInt(qtyInput.value) || 1;
+            const sugarMap = { '0%': 0.0, '25%': 0.25, '50%': 0.5, '75%': 0.75, '100%': 1.0, 'Extra': 1.5 };
+            const sugarMultiplier = sugarMap[currentItem.sugar] || 0;
+
+            const uniqueKey = `${currentItem.id}-${currentItem.size}-${currentItem.sugar}-${currentItem.type}`;
+            const existing = cart.find(i => i.uniqueKey === uniqueKey);
+            
+            if (existing) { existing.qty += qty; } 
+            else {
+                cart.push({
+                    uniqueKey: uniqueKey, id: currentItem.id, name: currentItem.name,
+                    size: currentItem.size, type: currentItem.type, sugar: currentItem.sugar,
+                    sugar_multiplier: sugarMultiplier, price: currentItem.totalCalculatedPrice, qty: qty
                 });
-                
-                const activeBtn = document.getElementById(`service-${type}`);
-                activeBtn.classList.replace('border-slate-800', 'border-orange-500');
-                activeBtn.classList.replace('text-slate-400', 'text-orange-500');
+            }
+            closeModal(); renderCart();
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cart-list');
+            if (cart.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center flex flex-col items-center justify-center h-full text-slate-400 mt-10">
+                        <div class="w-16 h-16 bg-slate-50 border-2 border-slate-100 rounded-2xl flex items-center justify-center mb-4">
+                            <i class="bi bi-basket text-2xl"></i>
+                        </div>
+                        <p class="font-bold text-sm">Cart is empty</p>
+                    </div>`;
+                updateTotals(0);
+                return;
             }
 
-            /**
-            * Secondary service type handler used to toggle between Dine-in and Takeout themes.
-            */
-            function setServiceType(type) {
-                // FIX: Update the global variable so the backend receives 'Takeout'
-                currentService = type; 
-                
-                const dineBtn = document.getElementById('btn-dine-in');
-                const takeBtn = document.getElementById('btn-takeout');
-                
-                if (type === 'Dine-in') {
-                    dineBtn.className = "service-option flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-orange-500 bg-orange-500/10 text-orange-500 transition-all";
-                    takeBtn.className = "service-option flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-slate-800 bg-slate-950 text-slate-500 transition-all";
-                } else {
-                    // Highlighting for Takeout
-                    takeBtn.className = "service-option flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-500/10 text-emerald-500 transition-all";
-                    dineBtn.className = "service-option flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-slate-800 bg-slate-950 text-slate-500 transition-all";
-                }
-            }
-            /**
-            * Completely empties the cart and refreshes the display.
-            */
-            function clearCart() { 
-                cart = []; 
-                renderCart(); 
+            list.innerHTML = cart.map((item, index) => `
+                <div class="bg-white p-4 rounded-2xl border-2 border-slate-100 flex justify-between items-center hover:border-orange-200 transition-colors shadow-sm">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <p class="font-[800] text-sm text-slate-900 leading-none">${item.name}</p>
+                            <span class="text-[8px] px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 font-[800] uppercase tracking-widest">${item.type}</span>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">${item.size} | ${item.sugar} Sugar</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-[800] text-orange-600">$${(item.price * item.qty).toFixed(2)}</p>
+                        <p class="text-[10px] text-slate-400 font-bold">${item.qty} units</p>
+                    </div>
+                </div>
+            `).join('');
+
+            const subtotal = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+            updateTotals(subtotal);
+        }
+
+        function updateTotals(subtotal) {
+            let discount = 0;
+            if (selectedCustomerId) {
+                discount = subtotal * 0.10; 
+                document.getElementById('loyalty-discount-row').classList.remove('hidden');
+            } else {
+                document.getElementById('loyalty-discount-row').classList.add('hidden');
             }
 
-            /**
-            * Closes the product customization modal.
-            */
-            function closeModal() { 
-                document.getElementById('option-modal').classList.add('hidden'); 
+            const total = subtotal - discount;
+            const taxRate = 0.10;
+            const tax = total - (total / (1 + taxRate));
+
+            document.getElementById('subtotal').innerText = `$${subtotal.toFixed(2)}`;
+            document.getElementById('discount-amount').innerText = `-$${discount.toFixed(2)}`;
+            document.getElementById('tax').innerText = `$${tax.toFixed(2)}`;
+            document.getElementById('total-price').innerText = `$${total.toFixed(2)}`;
+        }
+
+        async function sendOrder() {
+            if (cart.length === 0) return alert("Your cart is empty!");
+            
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const totalDisplay = document.getElementById('total-price').innerText;
+            const totalNumeric = parseFloat(totalDisplay.replace('$', ''));
+
+            const payBtn = event.currentTarget;
+            const originalText = payBtn.innerHTML;
+            payBtn.disabled = true;
+            payBtn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i>Processing...';
+
+            try {
+                const response = await fetch('/api/process-payment/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                    body: JSON.stringify({
+                        items: cart, total: totalNumeric, customer_id: selectedCustomerId, service_type: currentService 
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert(`Order #${result.order_id} Success!\nPackaging and Ingredients have been updated.`);
+                    clearCart(); removeCustomer();
+                } else { alert("Transaction Failed: " + result.message); }
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                alert("Connection Error: Please check if the local server is running.");
+            } finally {
+                payBtn.disabled = false;
+                payBtn.innerHTML = originalText;
             }
-        </script>
-    </body>
+        }
+
+        function changeQty(amt) {
+            const qtyInput = document.getElementById('modal-qty');
+            let newQty = parseInt(qtyInput.value) + amt;
+            if (newQty < 1) newQty = 1;
+            qtyInput.value = newQty;
+            calculateDynamicPrice();
+        }
+
+        function calculateDynamicPrice() {
+            if (!currentItem) return;
+            let price = currentBasePrice;
+
+            if (currentItem.type === 'Iced') price += currentIceUpcharge;
+            if (currentItem.type === 'Frappe') price += currentFrappeUpcharge;
+
+            if (currentItem.size === 'Medium') price = price * 1.2;
+            if (currentItem.size === 'Large') price = price * 1.5;
+
+            const qty = parseInt(document.getElementById('modal-qty').value) || 1;
+            let finalTotal = price * qty;
+            currentItem.totalCalculatedPrice = price; 
+
+            const confirmBtnText = document.getElementById('confirm-btn-text');
+            if (confirmBtnText) confirmBtnText.innerText = `ADD TO CART — $${finalTotal.toFixed(2)}`;
+        }
+
+        function setServiceType(type) {
+            currentService = type; 
+            const dineBtn = document.getElementById('btn-dine-in');
+            const takeBtn = document.getElementById('btn-takeout');
+            
+            if (type === 'Dine-in') {
+                dineBtn.className = "flex-1 rounded-2xl border-2 border-orange-500 bg-orange-50 text-orange-600 transition-all font-[800] text-[10px] uppercase tracking-widest";
+                takeBtn.className = "flex-1 rounded-2xl border-2 border-slate-200 bg-white text-slate-400 hover:bg-slate-50 transition-all font-[800] text-[10px] uppercase tracking-widest";
+            } else {
+                takeBtn.className = "flex-1 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-emerald-600 transition-all font-[800] text-[10px] uppercase tracking-widest";
+                dineBtn.className = "flex-1 rounded-2xl border-2 border-slate-200 bg-white text-slate-400 hover:bg-slate-50 transition-all font-[800] text-[10px] uppercase tracking-widest";
+            }
+        }
+
+        function clearCart() { cart = []; renderCart(); }
+        function closeModal() { 
+            document.getElementById('option-modal').classList.add('hidden'); 
+            document.getElementById('modal-qty').value = 1; // reset qty
+        }
+    </script>
+</body>
 </html>

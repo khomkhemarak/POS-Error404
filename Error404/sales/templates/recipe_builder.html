@@ -242,22 +242,29 @@
             
             allChips.forEach(chip => {
                 chip.classList.remove('active');
-                if (size === '' && chip.id === 'all-sizes-btn') chip.classList.add('active');
-                else if (chip.innerText.toLowerCase() === size.toLowerCase().charAt(0)) chip.classList.add('active');
+                // Logic to match chip text (e.g., "M", "L") to the filter
+                if (size === '' && chip.id === 'all-sizes-btn') {
+                    chip.classList.add('active');
+                } else if (size !== '' && chip.innerText.toLowerCase() === size.toLowerCase().charAt(0)) {
+                    chip.classList.add('active');
+                }
             });
 
             runFilters();
         }
 
         function runFilters() {
-            const searchTerm = document.getElementById('recipeSearch').value.toLowerCase();
+            const searchInput = document.getElementById('recipeSearch');
+            if (!searchInput) return;
+
+            const searchTerm = searchInput.value.toLowerCase();
             const rows = document.querySelectorAll('.recipe-row');
             let visibleCount = 0;
 
             rows.forEach(row => {
-                const product = row.getAttribute('data-product') || "";
-                const ingredient = row.getAttribute('data-ingredient') || "";
-                const size = row.getAttribute('data-size') || "";
+                const product = (row.getAttribute('data-product') || "").toLowerCase();
+                const ingredient = (row.getAttribute('data-ingredient') || "").toLowerCase();
+                const size = (row.getAttribute('data-size') || "").toLowerCase();
 
                 const matchesSearch = product.includes(searchTerm) || ingredient.includes(searchTerm);
                 const matchesSize = currentSizeFilter === '' || size === currentSizeFilter;
@@ -269,9 +276,49 @@
                     row.style.display = 'none';
                 }
             });
-            document.getElementById('activeRulesCount').innerText = visibleCount;
+            
+            const countDisplay = document.getElementById('activeRulesCount');
+            if (countDisplay) countDisplay.innerText = visibleCount;
         }
 
+        // --- SAVE STATE ---
+        window.onbeforeunload = function() {
+            const searchInput = document.getElementById('recipeSearch');
+            if (searchInput) {
+                localStorage.setItem('recipe_search_val', searchInput.value);
+            }
+            localStorage.setItem('recipe_size_filter', currentSizeFilter);
+            localStorage.setItem('recipe_scroll_pos', window.scrollY);
+        };
+
+        // --- RESTORE STATE ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedSearch = localStorage.getItem('recipe_search_val');
+            const savedSize = localStorage.getItem('recipe_size_filter');
+            const searchInput = document.getElementById('recipeSearch');
+
+            // Restore Search
+            if (savedSearch !== null && searchInput) {
+                searchInput.value = savedSearch;
+            }
+
+            // Restore Size Filter (Defaults to '' if none saved)
+            setSizeFilter(savedSize || '');
+
+            // Restore Scroll Position
+            const savedScroll = localStorage.getItem('recipe_scroll_pos');
+            if (savedScroll) {
+                // Use a slight timeout to ensure images/rows are rendered before scrolling
+                setTimeout(() => {
+                    window.scrollTo({
+                        top: parseInt(savedScroll),
+                        behavior: 'instant'
+                    });
+                }, 50); 
+            }
+        });
+
+        // Modal Logic
         function openCopyModal(productId, size, productName) {
             document.getElementById('modal_product_id').value = productId;
             document.getElementById('modal_source_size').value = size;
@@ -282,8 +329,6 @@
         function closeCopyModal() {
             document.getElementById('copyModal').classList.add('hidden');
         }
-
-        window.onload = () => setSizeFilter('');
     </script>
 </body>
 </html>

@@ -64,16 +64,16 @@ def admin_dashboard(request):
     milk = Ingredient.objects.filter(name__icontains="Milk").first()
     cups = Ingredient.objects.filter(name__icontains="Cup").aggregate(total=Sum('stock_quantity'))['total'] or 0
     
-    capacity_list = []
-    if beans:
-        capacity_list.append(int(beans.stock_quantity / 30)) # 30g per cup
-    if milk:
-        # Changed from 250 to 180 to give a more realistic capacity
-        capacity_list.append(int(milk.stock_quantity / 190)) 
-    if cups > 0:
-        capacity_list.append(int(cups))
+    # capacity_list = []
+    # if beans:
+    #     capacity_list.append(int(beans.stock_quantity / 30)) # 30g per cup
+    # if milk:
+    #     # Changed from 250 to 180 to give a more realistic capacity
+    #     capacity_list.append(int(milk.stock_quantity / 190)) 
+    # if cups > 0:
+    #     capacity_list.append(int(cups))
 
-    total_capacity = min(capacity_list) if capacity_list else 0
+    # total_capacity = min(capacity_list) if capacity_list else 0
 
     # 5. CONTEXT DATA
     context = {
@@ -87,7 +87,7 @@ def admin_dashboard(request):
         'products': Product.objects.all(),
         'categories': Category.objects.all(),
         'top_customers': Customer.objects.order_by('-points')[:5],
-        'total_capacity': total_capacity,
+        # 'total_capacity': total_capacity,
         # ALERTS: Only alert if under 500g or 1000ml (1 Liter)
         'low_stock_products': Product.objects.filter(stock__lt=10),
         'low_stock_ingredients': Ingredient.objects.filter(stock_quantity__lt=500), 
@@ -189,7 +189,9 @@ def monitoring_kitchen(request):
 
     return render(request, 'monitoring_kitchen.html', context)
 
+################################
 ######## inventory page ########
+################################
 
 def inventory_list(request):
     ingredients = Ingredient.objects.all().order_by('name')
@@ -474,7 +476,12 @@ def process_payment(request):
         service_type = data.get('service_type', 'Dine-in')
 
         with transaction.atomic():
-            new_order = Order.objects.create(total_amount=total_price, is_completed=True)
+            # CHANGE is_completed to False here!
+            new_order = Order.objects.create(
+                total_amount=total_price, 
+                is_completed=False, # Now it will show up in the kitchen
+                service_type=service_type # If you have this field in model
+            )
             # 1. LOYALTY POINTS LOGIC
             if customer_id:
                 try:
@@ -598,15 +605,20 @@ def process_order_stock(order_item):
         ingredient.save()
         
 def complete_order(request, order_id):
-    if request.method == 'POST':
-        # Find the specific order
+    if request.method == "POST":
         order = get_object_or_404(Order, id=order_id)
-        
-        # Switch status to True (Hidden from kitchen)
         order.is_completed = True
         order.save()
+
+        # Deduct stock based on your Recipe models
+        for item in order.items.all():
+            # Find the specific recipe for this product and size
+            recipe_items = Recipe.objects.filter(product=item.product, size=item.size)
+            for recipe in recipe_items:
+                recipe.deduct_stock(item.quantity)
         
-    # Redirect back to the kitchen screen
+        messages.success(request, f"Order #{order.id} sent to history.")
+    
     return redirect('kitchen_view')
 
 #############################
@@ -617,48 +629,81 @@ def is_manager(user):
     # This checks if the user is an admin OR in the 'Managers' group
     return user.is_staff or user.groups.filter(name='Managers').exists()
 
-def product_list_view(request):
+def manager_view(request):
     products = Product.objects.all()
     
-    # --- 1. Summary Cards Logic ---
+    # --- 1. Calculate Recipe-Based Stock ---
+    for product in products:
+        recipes = Recipe.objects.filter(product=product)
+        if not recipes.exists():
+            product.calculated_stock = 0
+            continue
+            
+        potential_servings = []
+        for r in recipes:
+            if r.ingredient.stock_quantity > 0:
+                servings = int(r.ingredient.stock_quantity / r.quantity)
+                potential_servings.append(servings)
+            else:
+                potential_servings.append(0)
+        
+        product.calculated_stock = min(potential_servings) if potential_servings else 0
+
+    # --- 2. Summary Cards Logic ---
     total_margin = sum(p.margin_percentage for p in products)
     count = products.count()
-    avg_margin = total_margin / count if count > 0 else 0
+    avg_profitability = total_margin / count if count > 0 else 0
     
-    # --- 2. Chart Data Logic (Last 30 Days) ---
+    # --- 3. REAL Chart Data Logic (Last 30 Days) ---
     today = timezone.now()
-    last_month = today - timedelta(days=30)
+    thirty_days_ago = today - timedelta(days=30)
     
-    # We fetch daily average margins from your Sales history
-    # Note: If you don't have a Sale model yet, use the 'labels' and 'data' lists below
+    # Fetch all items sold in the last 30 days from completed orders
+    # We use select_related to speed up the database query
+    recent_sold_items = OrderItem.objects.filter(
+        order__created_at__gte=thirty_days_ago,
+        order__is_completed=True
+    ).select_related('order', 'product')
+
+    # Group the margin percentages by day
+    daily_margins = {}
+    for item in recent_sold_items:
+        # Get the date string (e.g., 'Oct 24')
+        date_str = item.order.created_at.strftime('%b %d')
+        
+        if date_str not in daily_margins:
+            daily_margins[date_str] = []
+            
+        # Add this product's margin to that day's list
+        # We multiply by quantity in case they bought 3 of the same drink
+        for _ in range(item.quantity):
+            daily_margins[date_str].append(item.product.margin_percentage)
+
+    # Build the final lists for Chart.js
     chart_labels = []
     chart_data = []
     
-    # Example: Generating last 7-30 days of data
     for i in range(30, -1, -1):
-        date = today - timedelta(days=i)
-        chart_labels.append(date.strftime('%b %d'))
-        # This is where you'd query: Sale.objects.filter(created_at__date=date)...
-        # For now, we'll use a placeholder that fluctuates around your current avg_margin
-        import random
-        variation = random.uniform(-5, 5)
-        chart_data.append(float(avg_margin) + variation)
+        target_date = today - timedelta(days=i)
+        date_str = target_date.strftime('%b %d')
+        chart_labels.append(date_str)
+        
+        # If we sold things on this day, calculate the average margin
+        if date_str in daily_margins and len(daily_margins[date_str]) > 0:
+            day_avg = sum(daily_margins[date_str]) / len(daily_margins[date_str])
+            chart_data.append(round(float(day_avg), 1))
+        else:
+            # If nothing was sold that day, show 0 (or you could put avg_profitability here to keep the line flat)
+            chart_data.append(0)
 
-    # Example threshold, adjust as needed
-    low_stock_threshold = 10
-    low_stock_products = Product.objects.filter(stock__lte=low_stock_threshold)
-    low_stock_ingredients = Ingredient.objects.filter(stock_quantity__lte=low_stock_threshold)
     context = {
         'products': products,
-        'avg_margin': avg_margin,
+        'avg_profitability': avg_profitability, 
         'chart_labels': chart_labels,
         'chart_data': chart_data,
-        'low_stock_products': low_stock_products,
-        'low_stock_ingredients': low_stock_ingredients,
-        'all_ingredients': Ingredient.objects.all,
-        # ... keep your other context variables
+        'all_ingredients': Ingredient.objects.all(),
     }
-    return render(request, 'products_list.html', context)
+    return render(request, 'manager.html', context)
 
 #############################
 ####### Kitchen View ########
@@ -682,3 +727,21 @@ def kitchen_view(request):
         'pending_orders': pending_orders,
         'completed_orders': completed_orders
     })
+
+def toggle_product_availability(request, product_id):
+    if request.method == "POST":
+        product = get_object_or_404(Product, id=product_id)
+        product.is_available = not product.is_available
+        product.save()
+        
+        status = "Available" if product.is_available else "Snoozed/Sold Out"
+        messages.info(request, f"{product.name} is now {status}.")
+        
+    return redirect('kitchen_view')
+
+def snooze_product(request, product_id):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, id=product_id)
+        product.is_available = not product.is_available
+        product.save()
+    return redirect('kitchen_view')

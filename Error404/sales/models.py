@@ -7,6 +7,9 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+from django.db import models
+from decimal import Decimal
+
 class Product(models.Model):
     CATEGORIES = (
         ('Coffee', 'Coffee'),
@@ -24,6 +27,9 @@ class Product(models.Model):
     ice_upcharge = models.DecimalField(max_digits=6, decimal_places=2, default=0.25)
     frappe_upcharge = models.DecimalField(max_digits=6, decimal_places=2, default=0.50)
 
+    # --- NEW FIELD ---
+    is_available = models.BooleanField(default=True, help_text="Uncheck to hide from customer menu (Snooze)")
+
     # Availability toggles
     can_be_hot = models.BooleanField(default=True)
     can_be_iced = models.BooleanField(default=False)
@@ -34,48 +40,33 @@ class Product(models.Model):
     def __str__(self):
         return self.name
     
-    # --- DASHBOARD HELPER PROPERTIES (Default to Small/Hot) ---
+    # --- DASHBOARD HELPER PROPERTIES ---
 
     @property
     def price(self):
-        """Returns baseline price for dashboard display"""
         return self.base_price
 
     @property
     def total_cost(self):
-        """Returns baseline production cost for dashboard display"""
         return self.get_production_cost(size='Small')
 
     @property
     def net_revenue(self):
-        """Returns baseline revenue after 10% tax for dashboard display"""
         return round(self.base_price / Decimal('1.10'), 2)
-
-
 
     @property
     def margin_percentage(self):
-        """Calculates REAL profit margin % based on investment efficiency"""
-        net_revenue = self.net_revenue # Money kept after 10% tax
-        total_cost = self.total_cost   # Milk + Beans + Cup cost
-
+        net_revenue = self.net_revenue
+        total_cost = self.total_cost 
         if net_revenue <= 0 or total_cost <= 0:
             return 0
-
-        # 1. Calculate Real Profit (Money in pocket)
-        real_profit = net_revenue - total_cost # Example: $1.36 - $0.54 = $0.82
-
-        # 2. Calculate Efficiency (Return on investment)
-        # Correct Formula: Real Profit / Total Cost
-        real_efficiency = (real_profit / total_cost) * 100 # Example: ($0.82 / $0.54) * 100
-
-        return round(real_efficiency, 1) # Example: Returns 151.8%
+        real_profit = net_revenue - total_cost
+        real_efficiency = (real_profit / total_cost) * 100
+        return round(real_efficiency, 1)
 
     # --- PRICING & TAX LOGIC ---
 
     def get_final_price(self, size='Small', drink_type='Hot'):
-        """The total price the customer pays (Tax Inclusive)"""
-        # Look for size variants (assuming a related name 'variants' on a ProductVariant model)
         variant = getattr(self, 'variants', None)
         if variant:
             v_obj = variant.filter(attribute_value=size).first()
@@ -87,41 +78,29 @@ class Product(models.Model):
             price += self.ice_upcharge
         elif drink_type == 'Frappe':
             price += self.frappe_upcharge
-            
         return price
 
-    # --- PROFIT CALCULATION METHODS ---
-
     def get_net_revenue(self, size='Small', drink_type='Hot'):
-        """Extracts revenue AFTER 10% tax"""
         total_price = self.get_final_price(size, drink_type)
         return total_price / Decimal('1.10')
 
     def get_profit_margin(self, size='Small', drink_type='Hot'):
-        """Profit = (Price / 1.10) - Production Cost"""
         net_revenue = self.get_net_revenue(size, drink_type)
         production_cost = self.get_production_cost(size)
         return net_revenue - production_cost
 
-    # --- PRODUCTION COST & STOCK LOGIC ---
-
     def get_production_cost(self, size='Small'):
-        """Calculates cost of ingredients and packaging for a specific size"""
         total_cost = Decimal('0.00')
-        # Assuming related name 'recipes' on a Recipe model
         rules = self.recipes.filter(size=size) 
         for rule in rules:
-            # Multiplies recipe quantity by the unit_cost we built in the Ingredient model
             total_cost += rule.quantity * rule.ingredient.unit_cost
         return total_cost
 
     @property
     def real_profit(self):
-        """Actual money kept after tax and production costs"""
         return self.net_revenue - self.total_cost
 
     def reduce_stock(self, quantity):
-        """Manual reduction for pre-packaged goods"""
         if self.stock >= quantity:
             self.stock -= quantity
             self.save()
@@ -142,6 +121,7 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_completed = models.BooleanField(default=False)
+    service_type = models.CharField(max_length=20, default='Dine-in')
     customer = models.ForeignKey('Customer', on_delete=models.SET_NULL, null=True, blank=True)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=10.0) # 10%
 

@@ -2,143 +2,204 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Error404 | Kitchen Display</title>
+    <title>KITCHEN CTRL | Bold Flat 2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        @keyframes pulse-border {
-            0% { border-color: rgba(245, 158, 11, 0.5); }
-            50% { border-color: rgba(245, 158, 11, 1); box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
-            100% { border-color: rgba(245, 158, 11, 0.5); }
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;900&display=swap');
+        
+        body { 
+            font-family: 'Space Grotesk', sans-serif; 
+            background-color: #e2e8f0; /* Soft industrial slate to make white cards pop */
         }
-        .order-card-new { animation: pulse-border 2s infinite; }
-        .custom-grid { grid-auto-rows: min-content; }
+
+        /* True Flat 2.0 Layered Cards */
+        .flat-card { 
+            background: #ffffff;
+            border-radius: 1.25rem;
+            /* Soft, diffused shadow for modern depth */
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Floating hover effect */
+        .flat-card:hover { 
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.12), 0 10px 15px -5px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Grid */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            grid-auto-rows: min-content;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* True Flat 2.0 Buttons */
+        .flat-button {
+            border-radius: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .flat-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        .flat-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Smooth tab transition */
+        #pending-list, #history-list { transition: opacity 0.3s ease; }
+        
+        /* Clean Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-sans">
+<body class="text-slate-900 min-h-screen p-4 md:p-8">
 
-    <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
-        <div class="flex items-center gap-8">
-            <h1 class="text-4xl font-black tracking-tighter bg-gradient-to-r from-orange-500 to-amber-300 bg-clip-text text-transparent">
-                KITCHEN<span class="text-white ml-2 opacity-20">CTRL</span>
-            </h1>
-            
-            <nav class="flex bg-slate-900 p-1.5 rounded-2xl border border-slate-800 shadow-2xl">
-                <button id="tab-pending" onclick="showTab('pending')" class="px-8 py-3 rounded-xl font-black text-sm bg-orange-600 text-slate-950 transition-all shadow-lg shadow-orange-600/20 uppercase tracking-widest">
-                    LIVE QUEUE ({{ pending_orders.count }})
-                </button>
-                <button id="tab-history" onclick="showTab('history')" class="px-8 py-3 rounded-xl font-black text-sm text-slate-500 hover:text-white transition-all uppercase tracking-widest">
-                    HISTORY
-                </button>
-            </nav>
-        </div>
-        
-        <div class="flex items-center gap-4">
-            <div class="text-right hidden sm:block">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Station Time</p>
-                <div class="text-2xl font-mono font-black text-orange-500" id="live-clock">--:--:--</div>
+    <header class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-10">
+        <div class="md:col-span-5 flat-card p-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl font-black tracking-tighter uppercase text-slate-800">
+                    KITCHEN<span class="text-orange-500"> VIEW</span>
+                </h1>
+                <span class="text-xs font-bold tracking-[0.2em] text-slate-400 mt-1 block">STATION DASHBOARD</span>
             </div>
-            <div class="h-10 w-[1px] bg-slate-800 mx-2"></div>
-            <a href="{% url 'admin_dashboard' %}" class="bg-slate-900 hover:bg-slate-800 p-3 rounded-xl border border-slate-800 text-slate-400 transition">
-                <i class="bi bi-grid-fill"></i>
+            <div class="h-14 w-14 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-500">
+                <i class="bi bi-display-fill text-2xl"></i>
+            </div>
+        </div>
+
+        <div class="md:col-span-4 flat-card p-3 flex gap-3 bg-white/80 backdrop-blur-sm">
+            <button id="tab-pending" onclick="showTab('pending')" class="flex-1 py-4 text-sm bg-orange-500 text-white flat-button">
+                IN-PROGRESS (<span id="queue-count">{{ pending_orders.count }}</span>)
+            </button>
+            <button id="tab-history" onclick="showTab('history')" class="flex-1 py-4 font-bold text-sm bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 rounded-xl transition-colors uppercase">
+                HISTORY
+            </button>
+        </div>
+
+        <div class="md:col-span-3 flat-card p-5 flex items-center justify-between bg-slate-800 text-white">
+            <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">LOCAL TIME</span>
+                <div class="text-3xl font-mono font-black text-orange-400 leading-none" id="live-clock">00:00:00</div>
+            </div>
+            <a href="{% url 'admin_dashboard' %}" class="h-12 w-12 bg-slate-700 hover:bg-slate-600 rounded-xl flex items-center justify-center transition-colors shadow-sm">
+                <i class="bi bi-grid-fill text-xl text-slate-200"></i>
             </a>
         </div>
     </header>
 
-    <div id="pending-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 custom-grid">
+    <div id="pending-list" class="bento-grid">
         {% for order in pending_orders %}
-        <div class="bg-slate-900 rounded-[2.5rem] overflow-hidden border-2 border-slate-800 flex flex-col h-fit shadow-2xl order-card-new transition-transform hover:scale-[1.02]">
-            <div class="p-6 bg-slate-800/50 border-b border-slate-700 flex justify-between items-center">
-                <div>
-                    <span class="text-[10px] font-black text-orange-500 uppercase tracking-widest block">Order ID</span>
-                    <span class="font-black text-3xl text-white">#{{ order.id }}</span>
-                </div>
-                <div class="text-right">
-                    <span class="inline-flex items-center gap-1.5 text-[10px] font-black bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full uppercase border border-orange-500/20">
-                        <i class="bi bi-stopwatch"></i> {{ order.created_at|timesince }}
-                    </span>
-                </div>
-            </div>
+        <div class="flat-card flex flex-col max-h-[700px] border-t-8 border-t-orange-500">
             
-            <div class="p-6 flex-grow">
-                <div class="space-y-3">
-                    {% for item in order.items.all %}
-                    <div class="flex justify-between items-start bg-slate-950/50 p-4 rounded-2xl border border-slate-800 group hover:border-orange-500/30 transition">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-2xl font-black text-orange-500">{{ item.quantity }}x</span>
-                                <span class="font-black text-lg text-slate-200 tracking-tight leading-tight">{{ item.product.name }}</span>
-                            </div>
-                            <div class="flex gap-2 mt-2">
-                                <span class="text-[10px] font-black text-slate-500 uppercase tracking-tighter bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                                    {{ item.size }}
-                                </span>
-                                <span class="text-[10px] font-black text-slate-500 uppercase tracking-tighter bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                                    {{ item.sugar }} Sugar
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <span class="px-2 py-1 rounded-lg text-[9px] font-black uppercase border 
-                            {% if item.drink_type == 'Hot' %} border-orange-500/30 text-orange-500
-                            {% elif item.drink_type == 'Iced' %} border-cyan-500/30 text-cyan-500
-                            {% else %} border-purple-500/30 text-purple-500 {% endif %}">
-                            {{ item.drink_type }}
-                        </span>
-                    </div>
-                    {% endfor %}
+            <div class="p-6 border-b border-slate-100 flex justify-between items-start bg-slate-50 rounded-t-xl">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Order ID</span>
+                    <h2 class="text-4xl font-black text-slate-900 mt-1 leading-none">#{{ order.id }}</h2>
+                </div>
+                <div class="bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full text-xs font-black uppercase flex items-center gap-1.5">
+                    <i class="bi bi-stopwatch"></i> {{ order.created_at|timesince }}
                 </div>
             </div>
 
-            <div class="p-6 pt-0">
+            <div class="p-2 flex-grow overflow-y-auto custom-scroll">
+                {% for item in order.items.all %}
+                <div class="p-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors rounded-xl">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl font-black text-orange-500 bg-orange-50 px-2 py-1 rounded-lg">{{ item.quantity }}x</span>
+                            <span class="font-bold text-slate-800 text-xl leading-tight">{{ item.product.name }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full uppercase">{{ item.size }}</span>
+                        <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full uppercase">{{ item.sugar }} Sugar</span>
+                        
+                        <span class="text-[10px] font-bold px-3 py-1 rounded-full uppercase ml-auto shadow-sm
+                            {% if item.drink_type == 'Hot' %} bg-red-500 text-white
+                            {% elif item.drink_type == 'Iced' %} bg-cyan-500 text-white
+                            {% else %} bg-purple-500 text-white {% endif %}">
+                            {{ item.drink_type }}
+                        </span>
+                    </div>
+
+                    {% if item.product.stock < item.quantity or not item.product.is_available %}
+                    <div class="mt-4 bg-red-50 border border-red-100 rounded-xl p-3 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="bi bi-exclamation-circle-fill text-red-500"></i>
+                            <span class="text-xs font-bold text-red-600 uppercase">
+                                {% if not item.product.is_available %} Sold Out {% else %} Low: {{ item.product.stock }} {% endif %}
+                            </span>
+                        </div>
+                        <form action="{% url 'snooze_product' item.product.id %}" method="POST" class="m-0">
+                            {% csrf_token %}
+                            <button class="bg-white text-red-600 border border-red-200 text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase hover:bg-red-50 transition-colors shadow-sm">
+                                Snooze
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="p-5 bg-white rounded-b-xl border-t border-slate-100">
                 <form action="{% url 'complete_order' order.id %}" method="POST">
                     {% csrf_token %}
-                    <button type="submit" class="w-full bg-slate-100 hover:bg-orange-500 text-slate-950 py-5 rounded-2xl font-black transition-all flex items-center justify-center gap-3 group">
-                        <span class="uppercase tracking-widest text-sm">MARK AS READY</span>
-                        <i class="bi bi-arrow-right-circle-fill text-xl group-hover:translate-x-1 transition-transform"></i>
+                    <button type="submit" class="w-full bg-emerald-500 text-white py-4 text-sm flex items-center justify-center gap-2 flat-button hover:bg-emerald-600">
+                        MARK AS READY <i class="bi bi-check-circle-fill text-lg"></i>
                     </button>
                 </form>
             </div>
         </div>
         {% empty %}
-        <div class="col-span-full py-40 text-center">
-            <div class="inline-flex w-24 h-24 bg-slate-900 rounded-full items-center justify-center mb-6 border border-slate-800">
-                <i class="bi bi-cup-hot text-5xl text-slate-700"></i>
+        <div class="col-span-full h-80 flex flex-col items-center justify-center flat-card bg-white/50 border-2 border-dashed border-slate-300">
+            <div class="h-20 w-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                <i class="bi bi-cup-hot-fill text-4xl"></i>
             </div>
-            <h2 class="text-2xl font-black text-slate-600 uppercase tracking-widest">All caught up!</h2>
-            <p class="text-slate-500 mt-2 font-medium">No pending orders in the queue.</p>
+            <h2 class="text-2xl font-black text-slate-400 uppercase tracking-widest">In-Progress is Clear</h2>
+            <p class="text-slate-400 font-medium mt-1">Waiting for incoming orders...</p>
         </div>
         {% endfor %}
     </div>
 
     <div id="history-list" class="hidden">
-        <div class="bg-slate-900 rounded-[2.5rem] border border-slate-800 overflow-hidden shadow-2xl">
-            <table class="w-full text-left">
-                <thead class="bg-slate-800/50 text-slate-500 border-b border-slate-800">
+        <div class="flat-card overflow-hidden">
+            <div class="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Recent Order History</h2>
+                <span class="bg-slate-200 text-slate-600 px-3 py-1 rounded-full font-bold text-xs uppercase">Today</span>
+            </div>
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-white text-slate-400 uppercase text-[10px] font-bold border-b border-slate-100 tracking-widest">
                     <tr>
-                        <th class="p-6 font-black uppercase text-[10px] tracking-widest">Time</th>
-                        <th class="p-6 font-black uppercase text-[10px] tracking-widest">Order ID</th>
-                        <th class="p-6 font-black uppercase text-[10px] tracking-widest">Details</th>
-                        <th class="p-6 font-black uppercase text-[10px] tracking-widest text-right">Status</th>
+                        <th class="p-5">Time Completed</th>
+                        <th class="p-5">Order Reference</th>
+                        <th class="p-5 text-right">Status</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-800/50">
+                <tbody class="divide-y divide-slate-100 bg-white">
                     {% for order in completed_orders %}
-                    <tr class="hover:bg-slate-800/20 transition-colors group">
-                        <td class="p-6 font-mono text-orange-500/50 font-bold">{{ order.created_at|date:"H:i" }}</td>
-                        <td class="p-6 font-black text-white text-lg">#{{ order.id }}</td>
-                        <td class="p-6">
-                            <div class="flex flex-wrap gap-2">
-                                {% for item in order.items.all %}
-                                <span class="text-xs font-bold text-slate-400 bg-slate-950 px-3 py-1 rounded-lg border border-slate-800">
-                                    {{ item.quantity }}x {{ item.product.name }}
-                                </span>
-                                {% endfor %}
-                            </div>
-                        </td>
-                        <td class="p-6 text-right">
-                            <span class="inline-flex items-center gap-2 text-emerald-500 font-black text-xs uppercase tracking-widest">
-                                <i class="bi bi-check2-circle text-lg"></i> DISPATCHED
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-5 font-mono text-slate-500 font-bold text-sm">{{ order.created_at|date:"H:i A" }}</td>
+                        <td class="p-5 font-black text-slate-800 text-xl">#{{ order.id }}</td>
+                        <td class="p-5 text-right">
+                            <span class="bg-emerald-50 text-emerald-600 font-bold text-[10px] uppercase px-3 py-1 rounded-full flex items-center justify-end gap-1.5 w-max ml-auto">
+                                <i class="bi bi-check2-all text-sm"></i> Done
                             </span>
                         </td>
                     </tr>
@@ -160,32 +221,72 @@
             if (tabName === 'pending') {
                 pending.classList.remove('hidden');
                 history.classList.add('hidden');
-                btnPending.className = "px-8 py-3 rounded-xl font-black text-sm bg-orange-600 text-slate-950 transition-all shadow-lg shadow-orange-600/20 uppercase tracking-widest";
-                btnHistory.className = "px-8 py-3 rounded-xl font-black text-sm text-slate-500 hover:text-white transition-all uppercase tracking-widest";
+                
+                btnPending.className = "flex-1 py-4 text-sm bg-orange-500 text-white flat-button";
+                btnHistory.className = "flex-1 py-4 font-bold text-sm bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 rounded-xl transition-colors uppercase shadow-none transform-none";
             } else {
                 pending.classList.add('hidden');
                 history.classList.remove('hidden');
-                btnHistory.className = "px-8 py-3 rounded-xl font-black text-sm bg-orange-600 text-slate-950 transition-all shadow-lg shadow-orange-600/20 uppercase tracking-widest";
-                btnPending.className = "px-8 py-3 rounded-xl font-black text-sm text-slate-500 hover:text-white transition-all uppercase tracking-widest";
+                
+                btnHistory.className = "flex-1 py-4 text-sm bg-orange-500 text-white flat-button";
+                btnPending.className = "flex-1 py-4 font-bold text-sm bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 rounded-xl transition-colors uppercase shadow-none transform-none";
             }
         }
 
+        // 1. Live Clock Logic
         setInterval(() => {
-            document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
+            const clock = document.getElementById('live-clock');
+            if(clock) clock.innerText = new Date().toLocaleTimeString('en-US', { hour12: false });
         }, 1000);
 
-        // Sound & Refresh Logic
-        const currentOrderCount = {{ pending_orders.count }};
-        const previousOrderCount = localStorage.getItem('last_order_count') || 0;
+        // 2. Automatic Refresh Logic (The "Heartbeat")
+        async function refreshOrders() {
+            try {
+                // Fetch the current page HTML in the background
+                const response = await fetch(window.location.href);
+                const html = await response.text();
+                
+                // Convert the text into a temporary DOM object
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Grab the new content from the background fetch
+                const newPendingContent = doc.getElementById('pending-list').innerHTML;
+                const newCounterHTML = doc.getElementById('queue-count').innerHTML;
+                
+                // Grab the current live containers
+                const currentList = document.getElementById('pending-list');
+                const currentCounter = document.getElementById('queue-count');
 
-        if (currentOrderCount > previousOrderCount) {
-            const sound = document.getElementById('order-sound');
-            sound.play().catch(() => console.log("Sound blocked by browser. Click page to enable."));
+                // ONLY update if the content has actually changed
+                if (currentList.innerHTML.trim() !== newPendingContent.trim()) {
+                    
+                    // Sound Logic: Compare old count vs new count
+                    const newCount = parseInt(newCounterHTML);
+                    const lastCount = parseInt(localStorage.getItem('last_order_count') || 0);
+
+                    if (newCount > lastCount) {
+                        const sound = document.getElementById('order-sound');
+                        if(sound) sound.play().catch(e => console.log("Audio needs user interaction first"));
+                    }
+
+                    // Update the DOM with the new orders
+                    currentList.innerHTML = newPendingContent;
+                    if(currentCounter) currentCounter.innerHTML = newCounterHTML;
+                    
+                    // Save the new count for the next comparison
+                    localStorage.setItem('last_order_count', newCount);
+                }
+            } catch (err) {
+                console.error("Connection to server lost. Retrying...", err);
+            }
         }
-        localStorage.setItem('last_order_count', currentOrderCount);
 
-        // 20 second refresh for high-speed kitchen response
-        setTimeout(() => { window.location.reload(); }, 20000);
+        // Initialize the count on first load
+        localStorage.setItem('last_order_count', "{{ pending_orders.count }}");
+
+        // Run the check every 5 seconds (5000 milliseconds)
+        setInterval(refreshOrders, 5000);
     </script>
 </body>
 </html>

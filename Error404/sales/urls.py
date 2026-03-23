@@ -6,7 +6,7 @@ urlpatterns = [
     path('pos/', views.pos_view, name='pos_home'),
     path('check-stock/<int:product_id>/', views.check_stock, name='check_stock'),
     path('api/customer-lookup/', views.customer_lookup, name='customer_lookup'),
-    path('api/register-customer/', views.register_customer, name='register_customer'),
+    path('api/register-custo    mer/', views.register_customer, name='register_customer'),
 
     # API endpoints for the Frontend to talk to the Backend
     path('api/process-payment/', views.process_payment, name='process_payment'),
@@ -14,6 +14,7 @@ urlpatterns = [
     # Kitchen Display System (KDS) - to see active tickets
     path('kitchen/', views.kitchen_view, name='kitchen_view'),
     path('kitchen/complete/<int:order_id>/', views.complete_order, name='complete_order'),
+    path('product/snooze/<int:product_id>/', views.toggle_product_availability, name='snooze_product'),
 
     # Admin Dashboard for managing products, categories, and orders
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
@@ -27,5 +28,5 @@ urlpatterns = [
     path('mokit/', views.monitoring_kitchen, name='monitoring_kitchen'),
 
     # Managerial Analytics and Reporting
-    path('manager/', views.product_list_view, name='product_list'),
+    path('manager/', views.manager_view, name='manager_display'),
 ]
