@@ -117,7 +117,6 @@ def add_product(request):
             can_be_hot=is_hot,
             can_be_iced=is_iced,
             can_be_frappe=is_frappe,
-            # Pass the category name string to match your Product model choice field
             category=category_obj.name 
         )
         
