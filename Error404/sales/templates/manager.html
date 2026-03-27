@@ -94,6 +94,7 @@
         
         <div class="space-y-8">
             
+            <!-- Header Section -->
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <div class="flex items-center gap-3 mb-2">
@@ -111,12 +112,33 @@
                     <p class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest mt-1">Catalog & Profitability Analysis</p>
                 </div>
                 
-                <a href="{% url 'add_product' %}" class="flex items-center justify-center gap-3 bg-orange-500 hover:bg-orange-600 text-white font-[800] px-8 py-4 rounded-2xl transition-all shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[10px] border-2 border-orange-500">
-                    <i class="bi bi-plus-lg text-lg"></i>
-                    <span>Add New Drink</span>
-                </a>
+                <!-- Actions: Date Filter & Add Button -->
+                <div class="flex flex-col sm:flex-row w-full md:w-auto gap-4">
+                    <div class="relative inline-block text-left w-full sm:w-auto">
+                        <!-- FIXED: Changed onchange from updateManagerStats() to updateDashboardData() -->
+                        <select id="dateRangeFilter" onchange="updateDashboardData()" 
+                                class="appearance-none w-full bg-white border-2 border-slate-200 rounded-2xl py-4 pl-5 pr-12 text-slate-900 font-bold focus:outline-none focus:border-orange-500 transition-all cursor-pointer text-[10px] uppercase tracking-widest shadow-sm">
+                            <optgroup label="Manager View (Operations)">
+                                <option value="today" selected>Today</option>
+                                <option value="week">This Week</option>
+                            </optgroup>
+                            <optgroup label="Owner View (Growth)">
+                                <option value="month">This Month</option>
+                                <option value="30days">Last 30 Days</option>
+                                <option value="year">Year to Date</option>
+                            </optgroup>
+                        </select>
+                        <i class="bi bi-calendar3 absolute right-5 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none"></i>
+                    </div>
+
+                    <a href="{% url 'add_product' %}" class="flex items-center justify-center gap-3 bg-orange-500 hover:bg-orange-600 text-white font-[800] px-8 py-4 rounded-2xl transition-all shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[10px] border-2 border-orange-500 w-full sm:w-auto">
+                        <i class="bi bi-plus-lg text-lg"></i>
+                        <span>Add New Drink</span>
+                    </a>
+                </div>
             </div>
 
+            <!-- Bento Stat Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 <div class="bento-card p-8 rounded-[2.5rem] flex flex-col justify-between shadow-sm">
@@ -126,9 +148,9 @@
                         </div>
                         <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Avg. Profitability</span>
                     </div>
-                    <h3 class="text-5xl font-[800] text-slate-900 mb-4">{{ avg_profitability|floatformat:1 }}%</h3>
+                    <h3 id="display-avg-profit" class="text-5xl font-[800] text-slate-900 mb-4">{{ avg_profitability|floatformat:1 }}%</h3>
                     <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                        <div class="h-full bg-orange-500 rounded-full" style="width: {{ avg_profitability }}%"></div>
+                        <div id="bar-avg-profit" class="h-full bg-orange-500 rounded-full transition-all duration-500" style="width: {{ avg_profitability }}%"></div>
                     </div>
                 </div>
 
@@ -140,7 +162,7 @@
                         <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Total Drinks</span>
                     </div>
                     <div>
-                        <h3 class="text-5xl font-[800] text-slate-900 mb-1">{{ products.count }}</h3>
+                        <h3 id="display-total-drinks" class="text-5xl font-[800] text-slate-900 mb-1">{{ products.count }}</h3>
                         <p class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest">Active SKUs Listed</p>
                     </div>
                 </div>
@@ -156,6 +178,7 @@
                 </div>
             </div>
 
+            <!-- Inventory / Product Table -->
             <div class="bento-card rounded-[2.5rem] overflow-hidden shadow-sm">
                 
                 <div class="p-6 border-b-2 border-slate-100 bg-white/50 flex flex-col md:flex-row gap-4 justify-between">
@@ -298,7 +321,7 @@
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         }
 
-        // Search / Filtering Logic (Restored)
+        // Search / Filtering Logic
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('productSearch');
             const rows = document.querySelectorAll('.product-row');
@@ -306,7 +329,6 @@
             function filterTable() {
                 const query = searchInput.value.toLowerCase();
                 rows.forEach(row => {
-                    // Added querySelector safety check
                     const nameEl = row.querySelector('.productName');
                     if(nameEl) {
                         const name = nameEl.innerText.toLowerCase();
@@ -315,6 +337,9 @@
                 });
             }
             if(searchInput) searchInput.addEventListener('input', filterTable);
+            
+            // NEW: Fetch initial stats so they match the "Today" view by default
+            updateDashboardData();
         });
 
         // Modal Logic
@@ -408,6 +433,45 @@
         // Run ecosystem updates every 1 second
         setInterval(updateDashboardEcosystem, 1000);
         updateDashboardEcosystem(); // Initial call
+
+        // NEW: Live Stat Fetching API
+        async function updateDashboardData() {
+            const range = document.getElementById('dateRangeFilter').value;
+            
+            // Select all potential display elements
+            const elements = {
+                revenue: document.getElementById('revenueValue'),
+                profit: document.getElementById('profitValue'),
+                orders: document.getElementById('orderCount'),
+                managerProfit: document.getElementById('display-avg-profit'),
+                profitBar: document.getElementById('bar-avg-profit')
+            };
+
+            // Visual feedback: Add a slight fade out
+            Object.values(elements).forEach(el => { if(el) el.style.opacity = '0.5'; });
+
+            try {
+                const response = await fetch(`/api/dashboard-stats/?range=${range}`);
+                const data = await response.json();
+
+                // Update Owner Stats (Will safely ignore on Manager page if these IDs don't exist)
+                if (elements.revenue) elements.revenue.innerText = `$${data.revenue.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                if (elements.profit) elements.profit.innerText = `$${data.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                if (elements.orders) elements.orders.innerText = data.orders;
+
+                // Update Manager Stats
+                if (elements.managerProfit) {
+                    elements.managerProfit.innerText = `${data.avg_profit.toFixed(1)}%`;
+                    elements.profitBar.style.width = `${data.avg_profit}%`;
+                }
+
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            } finally {
+                // Fade back in
+                Object.values(elements).forEach(el => { if(el) el.style.opacity = '1'; });
+            }
+        }
     </script>
 </body>
 </html>

@@ -2,6 +2,7 @@ import json
 import math
 from decimal import Decimal
 from datetime import timedelta
+import calendar
 
 # Django Core
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,7 +13,7 @@ from django.contrib import messages
 # Database & Querying
 from django.db import transaction
 from django.db.models import Sum, Count, F, Avg
-from django.db.models.functions import ExtractHour, TruncDay
+from django.db.models.functions import ExtractHour, ExtractDay, ExtractMonth, TruncDay
 
 # Decorators
 from django.views.decorators.csrf import csrf_exempt
@@ -37,48 +38,48 @@ from .models import (
 def is_admin(user):
     return user.groups.filter(name='Admin').exists() or user.is_superuser
 
-def admin_dashboard(request):
-    # 1. Sales Analytics
-    total_revenue = Order.objects.filter(is_completed=True).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-    order_count = Order.objects.filter(is_completed=True).count()
+def owner_view(request):
+    # --- 1. TIME WINDOW ---
+    now = timezone.now()
+    # Default initial view is "Today"
+    start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
     
-    # 2. Profit Calculation
-    total_profit = Decimal('0.00')
-    completed_items = OrderItem.objects.filter(order__is_completed=True).select_related('product')
-    for item in completed_items:
-        try:
-            cost_per_unit = item.product.get_production_cost()
-            sale_price = getattr(item, 'price', item.product.base_price) 
-            total_profit += (sale_price - cost_per_unit) * item.quantity
-        except: continue
+    # Define today's completed orders
+    orders = Order.objects.filter(is_completed=True, created_at__gte=start_date)
 
-    # 3. Popular Items & Charts
-    popular_items = OrderItem.objects.filter(order__is_completed=True).values('product__name').annotate(total_qty=Sum('quantity')).order_by('-total_qty')[:5]
-    sales_by_hour = Order.objects.filter(is_completed=True).annotate(hour=ExtractHour('created_at')).values('hour').annotate(total=Sum('total_amount')).order_by('hour')
+    # --- 2. REVENUE & ORDERS ---
+    total_revenue = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    order_count = orders.count()
+
+    # --- 3. DYNAMIC PROFIT CALCULATION ---
+    total_profit = Decimal('0.00')
+    items = OrderItem.objects.filter(order__in=orders).select_related('product')
+
+    for item in items:
+        try:
+            cost_per_unit = item.product.get_production_cost(size=item.size)
+            actual_price = item.product.get_final_price(size=item.size, drink_type=item.drink_type)
+            net_revenue_per_unit = actual_price / Decimal('1.10')
+            total_profit += (net_revenue_per_unit - cost_per_unit) * item.quantity
+        except Exception as e:
+            continue
+
+    # --- 4. ANALYTICS & CHARTS (Initial: Today) ---
+    popular_items = OrderItem.objects.filter(order__in=orders).values('product__name').annotate(
+        total_qty=Sum('quantity')
+    ).order_by('-total_qty')[:5]
+
+    sales_by_hour = orders.annotate(
+        hour=ExtractHour('created_at')
+    ).values('hour').annotate(total=Sum('total_amount')).order_by('hour')
+    
     labels = [f"{item['hour']}:00" for item in sales_by_hour]
     sales_data = [float(item['total']) for item in sales_by_hour]
 
-    # 4. FIXED CAPACITY LOGIC
-    # We use lower dividers to represent real coffee usage
-    beans = Ingredient.objects.filter(name__icontains="Bean").first()
-    milk = Ingredient.objects.filter(name__icontains="Milk").first()
-    cups = Ingredient.objects.filter(name__icontains="Cup").aggregate(total=Sum('stock_quantity'))['total'] or 0
-    
-    # capacity_list = []
-    # if beans:
-    #     capacity_list.append(int(beans.stock_quantity / 30)) # 30g per cup
-    # if milk:
-    #     # Changed from 250 to 180 to give a more realistic capacity
-    #     capacity_list.append(int(milk.stock_quantity / 190)) 
-    # if cups > 0:
-    #     capacity_list.append(int(cups))
-
-    # total_capacity = min(capacity_list) if capacity_list else 0
-
-    # 5. CONTEXT DATA
+    # --- 5. CONTEXT ---
     context = {
         'total_revenue': total_revenue,
-        'total_profit': total_profit,
+        'total_profit': total_profit.quantize(Decimal('0.01')),
         'order_count': order_count,
         'popular_items': popular_items,
         'labels': labels,
@@ -87,13 +88,10 @@ def admin_dashboard(request):
         'products': Product.objects.all(),
         'categories': Category.objects.all(),
         'top_customers': Customer.objects.order_by('-points')[:5],
-        # 'total_capacity': total_capacity,
-        # ALERTS: Only alert if under 500g or 1000ml (1 Liter)
         'low_stock_products': Product.objects.filter(stock__lt=10),
         'low_stock_ingredients': Ingredient.objects.filter(stock_quantity__lt=500), 
     }
-
-    return render(request, 'admin_dashboard.html', context)
+    return render(request, 'owner.html', context)
 
 def add_product(request):
     if request.method == "POST":
@@ -121,7 +119,7 @@ def add_product(request):
         )
         
         messages.success(request, f'Drink "{name}" added successfully!')
-        return redirect('admin_dashboard')
+        return redirect('owner')
     
 def delete_product(request, product_id):
     if request.method == "POST":
@@ -129,7 +127,7 @@ def delete_product(request, product_id):
         name = product.name
         product.delete()
         messages.warning(request, f'"{name}" has been removed from the menu.')
-    return redirect('admin_dashboard')
+    return redirect('owner')
 
 def edit_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -157,7 +155,7 @@ def edit_product(request, product_id):
         product.save()
 
         messages.info(request, f'Updated "{product.name}" details.')
-        return redirect('admin_dashboard')
+        return redirect('owner')
 
 def pos_screen(request):
     return render(request, 'pos.html', {
@@ -703,6 +701,66 @@ def manager_view(request):
         'all_ingredients': Ingredient.objects.all(),
     }
     return render(request, 'manager.html', context)
+
+def api_dashboard_stats(request):
+    range_type = request.GET.get('range', 'today')
+    now = timezone.now()
+    current_month_name = now.strftime('%b') # Get 'Mar', 'Apr', etc.
+    
+    # --- 1. SET START DATE & CHART GROUPING ---
+    if range_type == 'today':
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        group_by = ExtractHour('created_at')
+        label_fmt = lambda x: f"{x}:00"
+        
+    elif range_type == 'week':
+        # Start from Monday of the current week
+        start_date = now - timedelta(days=now.weekday())
+        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        group_by = ExtractDay('created_at')
+        label_fmt = lambda x: f"{current_month_name} {x}"
+        
+    elif range_type in ['month', '30days']:
+        start_date = now.replace(day=1, hour=0, minute=0, second=0) 
+        group_by = ExtractDay('created_at')
+        label_fmt = lambda x: f"{current_month_name} {x}"
+        
+    elif range_type == 'year':
+        start_date = now.replace(month=1, day=1, hour=0, minute=0)
+        group_by = ExtractMonth('created_at')
+        label_fmt = lambda x: calendar.month_name[x][:3]
+        
+    else:
+        start_date = now.replace(hour=0, minute=0, second=0)
+        group_by = ExtractHour('created_at')
+        label_fmt = lambda x: f"{x}:00"
+
+    # --- 2. FILTER & CALCULATE ---
+    orders = Order.objects.filter(is_completed=True, created_at__gte=start_date)
+    
+    total_rev = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    
+    total_profit = Decimal('0.00')
+    items = OrderItem.objects.filter(order__in=orders).select_related('product')
+    for item in items:
+        try:
+            cost = item.product.get_production_cost(size=item.size)
+            price = item.product.get_final_price(size=item.size, drink_type=item.drink_type)
+            total_profit += ((price / Decimal('1.10')) - cost) * item.quantity
+        except: continue
+
+    # --- 3. TREND DATA ---
+    sales_trend = orders.annotate(unit=group_by).values('unit').annotate(
+        total=Sum('total_amount')
+    ).order_by('unit')
+
+    return JsonResponse({
+        'revenue': float(total_rev),
+        'profit': float(total_profit),
+        'orders': orders.count(),
+        'labels': [label_fmt(x['unit']) for x in sales_trend],
+        'sales_data': [float(x['total']) for x in sales_trend],
+    })
 
 #############################
 ####### Kitchen View ########

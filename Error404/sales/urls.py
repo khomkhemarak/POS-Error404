@@ -6,7 +6,7 @@ urlpatterns = [
     path('pos/', views.pos_view, name='pos_home'),
     path('check-stock/<int:product_id>/', views.check_stock, name='check_stock'),
     path('api/customer-lookup/', views.customer_lookup, name='customer_lookup'),
-    path('api/register-custo    mer/', views.register_customer, name='register_customer'),
+    path('api/register-customer/', views.register_customer, name='register_customer'),
 
     # API endpoints for the Frontend to talk to the Backend
     path('api/process-payment/', views.process_payment, name='process_payment'),
@@ -17,7 +17,7 @@ urlpatterns = [
     path('product/snooze/<int:product_id>/', views.toggle_product_availability, name='snooze_product'),
 
     # Admin Dashboard for managing products, categories, and orders
-    path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('dashboard/', views.owner_view, name='owner'),
     path('add-product/', views.add_product, name='add_product'),
     path('edit-product/<int:product_id>/', views.edit_product, name='edit_product'),
     path('delete-product/<int:product_id>/', views.delete_product, name='delete_product'),
@@ -29,4 +29,5 @@ urlpatterns = [
 
     # Managerial Analytics and Reporting
     path('manager/', views.manager_view, name='manager_display'),
+    path('api/dashboard-stats/', views.api_dashboard_stats, name='api_dashboard_stats'),
 ]
