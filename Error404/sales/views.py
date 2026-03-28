@@ -559,30 +559,33 @@ def process_payment(request):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     
-def process_order_stock(order_item):
+def process_order_stock(order_item, new_order):
     # order_item contains: product, sugar_multiplier, qty
     recipe_ingredients = Recipe.objects.filter(product=order_item.product)
-
+    
     for item in recipe_ingredients:
+        # Calculate base reduction
         reduction_amount = item.quantity * order_item.qty
         
         # Check if the ingredient is a sugar/sweetener type
         if "sugar" in item.ingredient.name.lower() or "syrup" in item.ingredient.name.lower():
-            # Apply the 50% logic here
+            # Apply the sugar multiplier logic
             reduction_amount = reduction_amount * order_item.sugar_multiplier
             
         # Subtract from inventory
         ingredient = item.ingredient
         ingredient.stock_quantity -= reduction_amount
         ingredient.save()
-
+        
+        # Record to History
         StockHistory.objects.create(
-        ingredient=ingredient,
-        amount=-usage,
-        type='REDUCTION',
-        # This is the line that makes it show up in your template
-        notes=f"Order #{new_order.id} ({product.name})" 
-    )
+            ingredient=ingredient,
+            # FIX: Use 'reduction_amount' instead of 'usage'
+            amount=-reduction_amount, 
+            type='REDUCTION',
+            # FIX: Use 'new_order.id' and 'order_item.product.name'
+            notes=f"Order #{new_order.id} ({order_item.product.name})"
+        )
         
 def complete_order(request, order_id):
     if request.method == "POST":
