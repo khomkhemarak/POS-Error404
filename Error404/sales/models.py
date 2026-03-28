@@ -255,12 +255,31 @@ class RecipeRequirement(models.Model):
         return f"{self.quantity_needed} of {self.ingredient.name} for {self.recipe.name}"
 
 class StockHistory(models.Model):
+    # Define types of stock movements
+    STOCK_TYPES = (
+        ('RESTOCK', 'Manual Restock'),       # When you buy more beans
+        ('REDUCTION', 'Order Deduction'),    # Automatically subtracted by an order
+        ('ADJUST', 'Manual Adjustment'),     # Fixing a mistake or waste
+    )
+
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='history')
-    amount_added = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Amount used or added. Use negative numbers for deductions (e.g., -90.00)
+    amount = models.DecimalField(max_digits=10, decimal_places=2) 
+    
+    # Type of movement
+    type = models.CharField(max_length=20, choices=STOCK_TYPES, default='RESTOCK')
+    
+    # Context for the audit (e.g., "Order #51" or "Spilled bag")
+    notes = models.CharField(max_length=255, null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-created_at'] # Shows newest updates first
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.ingredient.name}: {self.amount} ({self.type})"
 
 class Customer(models.Model):
     name = models.CharField(max_length=100)

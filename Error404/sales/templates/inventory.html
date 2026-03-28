@@ -239,33 +239,68 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white rounded-[2rem] border-2 border-slate-200 bento-card p-6 md:p-8">
-                <h3 class="text-lg font-black mb-6 flex items-center gap-3 text-slate-900 tracking-tight uppercase">
-                    <div class="w-10 h-10 rounded-xl bg-orange-100 border border-orange-200 flex items-center justify-center text-orange-500">
-                        <i class="bi bi-clock-history text-lg"></i>
+        <div class="divide-y-2 divide-slate-50 overflow-y-auto custom-scrollbar pr-2">
+    {% for entry in grouped_logs %}
+    <div class="py-4 group">
+        {% if entry.is_group %}
+            <div class="bg-slate-50 rounded-2xl p-3 border border-slate-100">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase">
+                        {{ entry.notes }}
+                    </span>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">
+                        {{ entry.created_at|date:"H:i A" }}
+                    </p>
+                </div>
+                
+                <div class="space-y-1">
+                    {% for item in entry.items %}
+                    <div class="flex justify-between items-center">
+                        <p class="text-[11px] font-bold text-slate-700 truncate max-w-[120px]">
+                            {{ item.ingredient.name }}
+                        </p>
+                        <p class="text-[11px] font-black text-red-500">
+                            {{ item.amount|floatformat:0 }}{{ item.ingredient.unit|default:"g" }}
+                        </p>
                     </div>
-                    Recent Updates
-                </h3>
-                <div class="space-y-3">
-                    {% for log in recent_history|slice:":5" %}
-                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-slate-300 transition">
-                        <div>
-                            <p class="font-black text-slate-800 text-sm">{{ log.ingredient.name }}</p>
-                            <p class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mt-0.5">{{ log.created_at|date:"M d, Y | H:i" }}</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-emerald-500 font-black text-lg">+{{ log.amount_added|floatformat:0 }} <span class="text-[10px] uppercase tracking-widest text-emerald-600/70">{{ log.ingredient.unit }}</span></span>
-                            <p class="text-[8px] uppercase font-black text-slate-400 tracking-widest block">Restocked</p>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <p class="text-slate-500 font-semibold text-center py-6 border-2 border-dashed border-slate-200 rounded-2xl">No recent stock movements.</p>
                     {% endfor %}
                 </div>
             </div>
-        </div>
 
+        {% else %}
+            <div class="flex justify-between items-start mb-1">
+                <div class="max-w-[140px]">
+                    <p class="font-black text-slate-800 text-xs truncate group-hover:text-blue-600 transition-colors">
+                        {{ entry.log.ingredient.name }}
+                    </p>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                        {{ entry.log.created_at|date:"H:i A" }} • {{ entry.log.created_at|date:"M d" }}
+                    </p>
+                </div>
+                <div class="text-right">
+                    <span class="{% if entry.log.amount < 0 %}text-red-500{% else %}text-emerald-500{% endif %} font-black text-sm">
+                        {% if entry.log.amount > 0 %}+{% endif %}{{ entry.log.amount|floatformat:0 }}<span class="text-[10px] opacity-70 ml-0.5">{{ entry.log.ingredient.unit|default:"g" }}</span>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center mt-1">
+                <span class="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md {% if entry.log.amount < 0 %}bg-red-50 text-red-400{% else %}bg-emerald-50 text-emerald-400{% endif %}">
+                    {% if entry.log.amount < 0 %}Usage{% else %}Restock{% endif %}
+                </span>
+                <span class="text-[9px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                    {{ entry.log.notes|default:"Manual Update" }}
+                </span>
+            </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="text-center py-20">
+        <i class="bi bi-inbox text-slate-200 text-3xl"></i>
+        <p class="text-slate-400 text-xs font-bold mt-2">No activity recorded.</p>
+    </div>
+    {% endfor %}
+</div>
     </main>
 
     <div id="ingredient-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4">

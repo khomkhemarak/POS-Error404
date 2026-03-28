@@ -14,8 +14,7 @@ urlpatterns = [
     # Kitchen Display System (KDS) - to see active tickets
     path('kitchen/', views.kitchen_view, name='kitchen_view'),
     path('kitchen/complete/<int:order_id>/', views.complete_order, name='complete_order'),
-    path('product/snooze/<int:product_id>/', views.toggle_product_availability, name='snooze_product'),
-
+    
     # Admin Dashboard for managing products, categories, and orders
     path('dashboard/', views.owner_view, name='owner'),
     path('add-product/', views.add_product, name='add_product'),
@@ -25,7 +24,7 @@ urlpatterns = [
     path('inventory/', views.inventory_list, name='inventory_list'),
     path('inventory/add/', views.add_ingredient, name='add_ingredient'),
     path('inventory/delete/<int:pk>/', views.delete_ingredient, name='delete_ingredient'),
-    path('mokit/', views.monitoring_kitchen, name='monitoring_kitchen'),
+
 
     # Managerial Analytics and Reporting
     path('manager/', views.manager_view, name='manager_display'),
