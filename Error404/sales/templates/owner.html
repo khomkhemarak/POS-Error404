@@ -104,14 +104,22 @@
         <div class="flex flex-col sm:flex-row w-full md:w-auto gap-4">
             <!-- Calendar Filter Container -->
             <div class="relative w-full md:w-64 group">
-                <select id="dateRange" onchange="updateDashboardData()" 
-                    class="w-full bg-white border-2 border-slate-200 text-slate-900 text-[11px] font-[800] uppercase tracking-wider rounded-2xl appearance-none block p-4 pr-12 focus:ring-orange-500 focus:border-orange-500 transition-all cursor-pointer shadow-[4px_4px_0px_0px_rgba(203,213,225,0.4)] hover:border-slate-300">
+                <!-- 
+                    Added 'range-btn' and 'active-range' classes. 
+                    The 'data-range' will be updated dynamically by the JS function below.
+                -->
+                    
+                <select id="dateRange" 
+                    onchange="handleDropdownChange(this)" 
+                    data-range="today"
+                    class="range-btn active-range w-full bg-white border-2 border-slate-200 text-slate-900 text-[11px] font-[800] uppercase tracking-wider rounded-2xl appearance-none block p-4 pr-12 focus:ring-orange-500 focus:border-orange-500 transition-all cursor-pointer shadow-[4px_4px_0px_0px_rgba(203,213,225,0.4)] hover:border-slate-300 outline-none">
                     <option value="today">Today</option>
                     <option value="week">This Week</option>
                     <option value="month">This Month</option>
                     <option value="30days">Last 30 Days</option>
                     <option value="year">Year to Date</option>
                 </select>
+                
                 <!-- Positioned Calendar Icon -->
                 <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center border-l-2 border-slate-100 pl-3">
                     <i class="bi bi-calendar3 text-orange-500 text-base"></i>
@@ -133,8 +141,8 @@
                 </div>
             </div>
             <div class="mt-4">
-                <p class="text-sm font-[800] text-slate-400 uppercase tracking-widest mb-1">Total Revenue</p>
-                <h2 id="revenueValue" class="text-5xl font-[800] text-slate-900">${{ total_revenue|floatformat:2 }}</h2>
+                <p class="text-sm font-[800] text-slate-400 uppercase tracking-widest mb-1">Total income</p>
+                <h2 id="incomeValue" class="text-5xl font-[800] text-slate-900">${{ total_income|floatformat:2 }}</h2>
             </div>
         </div>
 
@@ -153,18 +161,18 @@
                 <i class="bi bi-bag-check"></i>
             </div>
             <div>
-                <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Orders Fulfilled</p>
+                <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Orders</p>
                 <h2 id="orderCount" class="text-2xl font-[800] text-slate-900">{{ order_count }}</h2>
             </div>
         </div>
 
-        <div class="md:col-span-4 bento-card p-6 rounded-[2.5rem] flex items-center gap-5 {% if low_stock_products or low_stock_ingredients %}border-red-200 bg-red-50/30{% endif %}">
-            <div class="w-12 h-12 {% if low_stock_products or low_stock_ingredients %}bg-red-100 text-red-600 border-2 border-red-200{% else %}bg-slate-100 text-slate-400{% endif %} rounded-xl flex items-center justify-center text-xl">
+        <div id="stockAlertCard" class="md:col-span-4 bento-card p-6 rounded-[2.5rem] flex items-center gap-5 transition-colors duration-500">
+            <div id="stockIcon" class="w-12 h-12 rounded-xl flex items-center justify-center text-xl">
                 <i class="bi bi-exclamation-triangle"></i>
             </div>
             <div>
-                <p class="text-[10px] font-[800] {% if low_stock_products or low_stock_ingredients %}text-red-500{% else %}text-slate-400{% endif %} uppercase tracking-widest">Stock Alerts</p>
-                <h2 class="text-2xl font-[800] {% if low_stock_products or low_stock_ingredients %}text-red-600{% else %}text-slate-900{% endif %}">
+                <p id="stockAlertLabel" class="text-[10px] font-[800] uppercase tracking-widest">Stock Alerts</p>
+                <h2 id="stockAlertValue" class="text-2xl font-[800]">
                     {{ low_stock_products.count|add:low_stock_ingredients.count }}
                 </h2>
             </div>
@@ -232,7 +240,7 @@
             <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">Raw Materials Overview</h3>
             <a href="{% url 'inventory_list' %}" class="text-[10px] font-[800] text-orange-500 hover:text-orange-600 uppercase tracking-widest transition-colors bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">Manage &rarr;</a>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div id="rawMaterialsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {% for ing in all_ingredients %}
             <div class="p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-orange-200 transition-colors">
                 <div class="flex justify-between items-start mb-2">
@@ -261,7 +269,8 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {% for product in products %}
-            <div class="relative bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[140px]">
+            <!-- 1. Added data-product-id here -->
+            <div data-product-id="{{ product.id }}" class="relative bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[140px]">
                 <div class="flex gap-4">
                     {% if product.image %}
                     <img src="{{ product.image.url }}" class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 shrink-0">
@@ -269,32 +278,28 @@
                     <div class="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 border-2 border-slate-100 shrink-0"><i class="bi bi-cup text-xl"></i></div>
                     {% endif %}
                     <div>
-                        <p class="font-[800] text-slate-900 text-sm leading-tight">{{ product.name }}</p>
-                        <span class="inline-block mt-1 text-[8px] bg-slate-50 border border-slate-200 text-slate-500 px-2 py-0.5 rounded-md font-[800] tracking-widest uppercase">{{ product.category }}</span>
+                        <!-- 2. Added class="product-name" -->
+                        <p class="product-name font-[800] text-slate-900 text-sm leading-tight">{{ product.name }}</p>
+                        <!-- 3. Added class="product-category" -->
+                        <span class="product-category inline-block mt-1 text-[8px] bg-slate-50 border border-slate-200 text-slate-500 px-2 py-0.5 rounded-md font-[800] tracking-widest uppercase">{{ product.category }}</span>
                     </div>
                 </div>
                 
                 <div class="flex items-end justify-between mt-4 pt-4 border-t-2 border-slate-50">
                     <div>
                         <span class="text-[8px] font-[800] text-emerald-500 uppercase tracking-widest block mb-0.5">Profit</span>
-                        <span class="text-sm font-[800] text-slate-700">${{ product.get_profit_margin|stringformat:".2f" }}</span>
+                        <span class="product-profit text-sm font-[800] text-slate-700">${{ product.get_profit|stringformat:".2f" }}</span>
                     </div>
                     <div class="text-right">
                         <span class="text-[8px] font-[800] text-slate-400 uppercase tracking-widest block mb-0.5">Price</span>
-                        <span class="text-sm font-[800] text-orange-600">${{ product.base_price }}</span>
+                        <span class="product-price text-sm font-[800] text-orange-600">${{ product.base_price }}</span>
                     </div>
                 </div>
 
+                <!-- Buttons ... -->
                 <div class="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="openEditModal(
-                        '{{ product.id }}', 
-                        '{{ product.name|escapejs }}', 
-                        '{{ product.base_price }}', 
-                        '{{ product.category_id }}', 
-                        '{{ product.can_be_hot }}', 
-                        '{{ product.can_be_iced }}', 
-                        '{{ product.can_be_frappe }}')" 
-                        class="w-8 h-8 bg-white text-orange-500 rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm">
+                    <button onclick="openEditModal('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.base_price }}', '{{ product.category_id }}', '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" 
+                            class="w-8 h-8 bg-white text-orange-500 rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm">
                         <i class="bi bi-pencil-fill text-xs"></i>
                     </button>
                     <button onclick="openDeleteModal('{{ product.id }}', '{{ product.name|escapejs }}')" class="w-8 h-8 bg-white text-red-500 rounded-lg flex items-center justify-center hover:bg-red-50 border border-slate-200 shadow-sm">
@@ -405,7 +410,7 @@
         <div class="bg-white rounded-[2.5rem] w-full max-w-md border-4 border-slate-100 shadow-2xl overflow-hidden">
             
             <div class="p-6 bg-slate-50 border-b-2 border-slate-100 flex justify-between items-center">
-                <h3 class="text-xl font-[900] text-slate-900 uppercase tracking-tight">Edit Drink Detail</h3>
+                <h3 id="modalTitle" class="text-xl font-[900] text-slate-900 uppercase tracking-tight">Edit Drink Detail</h3>
                 <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-900"><i class="bi bi-x-lg"></i></button>
             </div>
 
@@ -458,7 +463,7 @@
 
                 <div class="flex gap-3 mt-4">
                     <button type="button" onclick="closeEditModal()" class="flex-1 py-3 rounded-2xl font-black text-[10px] uppercase border-2 border-slate-100 text-slate-400">Cancel</button>
-                    <button type="submit" class="flex-1 py-3 bg-orange-500 text-white rounded-2xl font-black text-[10px] uppercase shadow-[4px_4px_0px_0px_rgba(203,213,225,1)]">Update Drink</button>
+                    <button type="submit" id="modalSubmitBtn" class="flex-1 py-3 bg-orange-500 text-white rounded-2xl font-black text-[10px] uppercase shadow-[4px_4px_0px_0px_rgba(203,213,225,1)]">Update Drink</button>
                 </div>
             </form>
         </div>
@@ -492,6 +497,88 @@
     </div>
 
     <script>
+
+        async function refreshDashboardStats() {
+            try {
+                // 1. Get current selected range
+                const activeRangeElement = document.querySelector('.active-range') || document.getElementById('dateRange');
+                const currentRange = activeRangeElement.value || activeRangeElement.dataset.range || 'today';
+                
+                // 2. Fetch fresh data
+                const response = await fetch(`/api/dashboard-stats/?range=${currentRange}`);
+                const data = await response.json();
+
+                // 3. Update Key Metrics
+                document.getElementById('incomeValue').innerText = `$${data.income.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                document.getElementById('profitValue').innerText = `$${data.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                document.getElementById('orderCount').innerText = data.orders;
+
+                // 4. Update Stock Alert Card
+                const alertValue = document.getElementById('stockAlertValue');
+                const alertCard = document.getElementById('stockAlertCard');
+                if (alertValue && alertCard) {
+                    alertValue.innerText = data.stock_alerts;
+                    if (data.stock_alerts > 0) {
+                        alertCard.classList.add('border-red-200', 'bg-red-50/30');
+                    } else {
+                        alertCard.classList.remove('border-red-200', 'bg-red-50/30');
+                    }
+                }
+
+                // 5. Update Top Sellers List
+                const topSellersContainer = document.getElementById('topSellersList');
+                if (topSellersContainer && data.popular_items) {
+                    topSellersContainer.innerHTML = data.popular_items.length > 0 
+                        ? data.popular_items.map(item => `
+                            <div class="flex justify-between items-center py-3 group transition-all duration-500">
+                                <span class="font-bold text-slate-700 group-hover:text-orange-600 transition-colors">${item.product__name}</span>
+                                <span class="bg-orange-50 text-orange-600 border border-orange-100 px-3 py-1 rounded-lg text-[10px] font-[800] tracking-widest uppercase">
+                                    ${item.total_qty}
+                                </span>
+                            </div>`).join('')
+                        : '<p class="text-slate-400 font-semibold py-4 text-sm">No sales data.</p>';
+                }
+
+                // 6. Update Chart
+                if (window.salesChartInstance) {
+                    window.salesChartInstance.data.labels = data.labels;
+                    window.salesChartInstance.data.datasets[0].data = data.sales_data;
+                    window.salesChartInstance.update('none');
+                }
+
+                // 7. Update Raw Materials Overview (Live Progress Bars)
+                const materialsGrid = document.getElementById('rawMaterialsGrid');
+                if (materialsGrid && data.ingredients) {
+                    materialsGrid.innerHTML = data.ingredients.map(ing => {
+                        const statusColor = ing.is_low_stock ? 'text-red-500' : 'text-emerald-500';
+                        const barColor = ing.is_low_stock ? 'bg-red-500' : 'bg-emerald-500';
+                        const borderColor = ing.is_low_stock ? 'border-red-100' : 'border-slate-100';
+
+                        return `
+                            <div class="p-5 bg-slate-50 rounded-2xl border-2 ${borderColor} hover:border-orange-200 transition-all duration-500">
+                                <div class="flex justify-between items-start mb-2">
+                                    <p class="text-slate-500 text-[10px] font-[800] tracking-widest uppercase truncate pr-2">${ing.name}</p>
+                                    <span class="text-[10px] font-[800] ${statusColor}">${Math.round(ing.stock_percent)}%</span>
+                                </div>
+                                <div class="flex items-end gap-1">
+                                    <p class="text-2xl font-[800] text-slate-900">${Math.round(ing.stock_quantity)}</p>
+                                    <span class="text-[10px] font-[800] text-slate-400 uppercase pb-1">${ing.unit}</span>
+                                </div>
+                                <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden border border-slate-300">
+                                    <div class="h-full transition-all duration-700 ${barColor}" style="width: ${ing.stock_percent}%; min-width: 4px;"> </div>
+                                </div>
+                            </div>`;
+                    }).join('');
+                }
+
+            } catch (error) {
+                console.error("Dashboard Sync Error:", error);
+            }
+        }
+
+        // Start auto-refresh every 5 seconds
+        setInterval(refreshDashboardStats, 5000);
+
         // 1. Declare the chart globally so it can be updated
         let salesChartInstance = null;
 
@@ -535,7 +622,7 @@
                     data: {
                         labels: {{ labels|safe|default:"[]" }},
                         datasets: [{
-                            label: 'Revenue ($)',
+                            label: 'income ($)',
                             data: {{ sales_data|safe|default:"[]" }},
                             fill: true,
                             backgroundColor: gradient,
@@ -562,7 +649,7 @@
             const range = document.getElementById('dateRange').value;
             
             const elements = {
-                revenue: document.getElementById('revenueValue'),
+                income: document.getElementById('incomeValue'),
                 profit: document.getElementById('profitValue'),
                 orders: document.getElementById('orderCount')
             };
@@ -576,7 +663,7 @@
                 const data = await response.json();
 
                 // Update Numbers
-                if (elements.revenue) elements.revenue.innerText = `$${data.revenue.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                if (elements.income) elements.income.innerText = `$${data.income.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
                 if (elements.profit) elements.profit.innerText = `$${data.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
                 if (elements.orders) elements.orders.innerText = data.orders;
 
@@ -594,22 +681,58 @@
             }
         }
 
-       function openEditModal(id, name, price, categoryId, canH, canI, canF) {
-            const modal = document.getElementById('productModal');
-            const form = document.getElementById('productForm');
+        function changeRange(range, btnElement) {
+            // 1. Remove active classes from ALL buttons
+            document.querySelectorAll('.range-btn').forEach(btn => {
+                btn.classList.remove('active-range', 'text-orange-600');
+                btn.classList.add('text-slate-400');
+            });
+            
+            // 2. Add active classes to the CLICKED button
+            btnElement.classList.add('active-range', 'text-orange-600');
+            btnElement.classList.remove('text-slate-400');
+            
+            // 3. Trigger an immediate refresh (don't wait for the 5-second timer)
+            refreshDashboardStats();
+        }
+
+        function handleDropdownChange(selectElement) {
+            // 1. Update the 'data-range' so the auto-refresh loop (refreshDashboardStats) 
+            // knows which period to keep syncing in the background.
+            selectElement.dataset.range = selectElement.value;
+
+            // 2. Visual Polish: Highlight the border if it's not the default 'today'
+            if (selectElement.value !== 'today') {
+                selectElement.classList.add('border-orange-500');
+            } else {
+                selectElement.classList.remove('border-orange-500');
+            }
+
+            // 3. TRIGGER IMMEDIATE SYNC
+            // This calls your existing refreshDashboardStats() function immediately
+            // so the user doesn't have to wait for the 5-second timer.
+            refreshDashboardStats();
+        }
+
+       // 1. Logic to populate and show the modal
+        function openEditModal(id, name, price, categoryId, canH, canI, canF) {
+            const modal = document.getElementById('editModal'); // Changed to match your ID 'editModal'
+            const form = document.getElementById('editProductForm');
             
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
             document.getElementById('modalTitle').innerText = "Edit Drink Details";
-            document.getElementById('modalSubmitBtn').innerText = "Update Product";
+            document.getElementById('modalSubmitBtn').innerText = "Update Drink";
 
             form.querySelector('input[name="name"]').value = name;
             form.querySelector('input[name="price"]').value = price;
             form.querySelector('select[name="category"]').value = categoryId;
-            form.querySelector('input[name="can_be_hot"]').checked = canH;
-            form.querySelector('input[name="can_be_iced"]').checked = canI;
-            form.querySelector('input[name="can_be_frappe"]').checked = canF;
+            
+            // Convert string 'True'/'False' to boolean for checkboxes
+            form.querySelector('input[name="can_be_hot"]').checked = (canH === 'True');
+            form.querySelector('input[name="can_be_iced"]').checked = (canI === 'True');
+            form.querySelector('input[name="can_be_frappe"]').checked = (canF === 'True');
 
             form.action = `/edit-product/${id}/`;
         }
@@ -619,8 +742,97 @@
             document.getElementById('editModal').classList.remove('flex');
         }
 
+            // 2. The API Submission Logic
+            document.getElementById('editProductForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const actionUrl = this.getAttribute('action');
+
+                fetch(actionUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        closeEditModal();
+
+                        // --- 1. THE POS SYNC LOGIC ---
+                        localStorage.setItem('productUpdate', JSON.stringify({
+                            id: data.product.id,
+                            name: data.product.name,
+                            price: data.product.price,
+                            category: data.product.category,
+                            image_url: data.product.image_url,
+                            can_be_hot: formData.get('can_be_hot') === 'on',
+                            can_be_iced: formData.get('can_be_iced') === 'on',
+                            can_be_frappe: formData.get('can_be_frappe') === 'on'
+                        }));
+                        localStorage.removeItem('productUpdate'); 
+
+                        // --- 2. UPDATE THE DASHBOARD CARD (OWNER VIEW) ---
+                        const card = document.querySelector(`[data-product-id="${data.product.id}"]`);
+                        
+                        if (card) {
+                            // Update Name
+                            const nameEl = card.querySelector('.product-name');
+                            if (nameEl) nameEl.innerText = data.product.name;
+
+                            // Update Price
+                            const priceEl = card.querySelector('.product-price');
+                            if (priceEl) priceEl.innerText = `$${parseFloat(data.product.price).toFixed(2)}`;
+
+                            // Update Category
+                            const catEl = card.querySelector('.product-category');
+                            if (catEl) catEl.innerText = data.product.category;
+
+                            // Update Profit (NEW)
+                            const profitEl = card.querySelector('.product-profit');
+                            if (profitEl) profitEl.innerText = `$${parseFloat(data.product.profit).toFixed(2)}`;
+
+                            // Update Image
+                            if (data.product.image_url) {
+                                const imgEl = card.querySelector('img');
+                                if (imgEl) imgEl.src = data.product.image_url;
+                            }
+
+                            // --- 3. UPDATE THE EDIT BUTTON ONCLICK ATTRIBUTE ---
+                            // This ensures the NEXT time you click "Edit", the modal has the NEW data
+                            const editBtn = card.querySelector('button[onclick^="openEditModal"]');
+                            if (editBtn) {
+                                const updatedOnClick = `openEditModal(
+                                    '${data.product.id}', 
+                                    '${data.product.name.replace(/'/g, "\\'")}', 
+                                    '${data.product.price}', 
+                                    '${formData.get('category')}', 
+                                    '${formData.get('can_be_hot') === 'on' ? 'True' : 'False'}', 
+                                    '${formData.get('can_be_iced') === 'on' ? 'True' : 'False'}', 
+                                    '${formData.get('can_be_frappe') === 'on' ? 'True' : 'False'}'
+                                )`;
+                                editBtn.setAttribute('onclick', updatedOnClick);
+                            }
+                            
+                            // Visual feedback: Flash orange
+                            card.classList.add('border-orange-500', 'shadow-lg');
+                            setTimeout(() => {
+                                card.classList.remove('border-orange-500', 'shadow-lg');
+                            }, 1000);
+                        }
+                    } else {
+                        alert("Error: " + data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+
         // --- Delete Modal Logic ---
         function openDeleteModal(id, name) {
+            
             const modal = document.getElementById('deleteProductModal');
             const form = document.getElementById('deleteProdForm');
             const nameSpan = document.getElementById('deleteProdName');

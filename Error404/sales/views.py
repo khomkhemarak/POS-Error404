@@ -3,6 +3,8 @@ import math
 from decimal import Decimal
 from datetime import timedelta
 import calendar
+from os import name
+from urllib import request
 
 # Django Core
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,7 +14,7 @@ from django.contrib import messages
 
 # Database & Querying
 from django.db import transaction
-from django.db.models import Sum, Count, F, Avg
+from django.db.models import Sum, F, Case, When, DecimalField, IntegerField, Value
 from django.db.models.functions import ExtractHour, ExtractDay, ExtractMonth, TruncDay
 
 # Decorators
@@ -40,32 +42,31 @@ def is_admin(user):
     return user.groups.filter(name='Admin').exists() or user.is_superuser
 
 def owner_view(request):
-    # --- 1. TIME WINDOW ---
+    # --- 1. SET TIME WINDOW (Default: Today) ---
     now = timezone.now()
-    # Default initial view is "Today"
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
     
     # Define today's completed orders
     orders = Order.objects.filter(is_completed=True, created_at__gte=start_date)
-
-    # --- 2. REVENUE & ORDERS ---
-    total_revenue = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
     order_count = orders.count()
 
-    # --- 3. DYNAMIC PROFIT CALCULATION ---
+    # --- 2. income (Pulling from Order total_amount - Fixed) ---
+    total_income = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    
+    # --- 3. FROZEN PROFIT CALCULATION ---
     total_profit = Decimal('0.00')
     items = OrderItem.objects.filter(order__in=orders).select_related('product')
 
     for item in items:
-        try:
-            cost_per_unit = item.product.get_production_cost(size=item.size)
-            actual_price = item.product.get_final_price(size=item.size, drink_type=item.drink_type)
-            net_revenue_per_unit = actual_price / Decimal('1.10')
-            total_profit += (net_revenue_per_unit - cost_per_unit) * item.quantity
-        except Exception as e:
-            continue
+        # Use Snapshot data if it exists (>0), otherwise fallback to current product data
+        price = item.price_at_sale if item.price_at_sale > 0 else item.product.base_price
+        cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_production_cost(item.size)
 
-    # --- 4. ANALYTICS & CHARTS (Initial: Today) ---
+        # Performance Math (Net income after 10% tax)
+        net_income_per_unit = price / Decimal('1.10')
+        total_profit += (net_income_per_unit - cost) * item.quantity
+
+    # --- 4. ANALYTICS & CHARTS ---
     popular_items = OrderItem.objects.filter(order__in=orders).values('product__name').annotate(
         total_qty=Sum('quantity')
     ).order_by('-total_qty')[:5]
@@ -79,7 +80,7 @@ def owner_view(request):
 
     # --- 5. CONTEXT ---
     context = {
-        'total_revenue': total_revenue,
+        'total_income': total_income,
         'total_profit': total_profit.quantize(Decimal('0.01')),
         'order_count': order_count,
         'popular_items': popular_items,
@@ -135,28 +136,39 @@ def edit_product(request, product_id):
     
     if request.method == "POST":
         product.name = request.POST.get('name')
-        product.base_price = request.POST.get('price')
+        raw_price = request.POST.get('price')
+        product.base_price = Decimal(raw_price) if raw_price else Decimal('0.00')
         
         # Handle Category
         category_id = request.POST.get('category')
         category_obj = get_object_or_404(Category, id=category_id)
         product.category = category_obj.name 
         
-        # --- THE MISSING LOGIC ---
-        # These lines check if the key exists in POST. 
-        # If unchecked, 'in' returns False, correctly updating your DB.
+        # Checkboxes
         product.can_be_hot = 'can_be_hot' in request.POST
         product.can_be_iced = 'can_be_iced' in request.POST
         product.can_be_frappe = 'can_be_frappe' in request.POST
-        # -------------------------
 
         if request.FILES.get('image'):
             product.image = request.FILES.get('image')
             
         product.save()
 
-        messages.info(request, f'Updated "{product.name}" details.')
-        return redirect('owner')
+        # Return JSON instead of redirecting
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Updated "{product.name}"',
+            'product': {
+                'id': product.id,
+                'name': product.name,
+                'price': str(product.base_price),
+                'category': product.category,
+                'profit': f"{product.get_profit():.2f}",
+                'image_url': product.image.url if product.image else None
+            }
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 def pos_screen(request):
     return render(request, 'pos.html', {
@@ -237,14 +249,64 @@ def add_ingredient(request):
             packaging_type=pkg_type
         )
         
-        messages.success(request, f'Successfully added {name} to inventory.')
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'api' in request.path:
+            return JsonResponse({'status': 'success', 'message': f'Added {name}'})
+            
         return redirect('inventory_list')
+       
+def update_stock(request, pk):
+    if request.method == "POST":
+        ingredient = get_object_or_404(Ingredient, pk=pk)
+        try:
+            qty_added = float(request.POST.get('items_to_add') or 0)
+            batch_price_input = request.POST.get('batch_price')
+            new_unit_size = request.POST.get('unit_size')
+
+            if qty_added > 0:
+                if batch_price_input:
+                    total_price = float(batch_price_input)
+                else:
+                    total_price = qty_added * float(ingredient.last_purchase_price)
+
+                if new_unit_size:
+                    ingredient.initial_stock_per_item = Decimal(str(new_unit_size))
+
+                ingredient.add_new_stock(qty_added, total_price)
+
+                StockHistory.objects.create(
+                    ingredient=ingredient,
+                    amount=Decimal(str(qty_added)) * ingredient.initial_stock_per_item,
+                    type='RESTOCK',
+                    notes=f"Restock: {qty_added} items"
+                )
+                
+                # --- NEW: AJAX Check ---
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'status': 'success', 'message': 'Stock updated'})
+                
+                messages.success(request, f"Successfully restocked {ingredient.name}.")
+            else:
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'status': 'error', 'message': 'Quantity must be > 0'}, status=400)
+                messages.warning(request, "Please enter a quantity greater than 0.")
+
+        except Exception as e:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            messages.error(request, f"Error: {str(e)}")
+            
+    return redirect('inventory_list')
             
 def delete_ingredient(request, pk):
     if request.method == "POST":
         ingredient = get_object_or_404(Ingredient, pk=pk)
         name = ingredient.name
         ingredient.delete()
+        
+        # --- NEW: AJAX Check ---
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success', 'message': f'Deleted {name}'})
+            
         messages.success(request, f"'{name}' has been removed from inventory.")
     return redirect('inventory_list')
 
@@ -321,6 +383,42 @@ def stock_history_view(request):
         'ingredients': ingredients,
         'selected_ingredient': int(ingredient_id) if ingredient_id else None
     })
+
+@csrf_exempt
+def api_update_stock(request, pk):
+    if request.method == 'POST':
+        try:
+            ingredient = get_object_or_404(Ingredient, pk=pk)
+            items_to_add = float(request.POST.get('items_to_add') or 0)
+            unit_size = request.POST.get('unit_size') or ingredient.initial_stock_per_item
+            batch_price = request.POST.get('batch_price')
+            
+            if items_to_add > 0:
+                with transaction.atomic():
+                    # Update stock using your model method
+                    ingredient.initial_stock_per_item = Decimal(str(unit_size))
+                    ingredient.add_new_stock(
+                        new_items_count=items_to_add,
+                        price_paid=Decimal(batch_price) if batch_price else (Decimal(str(items_to_add)) * ingredient.last_purchase_price)
+                    )
+                    
+                    # Create History Log
+                    total_quantity_added = Decimal(str(items_to_add)) * ingredient.initial_stock_per_item
+                    StockHistory.objects.create(
+                        ingredient=ingredient,
+                        amount=total_quantity_added,
+                        type='RESTOCK',
+                        notes=f"Stock Update: {items_to_add} items"
+                    )
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Stock updated successfully',
+                    'new_stock': float(ingredient.stock_quantity)
+                })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=405)
 
 ##############################
 ####### Recipe Builder #######
@@ -457,9 +555,10 @@ def process_payment(request):
         service_type = data.get('service_type', 'Dine-in')
 
         with transaction.atomic():
+            # Set is_completed=True so it shows up in the Dashboard totals immediately
             new_order = Order.objects.create(
                 total_amount=total_price, 
-                is_completed=False,
+                is_completed=True,
                 service_type=service_type
             )
 
@@ -477,7 +576,10 @@ def process_payment(request):
                     recipe_items = Recipe.objects.filter(product=product, size='Medium')
 
                 if recipe_items.exists():
-                    sugar_map = {'0%': Decimal('0.0'), '25%': Decimal('0.25'), '50%': Decimal('0.5'), '75%': Decimal('0.75'), '100%': Decimal('1.0'), 'Extra': Decimal('1.5')}
+                    sugar_map = {
+                        '0%': Decimal('0.0'), '25%': Decimal('0.25'), '50%': Decimal('0.5'), 
+                        '75%': Decimal('0.75'), '100%': Decimal('1.0'), 'Extra': Decimal('1.5')
+                    }
                     multiplier = sugar_map.get(item.get('sugar', '100%'), Decimal('1.0'))
 
                     for recipe in recipe_items:
@@ -491,10 +593,10 @@ def process_payment(request):
                             ingredient.items_count = math.ceil(ingredient.stock_quantity / ingredient.initial_stock_per_item)
                         ingredient.save()
 
-                        # --- NEW: LOG AUDIT FOR INGREDIENTS ---
+                        # LOG AUDIT FOR INGREDIENTS
                         StockHistory.objects.create(
                             ingredient=ingredient,
-                            amount=-usage,  # Negative for deduction
+                            amount=-usage,
                             type='REDUCTION',
                             notes=f"Order #{new_order.id} ({product.name})"
                         )
@@ -518,7 +620,7 @@ def process_payment(request):
                             target_ing.items_count = math.ceil(target_ing.stock_quantity / target_ing.initial_stock_per_item)
                         target_ing.save()
 
-                        # --- NEW: LOG AUDIT FOR PACKAGING ---
+                        # LOG AUDIT FOR PACKAGING
                         StockHistory.objects.create(
                             ingredient=target_ing,
                             amount=-qty,
@@ -540,7 +642,7 @@ def process_payment(request):
                             carrier.items_count = math.ceil(carrier.stock_quantity / carrier.initial_stock_per_item)
                         carrier.save()
 
-                        # --- NEW: LOG AUDIT FOR CARRIER ---
+                        # LOG AUDIT FOR CARRIER
                         StockHistory.objects.create(
                             ingredient=carrier,
                             amount=-qty,
@@ -548,10 +650,17 @@ def process_payment(request):
                             notes=f"Order #{new_order.id} Carrier"
                         )
 
+                # --- D. CREATE ORDER ITEM WITH SNAPSHOTS ---
                 OrderItem.objects.create(
-                    order=new_order, product=product, quantity=qty,
-                    size=target_size, sugar=item.get('sugar', '100%'),
-                    drink_type=drink_type 
+                    order=new_order, 
+                    product=product, 
+                    quantity=qty,
+                    size=target_size, 
+                    sugar=item.get('sugar', '100%'),
+                    drink_type=drink_type,
+                    # LOCK THE DATA: This makes your owner_view reports "Fixed"
+                    price_at_sale=product.get_final_price(target_size, drink_type),
+                    cost_at_sale=product.get_production_cost(target_size)
                 )
 
         return JsonResponse({'status': 'success', 'order_id': new_order.id})
@@ -615,137 +724,155 @@ def is_manager(user):
 def manager_view(request):
     products = Product.objects.all()
     
-    # --- 1. Calculate Recipe-Based Stock ---
+    # --- 1. Recipe-Based Stock & Bottleneck Detection ---
     for product in products:
-        recipes = Recipe.objects.filter(product=product)
+        recipes = Recipe.objects.filter(product=product).select_related('ingredient')
         if not recipes.exists():
             product.calculated_stock = 0
+            product.limiting_ing = None
             continue
             
-        potential_servings = []
+        servings_data = []
         for r in recipes:
-            if r.ingredient.stock_quantity > 0:
-                servings = int(r.ingredient.stock_quantity / r.quantity)
-                potential_servings.append(servings)
-            else:
-                potential_servings.append(0)
+            # Calculate how many servings this specific ingredient allows
+            count = int(r.ingredient.stock_quantity / r.quantity) if r.ingredient.stock_quantity > 0 else 0
+            servings_data.append({'count': count, 'ing': r.ingredient})
         
-        product.calculated_stock = min(potential_servings) if potential_servings else 0
+        # The bottleneck is the ingredient with the LOWEST number of servings
+        bottleneck = min(servings_data, key=lambda x: x['count'])
+        product.calculated_stock = bottleneck['count']
+        product.limiting_ing = bottleneck['ing'] # Used by the "Update" button in HTML
 
-    # --- 2. Summary Cards Logic ---
-    total_margin = sum(p.margin_percentage for p in products)
-    count = products.count()
-    avg_profitability = total_margin / count if count > 0 else 0
+    # --- 2. Summary Stats (Today) ---
+    today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    todays_orders = Order.objects.filter(is_completed=True, created_at__gte=today)
     
-    # --- 3. REAL Chart Data Logic (Last 30 Days) ---
-    today = timezone.now()
-    thirty_days_ago = today - timedelta(days=30)
+    total_income = todays_orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    total_profit = Decimal('0.00')
+    total_expense = Decimal('0.00')
     
-    # Fetch all items sold in the last 30 days from completed orders
-    # We use select_related to speed up the database query
-    recent_sold_items = OrderItem.objects.filter(
-        order__created_at__gte=thirty_days_ago,
-        order__is_completed=True
-    ).select_related('order', 'product')
-
-    # Group the margin percentages by day
-    daily_margins = {}
-    for item in recent_sold_items:
-        # Get the date string (e.g., 'Oct 24')
-        date_str = item.order.created_at.strftime('%b %d')
+    # Calculate costs and profit for the initial display
+    items = OrderItem.objects.filter(order__in=todays_orders).select_related('product')
+    for item in items:
+        cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_production_cost(item.size)
+        price = item.price_at_sale if item.price_at_sale > 0 else item.product.base_price
         
-        if date_str not in daily_margins:
-            daily_margins[date_str] = []
-            
-        # Add this product's margin to that day's list
-        # We multiply by quantity in case they bought 3 of the same drink
-        for _ in range(item.quantity):
-            daily_margins[date_str].append(item.product.margin_percentage)
+        total_expense += (cost * item.quantity)
+        total_profit += ((price / Decimal('1.10')) - cost) * item.quantity
 
-    # Build the final lists for Chart.js
-    chart_labels = []
-    chart_data = []
-    
-    for i in range(30, -1, -1):
-        target_date = today - timedelta(days=i)
-        date_str = target_date.strftime('%b %d')
-        chart_labels.append(date_str)
-        
-        # If we sold things on this day, calculate the average margin
-        if date_str in daily_margins and len(daily_margins[date_str]) > 0:
-            day_avg = sum(daily_margins[date_str]) / len(daily_margins[date_str])
-            chart_data.append(round(float(day_avg), 1))
-        else:
-            # If nothing was sold that day, show 0 (or you could put avg_profitability here to keep the line flat)
-            chart_data.append(0)
+    avg_profitability = (float(total_profit) / float(total_income) * 100) if total_income > 0 else 0
+
+    # --- 3. Initial Chart Data (Income by Hour) ---
+    sales_by_hour = todays_orders.annotate(hour=ExtractHour('created_at')).values('hour').annotate(total=Sum('total_amount')).order_by('hour')
+    chart_labels = [f"{item['hour']}:00" for item in sales_by_hour]
+    chart_data = [float(item['total']) for item in sales_by_hour]
 
     context = {
         'products': products,
-        'avg_profitability': avg_profitability, 
+        'total_income': total_income,
+        'total_expense': total_expense,
+        'avg_profitability': round(avg_profitability, 1), 
         'chart_labels': chart_labels,
         'chart_data': chart_data,
-        'all_ingredients': Ingredient.objects.all(),
+        'all_ingredients': Ingredient.objects.all(), # Used for the quick-update list
     }
     return render(request, 'manager.html', context)
+
 
 def api_dashboard_stats(request):
     range_type = request.GET.get('range', 'today')
     now = timezone.now()
-    current_month_name = now.strftime('%b') # Get 'Mar', 'Apr', etc.
+    current_month_name = now.strftime('%b')
     
-    # --- 1. SET START DATE & CHART GROUPING ---
+    # --- 1. SET DATE RANGES & GROUPING ---
+    # We define 'group_by_order' to avoid the FieldError on OrderItem
     if range_type == 'today':
         start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        group_by = ExtractHour('created_at')
+        group_by_order = ExtractHour('order__created_at')
         label_fmt = lambda x: f"{x}:00"
-        
     elif range_type == 'week':
-        # Start from Monday of the current week
         start_date = now - timedelta(days=now.weekday())
         start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        group_by = ExtractDay('created_at')
+        group_by_order = ExtractDay('order__created_at')
         label_fmt = lambda x: f"{current_month_name} {x}"
-        
     elif range_type in ['month', '30days']:
         start_date = now.replace(day=1, hour=0, minute=0, second=0) 
-        group_by = ExtractDay('created_at')
+        group_by_order = ExtractDay('order__created_at')
         label_fmt = lambda x: f"{current_month_name} {x}"
-        
     elif range_type == 'year':
         start_date = now.replace(month=1, day=1, hour=0, minute=0)
-        group_by = ExtractMonth('created_at')
+        group_by_order = ExtractMonth('order__created_at')
         label_fmt = lambda x: calendar.month_name[x][:3]
-        
     else:
         start_date = now.replace(hour=0, minute=0, second=0)
-        group_by = ExtractHour('created_at')
+        group_by_order = ExtractHour('order__created_at')
         label_fmt = lambda x: f"{x}:00"
 
-    # --- 2. FILTER & CALCULATE ---
+    # --- 2. FINANCIAL CALCULATIONS ---
     orders = Order.objects.filter(is_completed=True, created_at__gte=start_date)
-    
     total_rev = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
     
     total_profit = Decimal('0.00')
+    total_expense = Decimal('0.00')
+    
     items = OrderItem.objects.filter(order__in=orders).select_related('product')
     for item in items:
-        try:
-            cost = item.product.get_production_cost(size=item.size)
-            price = item.product.get_final_price(size=item.size, drink_type=item.drink_type)
-            total_profit += ((price / Decimal('1.10')) - cost) * item.quantity
-        except: continue
+        price = item.price_at_sale if item.price_at_sale > 0 else item.product.base_price
+        cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_production_cost(item.size)
+        net_income_per_unit = price / Decimal('1.10')
+        total_profit += (net_income_per_unit - cost) * item.quantity
+        total_expense += cost * item.quantity
 
-    # --- 3. TREND DATA ---
-    sales_trend = orders.annotate(unit=group_by).values('unit').annotate(
-        total=Sum('total_amount')
+    # --- 3. EXPENSE TREND DATA (Fixes FieldError) ---
+    expense_trend_query = OrderItem.objects.filter(
+        order__is_completed=True, 
+        order__created_at__gte=start_date
+    ).annotate(
+        unit=group_by_order
+    ).values('unit').annotate(
+        total_cost=Sum(
+            F('quantity') * Case(
+                When(cost_at_sale__gt=0, then=F('cost_at_sale')),
+                default=F('product__base_price') * Value(Decimal('0.40')), 
+                output_field=DecimalField()
+            )
+        )
     ).order_by('unit')
 
+    # --- 4. POTENTIAL STOCK & LIVE BOTTLENECK ---
+    products = Product.objects.all()
+    product_stock_data = {}
+    for product in products:
+        recipes = Recipe.objects.filter(product=product).select_related('ingredient')
+        if not recipes.exists():
+            product_stock_data[product.id] = {'stock': 0, 'ing_id': None}
+            continue
+            
+        servings_data = []
+        for r in recipes:
+            count = int(r.ingredient.stock_quantity / r.quantity) if r.ingredient.stock_quantity > 0 else 0
+            servings_data.append({'count': count, 'ing': r.ingredient})
+        
+        limit = min(servings_data, key=lambda x: x['count'])
+        
+        # We send the bottleneck details so JavaScript can update the Update Button
+        product_stock_data[product.id] = {
+            'stock': limit['count'],
+            'ing_id': limit['ing'].id,
+            'ing_name': limit['ing'].name,
+            'ing_size': float(limit['ing'].initial_stock_per_item),
+            'ing_price': float(limit['ing'].last_purchase_price)
+        }
+
     return JsonResponse({
-        'revenue': float(total_rev),
-        'profit': float(total_profit),
+        'income': float(total_rev),
+        'expense': float(total_expense.quantize(Decimal('0.01'))),
+        'profit': float(total_profit.quantize(Decimal('0.01'))),
+        'avg_profit': round((float(total_profit) / float(total_rev) * 100), 1) if total_rev > 0 else 0,
         'orders': orders.count(),
-        'labels': [label_fmt(x['unit']) for x in sales_trend],
-        'sales_data': [float(x['total']) for x in sales_trend],
+        'product_potentials': product_stock_data,
+        'labels': [label_fmt(x['unit']) for x in expense_trend_query],
+        'expense_data': [float(x['total_cost']) for x in expense_trend_query],
     })
 
 #############################
@@ -770,4 +897,3 @@ def kitchen_view(request):
         'pending_orders': pending_orders,
         'completed_orders': completed_orders
     })
-

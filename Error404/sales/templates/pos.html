@@ -102,7 +102,7 @@
 
             <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 overflow-y-auto pr-2 pb-6 no-scrollbar content-start">
                 {% for product in products %}
-                <div class="product-item" data-category="{{ product.category }}">
+                <div class="product-item" data-product-id="{{ product.id }}" data-category="{{ product.category }}">
                     <button onclick="addToCart(
                         '{{ product.id }}', 
                         '{{ product.name|escapejs }}', 
@@ -113,15 +113,15 @@
                         {{ product.can_be_iced|yesno:'true,false' }}, 
                         {{ product.can_be_frappe|yesno:'true,false' }}
                     )"                            
-                    class="group w-full bg-white p-5 rounded-[2rem] border-2 border-slate-200 hover:border-orange-400 transition-all text-left flex flex-col justify-between h-52 relative overflow-hidden shadow-sm hover:shadow-md">
+                    class="product-button group w-full bg-white p-5 rounded-[2rem] border-2 border-slate-200 hover:border-orange-400 transition-all text-left flex flex-col justify-between h-52 relative overflow-hidden shadow-sm hover:shadow-md">
                         
                         {% if product.image %}
-                        <img src="{{ product.image.url }}" class="absolute inset-0 w-full h-full object-cover opacity-5 group-hover:opacity-10 transition-opacity grayscale group-hover:grayscale-0">
+                        <img src="{{ product.image.url }}" class="product-img absolute inset-0 w-full h-full object-cover opacity-5 group-hover:opacity-10 transition-opacity grayscale group-hover:grayscale-0">
                         {% endif %}
                         
                         <div class="relative z-10">
                             <div class="flex justify-between items-start">
-                                <span class="text-[9px] font-[800] uppercase tracking-widest text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+                                <span class="product-category text-[9px] font-[800] uppercase tracking-widest text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
                                     {{ product.category }}
                                 </span>
                                 
@@ -131,13 +131,15 @@
                                     {% if product.can_be_frappe %}<i class="bi bi-stars text-[10px] text-purple-500"></i>{% endif %}
                                 </div>
                             </div>
-                            <h3 class="text-lg font-[800] mt-3 text-slate-900 group-hover:text-orange-600 transition-colors leading-tight">{{ product.name }}</h3>
+                            <h3 class="product-name text-lg font-[800] mt-3 text-slate-900 group-hover:text-orange-600 transition-colors leading-tight">
+                                {{ product.name }}
+                            </h3>
                         </div>
 
                         <div class="relative z-10 flex justify-between items-end">
                             <div class="flex flex-col">
                                 <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mb-0.5">Price</span>
-                                <span class="text-2xl font-[800] text-slate-900">${{ product.base_price }}</span>
+                                <span class="product-price text-2xl font-[800] text-slate-900">${{ product.base_price }}</span>
                             </div>
                             <div class="w-10 h-10 bg-slate-50 border-2 border-slate-200 rounded-xl group-hover:bg-orange-500 group-hover:border-orange-500 group-hover:text-white text-slate-400 flex items-center justify-center transition-all">
                                 <i class="bi bi-plus-lg font-bold"></i>
@@ -339,6 +341,33 @@
         let currentFrappeUpcharge = 0; 
         let currentService = 'Dine-in'; 
         let activeInputId = 'reg-name';
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'productUpdate' && event.newValue) {
+                const product = JSON.parse(event.newValue);
+                const card = document.querySelector(`[data-product-id="${product.id}"]`);
+
+                if (card) {
+                    // 1. Update Visuals
+                    card.querySelector('.product-name').innerText = product.name;
+                    card.querySelector('.product-price').innerText = `$${parseFloat(product.price).toFixed(2)}`;
+                    card.querySelector('.product-category').innerText = product.category;
+                    if (product.image_url) {
+                        card.querySelector('.product-img').src = product.image_url;
+                    }
+
+                    // 2. Update the addToCart Button Function
+                    const btn = card.querySelector('button');
+                    // We update the onclick attribute so the cart gets the new price/name
+                    const newOnClick = `addToCart('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price}', '0', '0', true, true, true)`; 
+                    btn.setAttribute('onclick', newOnClick);
+
+                    // 3. Visual "Pulse" to show it updated
+                    card.classList.add('scale-105', 'border-orange-500');
+                    setTimeout(() => card.classList.remove('scale-105', 'border-orange-500'), 500);
+                }
+            }
+        });
 
         function filterCategory(category) {
             const buttons = document.querySelectorAll('.cat-btn');

@@ -67,7 +67,7 @@
         
         <nav class="space-y-1 flex-grow">
             <a href="{% url 'manager_display' %}" class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100">
-                <i class="bi bi-grid-1x2-fill"></i> Menu Items
+                <i class="bi bi-grid-1x2-fill"></i> Manager Analyst
             </a>
             
             <a href="{% url 'inventory_list' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
@@ -94,7 +94,7 @@
         
         <div class="space-y-8">
             
-            <!-- Header Section -->
+            <!-- 1. Header Section -->
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <div class="flex items-center gap-3 mb-2">
@@ -112,10 +112,9 @@
                     <p class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest mt-1">Catalog & Profitability Analysis</p>
                 </div>
                 
-                <!-- Actions: Date Filter & Add Button -->
+                <!-- Actions -->
                 <div class="flex flex-col sm:flex-row w-full md:w-auto gap-4">
                     <div class="relative inline-block text-left w-full sm:w-auto">
-                        <!-- FIXED: Changed onchange from updateManagerStats() to updateDashboardData() -->
                         <select id="dateRangeFilter" onchange="updateDashboardData()" 
                                 class="appearance-none w-full bg-white border-2 border-slate-200 rounded-2xl py-4 pl-5 pr-12 text-slate-900 font-bold focus:outline-none focus:border-orange-500 transition-all cursor-pointer text-[10px] uppercase tracking-widest shadow-sm">
                             <optgroup label="Manager View (Operations)">
@@ -138,9 +137,9 @@
                 </div>
             </div>
 
-            <!-- Bento Stat Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
+            <!-- 2. Bento Stat Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Avg Profit -->
                 <div class="bento-card p-8 rounded-[2.5rem] flex flex-col justify-between shadow-sm">
                     <div class="flex items-center justify-between mb-6">
                         <div class="w-12 h-12 bg-orange-50 rounded-xl border-2 border-orange-100 text-orange-500 flex items-center justify-center">
@@ -154,6 +153,7 @@
                     </div>
                 </div>
 
+                <!-- Total Drinks -->
                 <div class="bento-card p-8 rounded-[2.5rem] flex flex-col justify-between shadow-sm">
                     <div class="flex items-center justify-between mb-6">
                         <div class="w-12 h-12 bg-emerald-50 rounded-xl border-2 border-emerald-100 text-emerald-500 flex items-center justify-center">
@@ -167,20 +167,41 @@
                     </div>
                 </div>
 
+                <!-- Total Income -->
+                <div class="bento-card p-8 rounded-[2.5rem] flex flex-col justify-between shadow-sm border-emerald-100 bg-emerald-50/10">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-12 h-12 bg-emerald-100 rounded-xl border-2 border-emerald-200 text-emerald-600 flex items-center justify-center">
+                            <i class="bi bi-cash-stack text-xl"></i>
+                        </div>
+                        <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Total Income</span>
+                    </div>
+                    <div>
+                        <h3 id="display-total-income" class="text-5xl font-[800] text-slate-900 mb-1">
+                            ${{ total_income|floatformat:2|default:"0.00" }}
+                        </h3>
+                        <p class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest">Gross Revenue</p>
+                    </div>
+                </div>
+
+                <!-- Total Expense -->
                 <div class="bento-card p-6 rounded-[2.5rem] flex flex-col justify-center shadow-sm">
                     <div class="flex items-center justify-between mb-2">
-                        <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Profit History</p>
-                        <i class="bi bi-activity text-slate-300"></i>
+                        <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Total Expense</p>
+                        <i class="bi bi-receipt text-slate-300"></i>
                     </div>
-                    <div class="h-[80px] w-full relative">
+                    <div class="flex items-baseline gap-1 mb-2">
+                        <h3 id="display-total-expense" class="text-2xl font-[900] text-slate-900">
+                            ${{ total_expense|floatformat:2|default:"0.00" }}
+                        </h3>
+                    </div>
+                    <div class="h-[60px] w-full relative">
                         <canvas id="miniChart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Inventory / Product Table -->
+            <!-- 3. Menu Intelligence Table -->
             <div class="bento-card rounded-[2.5rem] overflow-hidden shadow-sm">
-                
                 <div class="p-6 border-b-2 border-slate-100 bg-white/50 flex flex-col md:flex-row gap-4 justify-between">
                     <div class="relative flex-1 w-full max-w-md">
                         <i class="bi bi-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
@@ -195,7 +216,7 @@
                                 <th class="p-6 text-left w-1/3">Product Details</th>
                                 <th class="p-6 text-left w-1/6">Pricing</th>
                                 <th class="p-6 text-left w-1/5">Profitability</th>
-                                <th class="p-6 text-left w-1/5">Inventory</th>
+                                <th class="p-6 text-left w-1/5">Inventory (Bottleneck)</th>
                                 <th class="p-6 text-right w-1/6">Actions</th>
                             </tr>
                         </thead>
@@ -229,10 +250,10 @@
                                     <div class="flex flex-col gap-1.5 max-w-[140px]">
                                         <div class="flex justify-between font-black text-[9px] uppercase">
                                             <span class="text-emerald-500">+${{ product.real_profit|floatformat:2 }}</span>
-                                            <span class="text-slate-400">{{ product.margin_percentage|floatformat:0 }}%</span>
+                                            <span class="text-slate-400">{{ product.profit_percentage|floatformat:0 }}%</span>
                                         </div>
                                         <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                            <div class="h-full bg-orange-500" style="width: {{ product.margin_percentage }}%"></div>
+                                            <div class="h-full bg-orange-500" style="width: {{ product.profit_percentage }}%"></div>
                                         </div>
                                     </div>
                                 </td>
@@ -241,11 +262,10 @@
                                     <div class="flex flex-col gap-1.5 max-w-[140px]">
                                         <div class="flex justify-between items-center font-black text-[9px] uppercase">
                                             <span class="text-slate-400">Potential</span>
-                                            <span class="{% if product.calculated_stock <= 0 %}text-red-600 animate-pulse{% elif product.calculated_stock < 10 %}text-amber-500{% else %}text-slate-700{% endif %}">
+                                            <span id="potential-{{ product.id }}" class="potential-display {% if product.calculated_stock <= 0 %}text-red-600 animate-pulse{% elif product.calculated_stock < 10 %}text-amber-500{% else %}text-slate-700{% endif %}">
                                                 {% if product.calculated_stock <= 0 %}SOLD OUT{% else %}{{ product.calculated_stock }} Cups{% endif %}
                                             </span>
                                         </div>
-                                        
                                         <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
                                             <div class="h-full transition-all duration-500 
                                                 {% if product.calculated_stock <= 0 %}
@@ -255,7 +275,7 @@
                                                 {% else %}
                                                     bg-emerald-400
                                                 {% endif %}" 
-                                                style="{% if product.calculated_stock > 0 %}width: {{ product.calculated_stock }}%{% endif %}">
+                                                style="width: {% if product.calculated_stock > 100 %}100{% else %}{{ product.calculated_stock }}{% endif %}%">
                                             </div>
                                         </div>
                                     </div>
@@ -263,31 +283,77 @@
 
                                 <td class="p-6 w-1/6 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <a href="{% url 'edit_product' product.id %}" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-orange-50 hover:text-orange-500 hover:border-orange-200 transition-all">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </a>
-                                        <button onclick="openDeleteModal('{{ product.id }}', '{{ product.name|escapejs }}')" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all">
-                                            <i class="bi bi-trash3-fill"></i>
-                                        </button>
+                                        {% if product.limiting_ing %}
+                                            <button type="button"
+                                                id="update-btn-{{ product.id }}"
+                                                onclick="openUpdateModal('{{ product.limiting_ing.id }}', '{{ product.limiting_ing.name|escapejs }}', '{{ product.limiting_ing.initial_stock_per_item }}', '{{ product.limiting_ing.last_purchase_price }}')"
+                                                class="bg-white border-2 border-slate-200 text-slate-600 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 px-4 py-2 rounded-xl text-[10px] font-black transition uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(203,213,225,0.7)] active:translate-y-[1px]">
+                                                Update
+                                            </button>
+                                        {% else %}
+                                            <span class="text-[8px] text-slate-300 italic">No Recipe</span>
+                                        {% endif %}
+                                        <!-- ... pencil and trash buttons ... -->
                                     </div>
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr>
-                                <td colspan="5" class="p-16 text-center">
-                                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-slate-50 border-4 border-dashed border-slate-200 mb-6 text-slate-200">
-                                        <i class="bi bi-cup-hot text-4xl"></i>
-                                    </div>
-                                    <p class="text-slate-400 font-black uppercase tracking-widest text-sm italic">The menu is empty.</p>
-                                </td>
-                            </tr>
+                            <tr><td colspan="5" class="p-16 text-center text-slate-400 uppercase font-black text-sm">No drinks found.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
+
         </div>
     </main>
+
+    <div id="updateStockModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[250] items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 border-2 border-slate-200 shadow-2xl">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tight uppercase">Restock Item</h3>
+                    <!-- This is where the ingredient name (e.g., "Whole Milk") appears -->
+                    <p id="modalIngName" class="text-orange-600 font-black uppercase tracking-widest text-[9px] mt-1"></p>
+                </div>
+                <button type="button" onclick="closeStockModal()" class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <form id="updateStockForm" method="POST" action="">
+                {% csrf_token %}
+                <input type="hidden" name="ingredient_id" id="modalIngId">
+                
+                <div class="space-y-5">
+                    <!-- Quantity Field -->
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-1">Quantity (Items/Boxes Added)</label>
+                        <input type="number" name="items_to_add" id="modalQty" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold" required>
+                    </div>
+
+                    <!-- Batch Price Field -->
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-1">Total Batch Price ($)</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 font-black">$</span>
+                            <input type="number" name="batch_price" step="0.01" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl pl-8 pr-4 py-3.5 focus:border-orange-500 outline-none transition font-black">
+                        </div>
+                    </div>
+
+                    <!-- Unit Size Field (Crucial for bottleneck math) -->
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-1">Size per Box/Item (g, ml, pc)</label>
+                        <input type="number" name="unit_size" id="modalUnitSize" step="0.01" class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3.5 font-bold" required>
+                    </div>
+
+                    <button type="submit" class="w-full bg-orange-500 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:bg-orange-600 transition-all">
+                        Confirm Restock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div id="deleteModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] hidden items-center justify-center p-4">
         <div class="bg-white rounded-[2.5rem] border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(239,68,68,0.2)] max-w-sm w-full p-8 text-center relative">
@@ -316,33 +382,107 @@
     </div>
 
     <script>
-        // Sidebar Logic
+        // 1. BROADCAST CHANNEL SETUP
+        // Communication channel to sync data across different browser tabs
+        const stockChannel = new BroadcastChannel('stock_updates');
+
+        // Listen for updates from other tabs (e.g., updates made on the Inventory page)
+        stockChannel.onmessage = (event) => {
+            if (event.data === 'refresh_data') {
+                console.log("Received sync command from another tab...");
+                // Silently refresh dashboard stats and table rows
+                if (typeof updateDashboardData === 'function') updateDashboardData();
+            }
+        };
+
+        // 2. SIDEBAR LOGIC
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) sidebar.classList.toggle('-translate-x-full');
         }
 
-        // Search / Filtering Logic
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('productSearch');
-            const rows = document.querySelectorAll('.product-row');
+        // 3. CHART INITIALIZATION
+        let miniChartInstance = null;
 
-            function filterTable() {
-                const query = searchInput.value.toLowerCase();
-                rows.forEach(row => {
-                    const nameEl = row.querySelector('.productName');
-                    if(nameEl) {
-                        const name = nameEl.innerText.toLowerCase();
-                        row.style.display = name.includes(query) ? '' : 'none';
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('miniChart');
+            if(canvas) {
+                const ctx = canvas.getContext('2d');
+                let gradient = ctx.createLinearGradient(0, 0, 0, 80);
+                gradient.addColorStop(0, 'rgba(249, 115, 22, 0.2)'); 
+                gradient.addColorStop(1, 'rgba(249, 115, 22, 0)');
+
+                miniChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: {{ chart_labels|safe|default:"[]" }},
+                        datasets: [{
+                            data: {{ chart_data|safe|default:"[]" }}, 
+                            borderColor: '#f97316', 
+                            borderWidth: 3,
+                            fill: true,
+                            backgroundColor: gradient,
+                            tension: 0.4, 
+                            pointRadius: 0, 
+                            pointHoverRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { display: false }, y: { display: false } }
                     }
                 });
             }
-            if(searchInput) searchInput.addEventListener('input', filterTable);
+
+            // 4. SEAMLESS API RESTOCK LOGIC
+            const stockForm = document.getElementById('updateStockForm');
+            if (stockForm) {
+                stockForm.onsubmit = async function(e) {
+                    e.preventDefault(); // Stop standard form submission/reload
+                    
+                    const formData = new FormData(this);
+                    const actionUrl = this.getAttribute('action'); 
+                    
+                    try {
+                        const response = await fetch(actionUrl, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                                'X-Requested-With': 'XMLHttpRequest' // Tells Django this is an AJAX request
+                            }
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.status === 'success') {
+                            closeStockModal(); 
+                            
+                            // Update current page UI immediately
+                            await updateDashboardData(); 
+                            
+                            // BROADCAST: Notify the Inventory tab to update its table
+                            stockChannel.postMessage('refresh_data');
+                            
+                            console.log("Dashboard synced and broadcast sent.");
+                        } else {
+                            alert("Update failed: " + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Submission Error:', error);
+                        alert("Network error: Could not update stock.");
+                    }
+                };
+            }
             
-            // NEW: Fetch initial stats so they match the "Today" view by default
+            // Initial sync and 30-second background auto-refresh
             updateDashboardData();
+            setInterval(updateDashboardData, 30000); 
         });
 
-        // Modal Logic
+        // 5. MODAL & UI LOGIC
         function openDeleteModal(productId, productName) {
             document.getElementById('deleteItemName').innerText = productName;
             document.getElementById('deleteForm').action = `/delete-product/${productId}/`;
@@ -357,119 +497,161 @@
             modal.classList.remove('flex');
         }
 
-        // Close modal when clicking outside
+        // Modal dismiss logic (Clicking backdrop)
         window.onclick = function(event) {
-            const modal = document.getElementById('deleteModal');
-            if (event.target == modal) {
-                closeDeleteModal();
-            }
+            const delModal = document.getElementById('deleteModal');
+            const updateModal = document.getElementById('updateStockModal');
+            if (event.target == delModal) closeDeleteModal();
+            if (event.target == updateModal) closeStockModal();
         }
 
-        // Chart.js Data Initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            const canvas = document.getElementById('miniChart');
-            if(canvas) {
-                const ctx = canvas.getContext('2d');
-                let gradient = ctx.createLinearGradient(0, 0, 0, 80);
-                gradient.addColorStop(0, 'rgba(249, 115, 22, 0.2)'); 
-                gradient.addColorStop(1, 'rgba(249, 115, 22, 0)');
-
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: {{ chart_labels|safe }},
-                        datasets: [{
-                            data: {{ chart_data|safe }}, 
-                            borderColor: '#f97316', 
-                            borderWidth: 3,
-                            fill: true,
-                            backgroundColor: gradient,
-                            tension: 0.4, 
-                            pointRadius: 0, 
-                            pointHoverRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, tooltip: { enabled: true } },
-                        scales: { x: { display: false }, y: { display: false } },
-                        layout: { padding: 0 }
-                    }
-                });
-            }
-        });
-
-        // Combined Time and Theme Logic
+        // 6. ECOSYSTEM (TIME & THEME)
         function updateDashboardEcosystem() {
             const now = new Date();
             const hour = now.getHours();
 
-            // 1. Clock & Date
             const timeString = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const dateOptions = { month: 'short', day: '2-digit', year: 'numeric' };
-            document.getElementById('live-clock').innerText = timeString;
-            document.getElementById('live-date').innerText = now.toLocaleDateString('en-US', dateOptions);
+            
+            const clockEl = document.getElementById('live-clock');
+            const dateEl = document.getElementById('live-date');
+            
+            if (clockEl) clockEl.innerText = timeString;
+            if (dateEl) dateEl.innerText = now.toLocaleDateString('en-US', dateOptions);
 
-            // 2. Adaptive Bento Card Theme Application
+            // Bento Card Color Shifting
             let themeClass = "";
-            if (hour >= 5 && hour < 12) {
-                themeClass = "theme-morning";
-            } else if (hour >= 12 && hour < 17) {
-                themeClass = "theme-afternoon";
-            } else if (hour >= 17 && hour < 21) {
-                themeClass = "theme-evening";
-            } else {
-                themeClass = "theme-night";
-            }
+            if (hour >= 5 && hour < 12) themeClass = "theme-morning";
+            else if (hour >= 12 && hour < 17) themeClass = "theme-afternoon";
+            else if (hour >= 17 && hour < 21) themeClass = "theme-evening";
+            else themeClass = "theme-night";
 
-            const cards = document.querySelectorAll('.bento-card');
-            cards.forEach(card => {
+            document.querySelectorAll('.bento-card').forEach(card => {
                 card.classList.remove('theme-morning', 'theme-afternoon', 'theme-evening', 'theme-night');
                 card.classList.add(themeClass);
             });
         }
 
-        // Run ecosystem updates every 1 second
         setInterval(updateDashboardEcosystem, 1000);
-        updateDashboardEcosystem(); // Initial call
+        updateDashboardEcosystem();
 
-        // NEW: Live Stat Fetching API
+        // 7. DASHBOARD DATA SYNC (CORE ENGINE)
         async function updateDashboardData() {
-            const range = document.getElementById('dateRangeFilter').value;
+            const rangeFilter = document.getElementById('dateRangeFilter');
+            const range = rangeFilter?.value || 'today';
             
-            // Select all potential display elements
-            const elements = {
-                revenue: document.getElementById('revenueValue'),
-                profit: document.getElementById('profitValue'),
-                orders: document.getElementById('orderCount'),
-                managerProfit: document.getElementById('display-avg-profit'),
-                profitBar: document.getElementById('bar-avg-profit')
-            };
-
-            // Visual feedback: Add a slight fade out
-            Object.values(elements).forEach(el => { if(el) el.style.opacity = '0.5'; });
-
             try {
                 const response = await fetch(`/api/dashboard-stats/?range=${range}`);
+                if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.json();
 
-                // Update Owner Stats (Will safely ignore on Manager page if these IDs don't exist)
-                if (elements.revenue) elements.revenue.innerText = `$${data.revenue.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                if (elements.profit) elements.profit.innerText = `$${data.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                if (elements.orders) elements.orders.innerText = data.orders;
+                // Update Summary Stats & Progress Bar
+                const profitText = document.getElementById('display-avg-profit');
+                const profitBar = document.getElementById('bar-avg-profit');
+                if (profitText) profitText.innerText = `${data.avg_profit}%`;
+                if (profitBar) profitBar.style.width = `${data.avg_profit}%`;
 
-                // Update Manager Stats
-                if (elements.managerProfit) {
-                    elements.managerProfit.innerText = `${data.avg_profit.toFixed(1)}%`;
-                    elements.profitBar.style.width = `${data.avg_profit}%`;
+                const incomeDisplay = document.getElementById('display-total-income');
+                if (incomeDisplay) incomeDisplay.innerText = `$${data.income.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+                const expenseDisplay = document.getElementById('display-total-expense');
+                if (expenseDisplay) expenseDisplay.innerText = `$${data.expense.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+                // Sync Mini Trend Chart
+                if (window.miniChartInstance) {
+                    window.miniChartInstance.data.labels = data.labels;
+                    window.miniChartInstance.data.datasets[0].data = data.expense_data;
+                    window.miniChartInstance.update('none');
                 }
 
+                // Sync Menu Table Rows (Potential Stock)
+                if (data.product_potentials) {
+                    for (const [productId, info] of Object.entries(data.product_potentials)) {
+                        const textElement = document.getElementById(`potential-${productId}`);
+                        const updateBtn = document.getElementById(`update-btn-${productId}`);
+
+                        if (textElement) {
+                            const stockValue = info.stock;
+                            textElement.innerText = stockValue <= 0 ? "SOLD OUT" : `${stockValue} Cups`;
+                            textElement.className = "potential-display font-black ";
+                            
+                            if (stockValue <= 0) {
+                                textElement.classList.add('text-red-600', 'animate-pulse');
+                            } else if (stockValue < 10) {
+                                textElement.classList.add('text-amber-500');
+                            } else {
+                                textElement.classList.add('text-slate-700');
+                            }
+
+                            // Update progress bar visual styling
+                            const barElement = textElement.closest('td')?.querySelector('.h-full.transition-all');
+                            if (barElement) {
+                                barElement.style.width = `${Math.min(stockValue, 100)}%`;
+                                barElement.className = "h-full transition-all duration-500 ";
+                                if (stockValue <= 0) barElement.classList.add('animate-critical', 'w-full');
+                                else if (stockValue < 10) barElement.classList.add('bg-amber-400');
+                                else barElement.classList.add('bg-emerald-400');
+                            }
+                        }
+
+                        // Dynamically re-bind the update button to target the current bottleneck ingredient
+                        if (updateBtn && info.ing_id) {
+                            updateBtn.onclick = function() {
+                                openUpdateModal(info.ing_id, info.ing_name, info.ing_size, info.ing_price);
+                            };
+                        }
+                    }
+                }
+
+                const orderDisplay = document.getElementById('display-total-orders');
+                if (orderDisplay) orderDisplay.innerText = data.orders;
+
             } catch (error) {
-                console.error('Error fetching stats:', error);
-            } finally {
-                // Fade back in
-                Object.values(elements).forEach(el => { if(el) el.style.opacity = '1'; });
+                console.error('Dashboard Sync Error:', error);
+            }
+        }
+
+        // 8. RESTOCK MODAL HANDLER
+        function openUpdateModal(id, name, unitSize, lastPurchasePrice) {
+            const modal = document.getElementById('updateStockModal');
+            if (!modal) return;
+
+            // Populate modal fields
+            document.getElementById('modalIngId').value = id;
+            document.getElementById('modalIngName').innerText = name;
+            
+            const sizeInput = document.getElementById('modalUnitSize');
+            if (sizeInput) sizeInput.value = unitSize;
+            
+            const qtyInput = document.getElementById('modalQty');
+            const priceInput = document.querySelector('input[name="batch_price"]');
+            
+            if (qtyInput && priceInput) {
+                qtyInput.value = ""; 
+                priceInput.value = ""; 
+                priceInput.placeholder = `Usual: $${parseFloat(lastPurchasePrice).toFixed(2)}`;
+
+                // Real-time cost estimation
+                qtyInput.oninput = function() {
+                    const qty = parseFloat(qtyInput.value) || 0;
+                    if (qty > 0) priceInput.value = (qty * parseFloat(lastPurchasePrice)).toFixed(2);
+                    else priceInput.value = "";
+                };
+            }
+            
+            // Update form action URL to point to the correct ingredient ID
+            const form = document.getElementById('updateStockForm');
+            if (form) form.action = `/inventory/update/${id}/`; 
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeStockModal() {
+            const modal = document.getElementById('updateStockModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
             }
         }
     </script>

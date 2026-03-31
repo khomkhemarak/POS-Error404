@@ -6,10 +6,6 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
-
-from django.db import models
-from decimal import Decimal
-
 class Product(models.Model):
     CATEGORIES = (
         ('Coffee', 'Coffee'),
@@ -51,16 +47,16 @@ class Product(models.Model):
         return self.get_production_cost(size='Small')
 
     @property
-    def net_revenue(self):
+    def net_income(self):
         return round(self.base_price / Decimal('1.10'), 2)
 
     @property
-    def margin_percentage(self):
-        net_revenue = self.net_revenue
+    def profit_percentage(self):
+        net_income = self.net_income
         total_cost = self.total_cost 
-        if net_revenue <= 0 or total_cost <= 0:
+        if net_income <= 0 or total_cost <= 0:
             return 0
-        real_profit = net_revenue - total_cost
+        real_profit = net_income - total_cost
         real_efficiency = (real_profit / total_cost) * 100
         return round(real_efficiency, 1)
 
@@ -80,14 +76,14 @@ class Product(models.Model):
             price += self.frappe_upcharge
         return price
 
-    def get_net_revenue(self, size='Small', drink_type='Hot'):
+    def get_net_income(self, size='Small', drink_type='Hot'):
         total_price = self.get_final_price(size, drink_type)
         return total_price / Decimal('1.10')
 
-    def get_profit_margin(self, size='Small', drink_type='Hot'):
-        net_revenue = self.get_net_revenue(size, drink_type)
+    def get_profit(self, size='Small', drink_type='Hot'):
+        net_income = self.get_net_income(size, drink_type)
         production_cost = self.get_production_cost(size)
-        return net_revenue - production_cost
+        return net_income - production_cost
 
     def get_production_cost(self, size='Small'):
         total_cost = Decimal('0.00')
@@ -98,7 +94,7 @@ class Product(models.Model):
 
     @property
     def real_profit(self):
-        return self.net_revenue - self.total_cost
+        return self.net_income - self.total_cost
 
     def reduce_stock(self, quantity):
         if self.stock >= quantity:
@@ -145,6 +141,12 @@ class OrderItem(models.Model):
     sugar = models.CharField(max_length=20, default='100%')
     drink_type = models.CharField(max_length=20, default='Hot')
 
+    # --- ADD THESE TWO NEW FIELDS ---
+    # This freezes the math so future menu changes don't ruin your past reports
+    price_at_sale = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cost_at_sale = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    # --------------------------------
+
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),
         ('PREPARING', 'Preparing'),
@@ -153,10 +155,6 @@ class OrderItem(models.Model):
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     is_completed = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"{self.quantity} x {self.product.name} ({self.drink_type})"
-
 
 class Ingredient(models.Model):
     PACKAGING_CHOICES = (
@@ -202,7 +200,7 @@ class Ingredient(models.Model):
         return self.stock_percent < 20
     
     def add_new_stock(self, new_items_count, price_paid):
-        """When you buy more, this automatically lowers/raises your product margins"""
+        """When you buy more, this automatically lowers/raises your product profits"""
         added_quantity = Decimal(str(new_items_count)) * self.initial_stock_per_item
         
         self.items_count += new_items_count
@@ -210,7 +208,7 @@ class Ingredient(models.Model):
         self.last_purchase_price = price_paid
         
         if added_quantity > 0:
-            # Updating the cost-per-unit ensures the Product margin is always live
+            # Updating the cost-per-unit ensures the Product profit is always live
             self.unit_cost = Decimal(str(price_paid)) / added_quantity
             
         self.save()

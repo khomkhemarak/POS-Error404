@@ -23,8 +23,9 @@ urlpatterns = [
     path('recipe-builder/', views.recipe_builder, name='recipe_builder'),
     path('inventory/', views.inventory_list, name='inventory_list'),
     path('inventory/add/', views.add_ingredient, name='add_ingredient'),
+    path('inventory/update/<int:pk>/', views.api_update_stock, name='update_stock'),
     path('inventory/delete/<int:pk>/', views.delete_ingredient, name='delete_ingredient'),
-
+    #path('api/inventory/update/<int:pk>/', views.api_update_stock, name='api_update_stock'),
 
     # Managerial Analytics and Reporting
     path('manager/', views.manager_view, name='manager_display'),
