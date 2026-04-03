@@ -93,15 +93,18 @@
                 </button>
 
                 {% for category in categories %}
+                {% if category.name != 'Matcha' %}
                 <button onclick="filterCategory('{{ category.name }}')" 
                         class="cat-btn px-6 py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-500 rounded-2xl font-[800] transition-all whitespace-nowrap">
                     {{ category.name }}
                 </button>
+                {% endif %}
                 {% endfor %}
             </div>
 
             <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 overflow-y-auto pr-2 pb-6 no-scrollbar content-start">
                 {% for product in products %}
+                {% if product.category != 'Matcha' %}
                 <div class="product-item" data-product-id="{{ product.id }}" data-category="{{ product.category }}">
                     <button onclick="addToCart(
                         '{{ product.id }}', 
@@ -147,6 +150,7 @@
                         </div>
                     </button>
                 </div>
+                {% endif %}
                 {% endfor %}
             </div>
         </div>

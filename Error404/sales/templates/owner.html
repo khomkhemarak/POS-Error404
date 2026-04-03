@@ -267,8 +267,9 @@
             <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">Menu Catalog</h3>
             <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-lg">{{ products.count }} Items</span>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div id="menuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {% for product in products %}
+            {% if product.category != 'Matcha' %}
             <!-- 1. Added data-product-id here -->
             <div data-product-id="{{ product.id }}" class="relative bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[140px]">
                 <div class="flex gap-4">
@@ -298,15 +299,16 @@
 
                 <!-- Buttons ... -->
                 <div class="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="openEditModal('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.base_price }}', '{{ product.category_id }}', '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" 
+                    <button onclick="openEditModal('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.base_price }}', '{{ product.category }}', '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" 
                             class="w-8 h-8 bg-white text-orange-500 rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm">
                         <i class="bi bi-pencil-fill text-xs"></i>
                     </button>
-                    <button onclick="openDeleteModal('{{ product.id }}', '{{ product.name|escapejs }}')" class="w-8 h-8 bg-white text-red-500 rounded-lg flex items-center justify-center hover:bg-red-50 border border-slate-200 shadow-sm">
+                    <button type="button" onclick="openDeleteModal('{{ product.id }}', '{{ product.name|escapejs }}')" class="w-8 h-8 bg-white text-red-500 rounded-lg flex items-center justify-center hover:bg-red-50 border border-slate-200 shadow-sm">
                         <i class="bi bi-trash3-fill text-xs"></i>
                     </button>
                 </div>
             </div>
+            {% endif %}
             {% endfor %}
         </div>
     </div>
@@ -355,7 +357,9 @@
                                     class="w-full bg-transparent text-slate-900 outline-none cursor-pointer appearance-none font-[800] text-sm">
                                 <option value="" disabled selected>Choose...</option>
                                 {% for category in categories %}
+                                    {% if category.name != 'Matcha' %}
                                     <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endif %}
                                 {% endfor %}
                             </select>
                             <i class="bi bi-chevron-down absolute right-0 top-0 text-slate-400 pointer-events-none"></i>
@@ -432,7 +436,9 @@
                         <label class="text-[10px] font-[900] text-slate-400 uppercase tracking-widest ml-1">Category</label>
                         <select id="editProductCategory" name="category" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 font-[800]">
                             {% for cat in categories %}
-                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% if cat.name != 'Matcha' %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endif %}
                             {% endfor %}
                         </select>
                     </div>
@@ -478,111 +484,34 @@
             
             <h3 class="text-2xl font-[800] text-slate-900 mb-2 uppercase tracking-tight">Erase Drink?</h3>
             <p class="text-slate-500 font-medium text-sm mb-8 leading-relaxed">
-                You are about to permanently delete <br><span id="deleteProdName" class="font-[800] text-red-500 bg-red-50 px-2 py-0.5 rounded-md"></span>. This action is final.
+                You are about to permanently delete <br>
+                <span id="deleteProdName" class="font-[800] text-red-500 bg-red-50 px-2 py-0.5 rounded-md"></span>. 
+                <br>This action is final.
             </p>
 
             <div class="flex flex-col gap-3">
-                <form id="deleteProdForm" method="POST" action="">
-                    {% csrf_token %}
-                    <button type="submit" class="w-full py-4 bg-red-500 text-white font-[800] rounded-2xl uppercase tracking-widest text-xs transition-all hover:bg-red-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-y-1 active:shadow-none">
-                        Confirm Deletion
-                    </button>
-                </form>
+                <button type="button" 
+                        onclick="executeDelete()" 
+                        class="w-full py-4 bg-red-500 text-white font-[800] rounded-2xl uppercase tracking-widest text-xs transition-all hover:bg-red-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-y-1 active:shadow-none">
+                    Confirm Deletion
+                </button>
                 
-                <button onclick="closeDeleteProductModal()" class="w-full py-4 text-slate-400 font-[800] hover:text-slate-900 transition-colors uppercase tracking-widest text-[10px]">
+                <button type="button" 
+                        onclick="closeDeleteProductModal()" 
+                        class="w-full py-4 text-slate-400 font-[800] hover:text-slate-900 transition-colors uppercase tracking-widest text-[10px]">
                     No, Keep it
                 </button>
             </div>
+
+            {% csrf_token %}
         </div>
     </div>
 
     <script>
+        const stockChannel = new BroadcastChannel('stock_updates');
+        let productToDeleteId = null;
 
-        async function refreshDashboardStats() {
-            try {
-                // 1. Get current selected range
-                const activeRangeElement = document.querySelector('.active-range') || document.getElementById('dateRange');
-                const currentRange = activeRangeElement.value || activeRangeElement.dataset.range || 'today';
-                
-                // 2. Fetch fresh data
-                const response = await fetch(`/api/dashboard-stats/?range=${currentRange}`);
-                const data = await response.json();
-
-                // 3. Update Key Metrics
-                document.getElementById('incomeValue').innerText = `$${data.income.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                document.getElementById('profitValue').innerText = `$${data.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                document.getElementById('orderCount').innerText = data.orders;
-
-                // 4. Update Stock Alert Card
-                const alertValue = document.getElementById('stockAlertValue');
-                const alertCard = document.getElementById('stockAlertCard');
-                if (alertValue && alertCard) {
-                    alertValue.innerText = data.stock_alerts;
-                    if (data.stock_alerts > 0) {
-                        alertCard.classList.add('border-red-200', 'bg-red-50/30');
-                    } else {
-                        alertCard.classList.remove('border-red-200', 'bg-red-50/30');
-                    }
-                }
-
-                // 5. Update Top Sellers List
-                const topSellersContainer = document.getElementById('topSellersList');
-                if (topSellersContainer && data.popular_items) {
-                    topSellersContainer.innerHTML = data.popular_items.length > 0 
-                        ? data.popular_items.map(item => `
-                            <div class="flex justify-between items-center py-3 group transition-all duration-500">
-                                <span class="font-bold text-slate-700 group-hover:text-orange-600 transition-colors">${item.product__name}</span>
-                                <span class="bg-orange-50 text-orange-600 border border-orange-100 px-3 py-1 rounded-lg text-[10px] font-[800] tracking-widest uppercase">
-                                    ${item.total_qty}
-                                </span>
-                            </div>`).join('')
-                        : '<p class="text-slate-400 font-semibold py-4 text-sm">No sales data.</p>';
-                }
-
-                // 6. Update Chart
-                if (window.salesChartInstance) {
-                    window.salesChartInstance.data.labels = data.labels;
-                    window.salesChartInstance.data.datasets[0].data = data.sales_data;
-                    window.salesChartInstance.update('none');
-                }
-
-                // 7. Update Raw Materials Overview (Live Progress Bars)
-                const materialsGrid = document.getElementById('rawMaterialsGrid');
-                if (materialsGrid && data.ingredients) {
-                    materialsGrid.innerHTML = data.ingredients.map(ing => {
-                        const statusColor = ing.is_low_stock ? 'text-red-500' : 'text-emerald-500';
-                        const barColor = ing.is_low_stock ? 'bg-red-500' : 'bg-emerald-500';
-                        const borderColor = ing.is_low_stock ? 'border-red-100' : 'border-slate-100';
-
-                        return `
-                            <div class="p-5 bg-slate-50 rounded-2xl border-2 ${borderColor} hover:border-orange-200 transition-all duration-500">
-                                <div class="flex justify-between items-start mb-2">
-                                    <p class="text-slate-500 text-[10px] font-[800] tracking-widest uppercase truncate pr-2">${ing.name}</p>
-                                    <span class="text-[10px] font-[800] ${statusColor}">${Math.round(ing.stock_percent)}%</span>
-                                </div>
-                                <div class="flex items-end gap-1">
-                                    <p class="text-2xl font-[800] text-slate-900">${Math.round(ing.stock_quantity)}</p>
-                                    <span class="text-[10px] font-[800] text-slate-400 uppercase pb-1">${ing.unit}</span>
-                                </div>
-                                <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden border border-slate-300">
-                                    <div class="h-full transition-all duration-700 ${barColor}" style="width: ${ing.stock_percent}%; min-width: 4px;"> </div>
-                                </div>
-                            </div>`;
-                    }).join('');
-                }
-
-            } catch (error) {
-                console.error("Dashboard Sync Error:", error);
-            }
-        }
-
-        // Start auto-refresh every 5 seconds
-        setInterval(refreshDashboardStats, 5000);
-
-        // 1. Declare the chart globally so it can be updated
-        let salesChartInstance = null;
-
-        // 2. Sidebar & Modal Logic (Consolidated)
+        // --- 1. MODAL CONTROLS ---
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         }
@@ -594,142 +523,49 @@
         }
 
         function openAddModal() {
-            // 1. Reset the form to blank
             const form = document.getElementById('productForm');
-            form.reset();
+            // Capture the current category before resetting
+            const currentCategory = form.querySelector('select[name="category"]').value;
             
-            // 2. Update UI elements for "Add" mode
+            form.reset();
+            // Restore the category so the user doesn't have to re-select it
+            form.querySelector('select[name="category"]').value = currentCategory;
+            
             document.getElementById('modalTitle').innerText = "Create Drink";
             document.getElementById('modalSubmitBtn').innerText = "Confirm & Save Drink";
-            
-            // 3. Set the action to your add_product URL
             form.action = "{% url 'add_product' %}";
-            
             toggleProductModal();
         }
 
-        // 3. Initialize Chart (Runs ONLY once on page load)
-        document.addEventListener('DOMContentLoaded', function() {
-            const ctx = document.getElementById('salesChart');
-            if (ctx) {
-                const chartCtx = ctx.getContext('2d');
-                const gradient = chartCtx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(249, 115, 22, 0.2)');
-                gradient.addColorStop(1, 'rgba(249, 115, 22, 0)');
-
-                salesChartInstance = new Chart(chartCtx, {
-                    type: 'line',
-                    data: {
-                        labels: {{ labels|safe|default:"[]" }},
-                        datasets: [{
-                            label: 'income ($)',
-                            data: {{ sales_data|safe|default:"[]" }},
-                            fill: true,
-                            backgroundColor: gradient,
-                            borderColor: '#f97316',
-                            borderWidth: 4,
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, ticks: { callback: (v) => '$' + v } }
-                        }
-                    }
-                });
-            }
-        });
-
-        // 4. Update Function (Fixed to match HTML ID 'dateRange')
-        async function updateDashboardData() {
-            // MATCHING ID: Changed from 'dateRangeFilter' to 'dateRange'
-            const range = document.getElementById('dateRange').value;
-            
-            const elements = {
-                income: document.getElementById('incomeValue'),
-                profit: document.getElementById('profitValue'),
-                orders: document.getElementById('orderCount')
-            };
-
-            // Visual feedback
-            Object.values(elements).forEach(el => { if(el) el.style.opacity = '0.5'; });
-
-            try {
-                const response = await fetch(`/api/dashboard-stats/?range=${range}`);
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.json();
-
-                // Update Numbers
-                if (elements.income) elements.income.innerText = `$${data.income.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                if (elements.profit) elements.profit.innerText = `$${data.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                if (elements.orders) elements.orders.innerText = data.orders;
-
-                // Update Chart
-                if (salesChartInstance && data.labels) {
-                    salesChartInstance.data.labels = data.labels;
-                    salesChartInstance.data.datasets[0].data = data.sales_data;
-                    salesChartInstance.update();
-                }
-
-            } catch (error) {
-                console.error('Dashboard update error:', error);
-            } finally {
-                Object.values(elements).forEach(el => { if(el) el.style.opacity = '1'; });
-            }
-        }
-
-        function changeRange(range, btnElement) {
-            // 1. Remove active classes from ALL buttons
-            document.querySelectorAll('.range-btn').forEach(btn => {
-                btn.classList.remove('active-range', 'text-orange-600');
-                btn.classList.add('text-slate-400');
-            });
-            
-            // 2. Add active classes to the CLICKED button
-            btnElement.classList.add('active-range', 'text-orange-600');
-            btnElement.classList.remove('text-slate-400');
-            
-            // 3. Trigger an immediate refresh (don't wait for the 5-second timer)
-            refreshDashboardStats();
-        }
-
-        function handleDropdownChange(selectElement) {
-            // 1. Update the 'data-range' so the auto-refresh loop (refreshDashboardStats) 
-            // knows which period to keep syncing in the background.
-            selectElement.dataset.range = selectElement.value;
-
-            // 2. Visual Polish: Highlight the border if it's not the default 'today'
-            if (selectElement.value !== 'today') {
-                selectElement.classList.add('border-orange-500');
-            } else {
-                selectElement.classList.remove('border-orange-500');
-            }
-
-            // 3. TRIGGER IMMEDIATE SYNC
-            // This calls your existing refreshDashboardStats() function immediately
-            // so the user doesn't have to wait for the 5-second timer.
-            refreshDashboardStats();
-        }
-
-       // 1. Logic to populate and show the modal
-        function openEditModal(id, name, price, categoryId, canH, canI, canF) {
-            const modal = document.getElementById('editModal'); // Changed to match your ID 'editModal'
+        function openEditModal(id, name, price, categoryName, canH, canI, canF) {
+            const modal = document.getElementById('editModal');
             const form = document.getElementById('editProductForm');
-            
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
-            document.getElementById('modalTitle').innerText = "Edit Drink Details";
-            document.getElementById('modalSubmitBtn').innerText = "Update Drink";
-
             form.querySelector('input[name="name"]').value = name;
             form.querySelector('input[name="price"]').value = price;
-            form.querySelector('select[name="category"]').value = categoryId;
-            
-            // Convert string 'True'/'False' to boolean for checkboxes
+
+            const categorySelect = form.querySelector('select[name="category"]');
+            let selectedCategoryValue = '';
+
+            if (categoryName) {
+                const trimmedCategoryName = categoryName.trim();
+                for (const option of categorySelect.options) {
+                    if (option.text.trim() === trimmedCategoryName) {
+                        selectedCategoryValue = option.value;
+                        break;
+                    }
+                }
+            }
+
+            if (selectedCategoryValue) {
+                categorySelect.value = selectedCategoryValue;
+            } else {
+                const activeAddCategory = document.querySelector('#productForm select[name="category"]').value;
+                if (activeAddCategory) categorySelect.value = activeAddCategory;
+            }
+
             form.querySelector('input[name="can_be_hot"]').checked = (canH === 'True');
             form.querySelector('input[name="can_be_iced"]').checked = (canI === 'True');
             form.querySelector('input[name="can_be_frappe"]').checked = (canF === 'True');
@@ -742,113 +578,221 @@
             document.getElementById('editModal').classList.remove('flex');
         }
 
-            // 2. The API Submission Logic
-            document.getElementById('editProductForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                const formData = new FormData(this);
-                const actionUrl = this.getAttribute('action');
-
-                fetch(actionUrl, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        closeEditModal();
-
-                        // --- 1. THE POS SYNC LOGIC ---
-                        localStorage.setItem('productUpdate', JSON.stringify({
-                            id: data.product.id,
-                            name: data.product.name,
-                            price: data.product.price,
-                            category: data.product.category,
-                            image_url: data.product.image_url,
-                            can_be_hot: formData.get('can_be_hot') === 'on',
-                            can_be_iced: formData.get('can_be_iced') === 'on',
-                            can_be_frappe: formData.get('can_be_frappe') === 'on'
-                        }));
-                        localStorage.removeItem('productUpdate'); 
-
-                        // --- 2. UPDATE THE DASHBOARD CARD (OWNER VIEW) ---
-                        const card = document.querySelector(`[data-product-id="${data.product.id}"]`);
-                        
-                        if (card) {
-                            // Update Name
-                            const nameEl = card.querySelector('.product-name');
-                            if (nameEl) nameEl.innerText = data.product.name;
-
-                            // Update Price
-                            const priceEl = card.querySelector('.product-price');
-                            if (priceEl) priceEl.innerText = `$${parseFloat(data.product.price).toFixed(2)}`;
-
-                            // Update Category
-                            const catEl = card.querySelector('.product-category');
-                            if (catEl) catEl.innerText = data.product.category;
-
-                            // Update Profit (NEW)
-                            const profitEl = card.querySelector('.product-profit');
-                            if (profitEl) profitEl.innerText = `$${parseFloat(data.product.profit).toFixed(2)}`;
-
-                            // Update Image
-                            if (data.product.image_url) {
-                                const imgEl = card.querySelector('img');
-                                if (imgEl) imgEl.src = data.product.image_url;
-                            }
-
-                            // --- 3. UPDATE THE EDIT BUTTON ONCLICK ATTRIBUTE ---
-                            // This ensures the NEXT time you click "Edit", the modal has the NEW data
-                            const editBtn = card.querySelector('button[onclick^="openEditModal"]');
-                            if (editBtn) {
-                                const updatedOnClick = `openEditModal(
-                                    '${data.product.id}', 
-                                    '${data.product.name.replace(/'/g, "\\'")}', 
-                                    '${data.product.price}', 
-                                    '${formData.get('category')}', 
-                                    '${formData.get('can_be_hot') === 'on' ? 'True' : 'False'}', 
-                                    '${formData.get('can_be_iced') === 'on' ? 'True' : 'False'}', 
-                                    '${formData.get('can_be_frappe') === 'on' ? 'True' : 'False'}'
-                                )`;
-                                editBtn.setAttribute('onclick', updatedOnClick);
-                            }
-                            
-                            // Visual feedback: Flash orange
-                            card.classList.add('border-orange-500', 'shadow-lg');
-                            setTimeout(() => {
-                                card.classList.remove('border-orange-500', 'shadow-lg');
-                            }, 1000);
-                        }
-                    } else {
-                        alert("Error: " + data.message);
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            });
-
-        // --- Delete Modal Logic ---
+        // --- 2. DELETE LOGIC ---
         function openDeleteModal(id, name) {
-            
-            const modal = document.getElementById('deleteProductModal');
-            const form = document.getElementById('deleteProdForm');
+            productToDeleteId = id;
             const nameSpan = document.getElementById('deleteProdName');
-
-            nameSpan.innerText = name; 
-            form.action = `/delete-product/${id}/`; 
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            const modal = document.getElementById('deleteProductModal');
+            if (nameSpan) nameSpan.innerText = name;
+            if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
         }
 
         function closeDeleteProductModal() {
             const modal = document.getElementById('deleteProductModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+            productToDeleteId = null;
         }
+
+        async function executeDelete() {
+            if (!productToDeleteId) return;
+            try {
+                const response = await fetch(`/delete-product/${productToDeleteId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    stockChannel.postMessage({ type: 'delete_product', product_id: productToDeleteId });
+                    const card = document.querySelector(`[data-product-id="${productToDeleteId}"]`);
+                    if (card) {
+                        card.classList.add('opacity-0', 'scale-95');
+                        setTimeout(() => card.remove(), 300);
+                    }
+                    closeDeleteProductModal();
+                }
+            } catch (error) { console.error(error); }
+        }
+
+        // --- 3. UI INJECTION HELPERS ---
+        function renderNewCard(product, canH, canI, canF) {
+            const menuGrid = document.getElementById('menuGrid'); 
+            if (!menuGrid) return;
+
+            const newCard = document.createElement('div');
+            newCard.setAttribute('data-product-id', product.id);
+            
+            // 1. STYLING: Match exactly with the Django loop classes for consistent sizing
+            newCard.className = "relative bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[140px] opacity-0 scale-95";
+            
+            const displayImage = product.image_url 
+                ? `<img src="${product.image_url}?t=${new Date().getTime()}" class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 shrink-0">`
+                : `<div class="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 border-2 border-slate-100 shrink-0"><i class="bi bi-cup text-xl"></i></div>`;
+
+            newCard.innerHTML = `
+                <div class="flex gap-4">
+                    ${displayImage}
+                    <div>
+                        <p class="product-name font-[800] text-slate-900 text-sm leading-tight">${product.name}</p>
+                        <span class="product-category inline-block mt-1 text-[8px] bg-slate-50 border border-slate-200 text-slate-500 px-2 py-0.5 rounded-md font-[800] tracking-widest uppercase">${product.category}</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-end justify-between mt-4 pt-4 border-t-2 border-slate-50">
+                    <div>
+                        <span class="text-[8px] font-[800] text-emerald-500 uppercase tracking-widest block mb-0.5">Profit</span>
+                        <span class="product-profit text-sm font-[800] text-slate-700">$${parseFloat(product.profit || 0).toFixed(2)}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[8px] font-[800] text-slate-400 uppercase tracking-widest block mb-0.5">Price</span>
+                        <span class="product-price text-sm font-[800] text-orange-600">$${parseFloat(product.price).toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div class="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="openEditModal('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price}', '${product.category_id || ''}', '${canH}', '${canI}', '${canF}')" 
+                            class="w-8 h-8 bg-white text-orange-500 rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm">
+                        <i class="bi bi-pencil-fill text-xs"></i>
+                    </button>
+                    <button type="button" onclick="openDeleteModal('${product.id}', '${product.name.replace(/'/g, "\\'")}')" class="w-8 h-8 bg-white text-red-500 rounded-lg flex items-center justify-center hover:bg-red-50 border border-slate-200 shadow-sm">
+                        <i class="bi bi-trash3-fill text-xs"></i>
+                    </button>
+                </div>
+            `;
+
+            // 3. PLACEMENT: Add to the start of the grid
+            menuGrid.prepend(newCard);
+
+            // 4. ANIMATION: Smooth fade and scale in
+            requestAnimationFrame(() => {
+                newCard.classList.remove('opacity-0', 'scale-95');
+                newCard.classList.add('opacity-100', 'scale-100');
+            });
+
+            // Remove the orange "New" highlight after 2 seconds
+            setTimeout(() => {
+                newCard.classList.remove('border-orange-500');
+                newCard.classList.add('border-slate-100');
+            }, 2000);
+        }
+
+        // --- 4. FORM HANDLERS ---
+        
+        // Add Product Handler
+        document.getElementById('productForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            try {
+                const response = await fetch(this.action, { 
+                    method: 'POST', body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    toggleProductModal();
+                    const canH = formData.get('can_be_hot') === 'on' ? 'True' : 'False';
+                    const canI = formData.get('can_be_iced') === 'on' ? 'True' : 'False';
+                    const canF = formData.get('can_be_frappe') === 'on' ? 'True' : 'False';
+                    
+                    renderNewCard(data.product, canH, canI, canF);
+                    stockChannel.postMessage({ type: 'add_product', product: data.product });
+                }
+            } catch (error) { console.error(error); }
+        });
+
+        document.getElementById('editProductForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            try {
+                const response = await fetch(this.getAttribute('action'), { 
+                    method: 'POST', 
+                    body: formData,
+                    headers: { 
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    closeEditModal();
+
+                    // 1. Create the Cache-Buster URL
+                    const timestampedUrl = data.product.image_url ? `${data.product.image_url}?t=${new Date().getTime()}` : null;
+
+                    // 2. Broadcast to Manager
+                    stockChannel.postMessage({
+                        type: 'update_product',
+                        product: { ...data.product, image_url: timestampedUrl }
+                    });
+
+                    // 3. Update Owner Card
+                    const card = document.querySelector(`[data-product-id="${data.product.id}"]`);
+                    if (card) {
+                        // ALWAYS update text fields (Don't wrap these in the image check!)
+                        card.querySelector('.product-name').innerText = data.product.name;
+                        card.querySelector('.product-price').innerText = `$${parseFloat(data.product.price).toFixed(2)}`;
+                        card.querySelector('.product-category').innerText = data.product.category;
+                        
+                        const profitEl = card.querySelector('.product-profit');
+                        if (profitEl) profitEl.innerText = `$${parseFloat(data.product.profit).toFixed(2)}`;
+
+                        // Update image or replace placeholder
+                        if (timestampedUrl) {
+                            let img = card.querySelector('img');
+                            if (img) {
+                                img.src = timestampedUrl;
+                            } else {
+                                // If it was a placeholder icon, replace it with an img tag
+                                const placeholder = card.querySelector('.bi-cup')?.parentElement;
+                                if (placeholder) {
+                                    placeholder.outerHTML = `<img src="${timestampedUrl}" class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 shrink-0">`;
+                                }
+                            }
+                        }
+
+                        // 4. Update onclick for next edit (Crucial for live sync)
+                        const editBtn = card.querySelector('button[onclick^="openEditModal"]');
+                        if (editBtn) {
+                            const canH = formData.get('can_be_hot') === 'on' ? 'True' : 'False';
+                            const canI = formData.get('can_be_iced') === 'on' ? 'True' : 'False';
+                            const canF = formData.get('can_be_frappe') === 'on' ? 'True' : 'False';
+                            
+                            editBtn.setAttribute('onclick', `openEditModal(
+                                '${data.product.id}', 
+                                '${data.product.name.replace(/'/g, "\\'")}', 
+                                '${data.product.price}', 
+                                '${data.product.category_id}', 
+                                '${canH}', 
+                                '${canI}', 
+                                '${canF}'
+                            )`);
+                        }
+
+                        // Visual Feedback
+                        card.classList.add('border-orange-500', 'ring-2', 'ring-orange-200');
+                        setTimeout(() => card.classList.remove('border-orange-500', 'ring-2', 'ring-orange-200'), 1000);
+                    }
+                }
+            } catch (error) { 
+                console.error("Edit Error:", error); 
+            }
+        });
+
+        // --- 5. TELEMETRY SYNC ---
+        async function refreshDashboardStats() {
+            try {
+                const activeRange = document.querySelector('.active-range')?.value || 'today';
+                const response = await fetch(`/api/dashboard-stats/?range=${activeRange}`);
+                const data = await response.json();
+                if (document.getElementById('incomeValue')) document.getElementById('incomeValue').innerText = `$${data.income.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                if (document.getElementById('profitValue')) document.getElementById('profitValue').innerText = `$${data.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                if (document.getElementById('orderCount')) document.getElementById('orderCount').innerText = data.orders;
+            } catch (e) { }
+        }
+        setInterval(refreshDashboardStats, 5000);
     </script>
 </body>
 </html>

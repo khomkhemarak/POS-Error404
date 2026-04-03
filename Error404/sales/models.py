@@ -10,7 +10,7 @@ class Product(models.Model):
     CATEGORIES = (
         ('Coffee', 'Coffee'),
         ('Tea', 'Tea'),
-        ('Matcha', 'Matcha'),
+        ('Soft Drink', 'Soft Drink'),
         ('Other', 'Other'),
     )
 
@@ -62,18 +62,35 @@ class Product(models.Model):
 
     # --- PRICING & TAX LOGIC ---
 
+    from decimal import Decimal
+
     def get_final_price(self, size='Small', drink_type='Hot'):
+        # Force everything to Decimal to prevent "str + int" errors
+        # We use Decimal(str()) as a safety net for any data type
+        try:
+            price = Decimal(str(self.base_price))
+        except (ValueError, TypeError):
+            price = Decimal('0.00')
+
+        # 1. Handle Variants (Size modifiers)
         variant = getattr(self, 'variants', None)
         if variant:
             v_obj = variant.filter(attribute_value=size).first()
-            price = self.base_price + (v_obj.price_modifier if v_obj else 0)
-        else:
-            price = self.base_price
+            if v_obj:
+                try:
+                    price += Decimal(str(v_obj.price_modifier))
+                except (ValueError, TypeError):
+                    pass # Modifier is 0 if invalid
 
-        if drink_type == 'Iced':
-            price += self.ice_upcharge
-        elif drink_type == 'Frappe':
-            price += self.frappe_upcharge
+        # 2. Handle Drink Type Upcharges
+        try:
+            if drink_type == 'Iced':
+                price += Decimal(str(self.ice_upcharge))
+            elif drink_type == 'Frappe':
+                price += Decimal(str(self.frappe_upcharge))
+        except (ValueError, TypeError):
+            pass # Upcharge is 0 if invalid
+
         return price
 
     def get_net_income(self, size='Small', drink_type='Hot'):

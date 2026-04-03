@@ -70,7 +70,7 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <div class="md:col-span-3 bento-card p-8 rounded-[2rem] flex flex-col justify-center">
                 <h1 class="text-3xl font-800 tracking-tight">Recipe Builder</h1>
-                <p class="text-slate-500 mt-1 font-medium">Link ingredients to menu items and calculate live margins.</p>
+                <p class="text-slate-500 mt-1 font-medium">Link ingredients to menu items and calculate live profits.</p>
             </div>
             <div class="md:col-span-1 bento-card p-8 rounded-[2rem] flex flex-col items-center justify-center text-center border-orange-100 bg-orange-50/30">
                 <span class="text-[10px] font-800 uppercase text-orange-600/60 tracking-widest block mb-1">Active Rules</span>
@@ -101,20 +101,49 @@
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Ingredient</label>
-                                <select name="ingredient" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold text-sm">
-                                    <option value="" disabled selected>Select...</option>
-                                    {% for i in ingredients %}
-                                        <option value="{{ i.id }}">{{ i.name }}</option>
-                                    {% endfor %}
-                                </select>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Ingredient</label>
+                                    <select name="ingredient" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold text-sm">
+                                        <option value="" disabled selected>Select...</option>
+                                        {% for i in ingredients %}
+                                            <option value="{{ i.id }}">{{ i.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Package Item <span class="text-slate-400 font-normal">(optional)</span></label>
+                                    <select name="package_item" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold text-sm">
+                                        <option value="" selected>None</option>
+                                    <optgroup label="Hot Packaging">
+                                        {% for pkg in packaging_items %}
+                                            {% if pkg.packaging_type|slice:":3" == "HOT" %}
+                                                <option value="{{ pkg.id }}">{{ pkg.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
+                                    <optgroup label="Cold Packaging">
+                                        {% for pkg in packaging_items %}
+                                            {% if pkg.packaging_type|slice:":4" == "COLD" %}
+                                                <option value="{{ pkg.id }}">{{ pkg.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
+                                    <optgroup label="Other Packaging">
+                                        {% for pkg in packaging_items %}
+                                            {% if pkg.packaging_type != "HOT_CUP" and pkg.packaging_type != "HOT_LID" and pkg.packaging_type != "HOT_STRAW" and pkg.packaging_type != "COLD_CUP" and pkg.packaging_type != "COLD_LID" and pkg.packaging_type != "COLD_STRAW" %}
+                                                <option value="{{ pkg.id }}">{{ pkg.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
+                                    </select>
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Size</label>
                                 <select name="size" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold">
                                     <option value="Small">Small</option>
-                                    <option value="Medium" selected>Medium</option>
+                                    <option value="Medium">Medium</option>
                                     <option value="Large">Large</option>
                                 </select>
                             </div>
@@ -281,8 +310,32 @@
             if (countDisplay) countDisplay.innerText = visibleCount;
         }
 
+        function saveRecipeFormState() {
+            const recipeForm = document.getElementById('recipeForm');
+            if (!recipeForm) return;
+
+            const productSelect = recipeForm.querySelector('select[name="product"]');
+            const ingredientSelect = recipeForm.querySelector('select[name="ingredient"]');
+            const sizeSelect = recipeForm.querySelector('select[name="size"]');
+            const packageSelect = recipeForm.querySelector('select[name="package_item"]');
+
+            if (productSelect) {
+                localStorage.setItem('recipe_form_product', productSelect.value);
+            }
+            if (ingredientSelect) {
+                localStorage.setItem('recipe_form_ingredient', ingredientSelect.value);
+            }
+            if (sizeSelect) {
+                localStorage.setItem('recipe_form_size', sizeSelect.value);
+            }
+            if (packageSelect) {
+                localStorage.setItem('recipe_form_package_item', packageSelect.value);
+            }
+        }
+
         // --- SAVE STATE ---
         window.onbeforeunload = function() {
+            saveRecipeFormState();
             const searchInput = document.getElementById('recipeSearch');
             if (searchInput) {
                 localStorage.setItem('recipe_search_val', searchInput.value);
@@ -304,6 +357,36 @@
 
             // Restore Size Filter (Defaults to '' if none saved)
             setSizeFilter(savedSize || '');
+
+            // Restore Recipe Form selections
+            const recipeForm = document.getElementById('recipeForm');
+            if (recipeForm) {
+                const savedProduct = localStorage.getItem('recipe_form_product');
+                const savedIngredient = localStorage.getItem('recipe_form_ingredient');
+                const savedFormSize = localStorage.getItem('recipe_form_size');
+                const savedPackageItem = localStorage.getItem('recipe_form_package_item');
+
+                const productSelect = recipeForm.querySelector('select[name="product"]');
+                const ingredientSelect = recipeForm.querySelector('select[name="ingredient"]');
+                const sizeSelect = recipeForm.querySelector('select[name="size"]');
+                const packageSelect = recipeForm.querySelector('select[name="package_item"]');
+
+                if (productSelect && savedProduct) {
+                    productSelect.value = savedProduct;
+                }
+                if (ingredientSelect && savedIngredient) {
+                    ingredientSelect.value = savedIngredient;
+                }
+                if (sizeSelect && savedFormSize) {
+                    sizeSelect.value = savedFormSize;
+                }
+                if (packageSelect && savedPackageItem) {
+                    packageSelect.value = savedPackageItem;
+                }
+
+                const allInputs = recipeForm.querySelectorAll('select');
+                allInputs.forEach(input => input.addEventListener('change', saveRecipeFormState));
+            }
 
             // Restore Scroll Position
             const savedScroll = localStorage.getItem('recipe_scroll_pos');

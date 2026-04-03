@@ -155,7 +155,7 @@
                         </tr>
                     </thead>
                     
-                    <tbody class="divide-y-2 divide-slate-100">
+                    <tbody id="inventoryRows" class="divide-y-2 divide-slate-100">
                         {% for ing in ingredients %}
                         <tr class="hover:bg-slate-50 transition group inventory-row bg-white" 
                             data-is-packaging="{% if ing.packaging_type != 'NONE' %}true{% else %}false{% endif %}">
@@ -246,7 +246,7 @@
             </div>
         </div>
 
-        <div class="divide-y-2 divide-slate-50 overflow-y-auto custom-scrollbar pr-2">
+        <div id="stock-history" class="divide-y-2 divide-slate-50 overflow-y-auto custom-scrollbar pr-2">
     {% for entry in grouped_logs %}
     <div class="py-4 group">
         {% if entry.is_group %}
@@ -308,6 +308,48 @@
     </div>
     {% endfor %}
 </div>
+
+{% if page_obj.has_other_pages %}
+<div class="mt-6 flex flex-col md:flex-row items-center justify-between gap-4 px-2">
+    <p class="text-[10px] uppercase tracking-widest font-black text-slate-500">
+        Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </p>
+    <div class="flex flex-wrap items-center gap-2">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}#stock-history" class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition">
+                Previous
+            </a>
+        {% else %}
+            <span class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-400 font-black uppercase text-[10px] tracking-widest opacity-50 cursor-not-allowed">
+                Previous
+            </span>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+                <span class="px-4 py-2 rounded-2xl bg-orange-500 text-white font-black uppercase text-[10px] tracking-widest">
+                    {{ num }}
+                </span>
+            {% else %}
+                <a href="?page={{ num }}#stock-history" class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition">
+                    {{ num }}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}#stock-history" class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition">
+                Next
+            </a>
+        {% else %}
+            <span class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-400 font-black uppercase text-[10px] tracking-widest opacity-50 cursor-not-allowed">
+                Next
+            </span>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
     </main>
 
     <div id="ingredient-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
@@ -321,7 +363,7 @@
                 {% csrf_token %}
                 <div>
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Ingredient Name</label>
-                    <input type="text" name="name" placeholder="e.g. Arabica Beans" required
+                    <input type="text" name="name" value="" placeholder="e.g. Arabica Beans" required
                         class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition placeholder-slate-400 font-bold">
                 </div>
                 
@@ -345,14 +387,14 @@
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Price per 1 Item ($)</label>
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 font-black">$</span>
-                        <input type="number" name="price_per_item" step="0.01" placeholder="0.00" required
+                        <input type="number" name="price_per_item" value="" step="0.01" placeholder="0.00" required
                             class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl pl-8 pr-4 py-3.5 focus:border-orange-500 outline-none transition font-black placeholder-slate-400">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Initial Stock per 1 Item</label>
-                    <input type="number" id="calc-stock" name="stock_per_item" placeholder="e.g. 1000" step="0.01" oninput="calculateTotal()" required
+                    <input type="number" id="calc-stock" name="stock_per_item" value="" placeholder="e.g. 1000" step="0.01" oninput="calculateTotal()" required
                         class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold placeholder-slate-400">
                 </div>
 
@@ -521,41 +563,108 @@
         // 1. BROADCAST CHANNEL SETUP
         const stockChannel = new BroadcastChannel('stock_updates');
 
-        // This is the part that was likely missing or disconnected
+        // Listen for the "shout" from the Manager page
         stockChannel.onmessage = (event) => {
             if (event.data === 'refresh_data') {
-                console.log("Sync signal received from Manager. Updating table...");
-                // This function must exist in this file to work
-                refreshInventoryTable(); 
+                console.log("Sync signal received. Updating table...");
+                refreshInventoryTable(); // Trigger the silent number update
             }
         };
 
-        // 2. THE SILENT REFRESH FUNCTION
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function jsEscape(str) {
+            return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' ');
+        }
+
+        function buildInventoryRow(ing) {
+            const isPackaging = ing.packaging_type !== 'NONE';
+            const unitLabel = isPackaging ? 'pcs' : escapeHtml(ing.unit || '');
+            const percent = Math.round(Number(ing.stock_percent || 0));
+            const stockQty = Number(ing.stock_quantity || 0).toFixed(0);
+            const statusText = ing.is_low_stock ? 'LOW STOCK' : 'HEALTHY';
+            const statusClass = ing.is_low_stock ? 'text-red-500' : 'text-emerald-500';
+            const badgeClass = ing.is_low_stock ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200';
+            const barClass = ing.is_low_stock ? 'bg-red-500' : 'bg-emerald-500';
+
+            return `
+                <tr class="hover:bg-slate-50 transition group inventory-row bg-white" data-is-packaging="${isPackaging}">
+                    <td class="p-5">
+                        <p class="font-black text-slate-800 text-sm group-hover:text-orange-600 transition">${escapeHtml(ing.name)}</p>
+                        <p class="text-[9px] text-slate-500 uppercase tracking-widest mt-1 font-bold">
+                            Unit: ${unitLabel}
+                            <span class="text-slate-300 mx-1">|</span>
+                            Boxes: <span id="ing-boxes-${ing.id}">${ing.items_count}</span>
+                        </p>
+                    </td>
+                    <td class="p-5 min-w-[150px]">
+                        <div class="flex flex-col gap-2">
+                            <div class="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                                <span id="ing-percent-${ing.id}" class="${statusClass}">${percent}%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden border border-slate-300">
+                                <div id="ing-bar-${ing.id}" class="h-full transition-all duration-500 ${barClass}" style="width: ${Math.max(0, Math.min(100, percent))}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-5 font-black text-xl text-slate-800 text-center">
+                        <span id="ing-qty-${ing.id}">${stockQty}</span>
+                        <span class="text-[10px] text-slate-400 ml-1 font-bold uppercase tracking-widest">${unitLabel}</span>
+                    </td>
+                    <td class="p-5 text-center">
+                        <div class="flex flex-col">
+                            <span class="text-slate-800 font-black">$${Number(ing.last_purchase_price || 0).toFixed(2)}</span>
+                            <span class="text-[8px] text-slate-400 uppercase font-black tracking-widest mb-1">Per Box/Item</span>
+                            <div class="pt-1 border-t-2 border-slate-100">
+                                <span class="text-orange-600 font-black text-[11px]">$${Number(ing.unit_cost || 0).toFixed(4)}</span>
+                                <span class="text-[8px] text-slate-400 uppercase font-bold tracking-tighter">/ ${unitLabel}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-5 text-center">
+                        <div id="ing-status-${ing.id}">
+                            <span class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${badgeClass} border border-slate-200">${statusText}</span>
+                        </div>
+                    </td>
+                    <td class="p-5 text-right pr-8">
+                        <div class="flex justify-end items-center gap-2">
+                            <button type="button"
+                                id="update-btn-${ing.id}"
+                                onclick="openUpdateModal('${ing.id}', '${jsEscape(ing.name)}', '${Number(ing.initial_stock_per_item || 0).toFixed(2)}', '${Number(ing.last_purchase_price || 0).toFixed(2)}')"
+                                class="bg-white border-2 border-slate-200 text-slate-600 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 px-4 py-2 rounded-xl text-[10px] font-black transition uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(203,213,225,0.7)] hover:shadow-[2px_2px_0px_0px_rgba(249,115,22,0.3)] active:translate-y-[1px]">
+                                Update
+                            </button>
+                            <button type="button" onclick="openDeleteModal('${ing.id}', '${jsEscape(ing.name)}')" class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition border-2 border-transparent hover:border-red-200 rounded-xl">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function renderInventoryRows(ingredients) {
+            const rows = document.getElementById('inventoryRows');
+            if (!rows) return;
+            rows.innerHTML = ingredients.map(buildInventoryRow).join('');
+            filterInventory(currentFilter);
+        }
+
         async function refreshInventoryTable() {
             try {
                 const response = await fetch('/api/inventory/list/');
                 const data = await response.json();
                 
-                data.ingredients.forEach(ing => {
-                    // Update Quantity
-                    const qtyEl = document.getElementById(`ing-qty-${ing.id}`);
-                    if (qtyEl) qtyEl.innerText = Math.round(ing.stock_quantity);
-
-                    // Update Percentage & Progress Bar
-                    const percentEl = document.getElementById(`ing-percent-${ing.id}`);
-                    const barEl = document.getElementById(`ing-bar-${ing.id}`);
-                    if (percentEl && barEl) {
-                        const percent = Math.round(ing.stock_percent);
-                        percentEl.innerText = `${percent}%`;
-                        barEl.style.width = `${percent}%`;
-                        
-                        // Toggle Low Stock Colors
-                        const isLow = percent < 20;
-                        percentEl.className = isLow ? "text-red-500" : "text-emerald-500";
-                        barEl.classList.toggle('bg-red-500', isLow);
-                        barEl.classList.toggle('bg-emerald-500', !isLow);
-                    }
-                });
+                if (data.ingredients && Array.isArray(data.ingredients)) {
+                    renderInventoryRows(data.ingredients);
+                }
             } catch (error) {
                 console.error("Silent refresh failed:", error);
             }
@@ -645,12 +754,20 @@
                             const result = await response.json();
                             
                             if (result.status === 'success') {
+                                if (this.id === 'ingredientForm') {
+                                    this.reset();
+                                    this.querySelector('input[name="quantity_items"]').value = 1;
+                                    calculateTotal();
+                                } else {
+                                    this.reset();
+                                }
+
                                 // Close all possible modals
                                 closeStockModal();
                                 if (document.getElementById('ingredient-modal')) document.getElementById('ingredient-modal').classList.add('hidden');
                                 if (document.getElementById('packaging-modal')) document.getElementById('packaging-modal').classList.add('hidden');
                                 
-                                // 1. Update the table numbers silently
+                                // 1. Update the table data silently
                                 await refreshInventoryTable();
                                 
                                 // 2. BROADCAST to Manager page
@@ -673,7 +790,11 @@
             const modal = document.getElementById('ingredient-modal');
             if (!modal) return;
             modal.classList.toggle('hidden');
-            if(!modal.classList.contains('hidden')) {
+            if (!modal.classList.contains('hidden')) {
+                const ingredientForm = document.getElementById('ingredientForm');
+                if (ingredientForm) {
+                    ingredientForm.reset();
+                }
                 document.getElementById('calc-qty').value = 1;
                 document.getElementById('calc-stock').value = "";
                 calculateTotal();
@@ -696,27 +817,47 @@
             const modal = document.getElementById('updateStockModal');
             if (!modal) return;
 
+            // 1. Set the basic hidden ID and display name
             document.getElementById('modalIngId').value = id;
             document.getElementById('modalIngName').innerText = name;
-            document.getElementById('modalUnitSize').value = unitSize;
             
+            // 2. Pre-fill the "Size per Box/Item" (The quantity inside one unit)
+            const sizeInput = document.getElementById('modalUnitSize');
+            if (sizeInput) sizeInput.value = unitSize;
+            
+            // 3. Setup Auto-Calculating Price logic
             const qtyInput = document.getElementById('modalQty');
             const priceInput = document.querySelector('input[name="batch_price"]');
             
-            qtyInput.value = "";
-            priceInput.value = "";
-            priceInput.placeholder = `Usual: $${parseFloat(lastPurchasePrice).toFixed(2)}`;
+            if (qtyInput && priceInput) {
+                qtyInput.value = ""; // Clear for new entry
+                priceInput.value = ""; 
+                
+                // Convert to float to ensure toFixed works even if passed as string
+                const lastPrice = parseFloat(lastPurchasePrice) || 0;
+                priceInput.placeholder = `Usual: $${lastPrice.toFixed(2)}`;
 
-            qtyInput.oninput = function() {
-                const qty = parseFloat(qtyInput.value) || 0;
-                if (qty > 0) {
-                    priceInput.value = (qty * parseFloat(lastPurchasePrice)).toFixed(2);
-                } else {
-                    priceInput.value = "";
-                }
-            };
+                // Calculate total as you type quantity
+                qtyInput.oninput = function() {
+                    const qty = parseFloat(qtyInput.value) || 0;
+                    if (qty > 0) {
+                        priceInput.value = (qty * lastPrice).toFixed(2);
+                    } else {
+                        priceInput.value = "";
+                    }
+                };
+            }
             
-            document.getElementById('updateStockForm').action = `/api/inventory/update/${id}/`;
+            // 4. Set form destination to the API view
+            const form = document.getElementById('updateStockForm');
+            if (form) {
+                /** * IMPORTANT: This path must match the one in urls.py linked to api_update_stock.
+                * Using the /inventory/update/ prefix ensures consistency across both pages.
+                */
+                form.action = `/inventory/update/${id}/`; 
+            }
+            
+            // 5. Show the modal
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }

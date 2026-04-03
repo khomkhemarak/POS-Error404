@@ -61,7 +61,7 @@
 
     <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 shrink-0 bg-white border-r border-slate-200 p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[150] md:sticky md:top-0 md:h-screen">
         <div class="mb-10">
-            <h1 class="text-2xl font-[800] tracking-tighter text-orange-600">Error404</h1>
+            <h1 class="text-2xl font-800 tracking-tighter text-orange-600">Error404</h1>
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management Suite</p>
         </div>
         
@@ -107,7 +107,7 @@
                     </div>
 
                     <h1 class="text-3xl md:text-4xl font-[800] tracking-tight text-slate-900 uppercase">
-                        Menu Intelligence
+                        Business Intelligence
                     </h1>
                     <p class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest mt-1">Catalog & Profitability Analysis</p>
                 </div>
@@ -138,167 +138,187 @@
             </div>
 
             <!-- 2. Bento Stat Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Avg Profit -->
-                <div class="bento-card p-8 rounded-[2.5rem] flex flex-col justify-between shadow-sm">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="w-12 h-12 bg-orange-50 rounded-xl border-2 border-orange-100 text-orange-500 flex items-center justify-center">
-                            <i class="bi bi-graph-up-arrow text-xl"></i>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+                <div class="bento-card p-6 rounded-[2.5rem] flex flex-col justify-between shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-10 h-10 bg-orange-50 rounded-xl border-2 border-orange-100 text-orange-500 flex items-center justify-center">
+                            <i class="bi bi-graph-up-arrow text-lg"></i>
                         </div>
-                        <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Avg. Profitability</span>
+                        <span class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest text-right leading-tight">Avg. Profitability</span>
                     </div>
-                    <h3 id="display-avg-profit" class="text-5xl font-[800] text-slate-900 mb-4">{{ avg_profitability|floatformat:1 }}%</h3>
-                    <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <h3 id="display-avg-profit" class="text-3xl font-[800] text-slate-900 mb-4">{{ avg_profitability|floatformat:1 }}%</h3>
+                    <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                         <div id="bar-avg-profit" class="h-full bg-orange-500 rounded-full transition-all duration-500" style="width: {{ avg_profitability }}%"></div>
                     </div>
                 </div>
 
-                <!-- Total Drinks -->
-                <div class="bento-card p-8 rounded-[2.5rem] flex flex-col justify-between shadow-sm">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="w-12 h-12 bg-emerald-50 rounded-xl border-2 border-emerald-100 text-emerald-500 flex items-center justify-center">
-                            <i class="bi bi-box-seam text-xl"></i>
+                <div class="bento-card p-6 rounded-[2.5rem] flex flex-col justify-between shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-10 h-10 bg-blue-50 rounded-xl border-2 border-blue-100 text-blue-500 flex items-center justify-center">
+                            <i class="bi bi-bag-check text-lg"></i>
                         </div>
-                        <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Total Drinks</span>
+                        <span class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest text-right leading-tight">Total Orders</span>
                     </div>
                     <div>
-                        <h3 id="display-total-drinks" class="text-5xl font-[800] text-slate-900 mb-1">{{ products.count }}</h3>
-                        <p class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest">Active SKUs Listed</p>
+                        <h3 id="display-total-orders" class="text-3xl font-[800] text-slate-900 mb-1">{{ total_orders }}</h3>
+                        <p class="text-slate-500 text-[9px] font-[800] uppercase tracking-widest">Completed</p>
                     </div>
                 </div>
 
-                <!-- Total Income -->
-                <div class="bento-card p-8 rounded-[2.5rem] flex flex-col justify-between shadow-sm border-emerald-100 bg-emerald-50/10">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="w-12 h-12 bg-emerald-100 rounded-xl border-2 border-emerald-200 text-emerald-600 flex items-center justify-center">
-                            <i class="bi bi-cash-stack text-xl"></i>
+                <div class="bento-card p-6 rounded-[2.5rem] flex flex-col justify-between shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-10 h-10 bg-amber-50 rounded-xl border-2 border-amber-100 text-amber-500 flex items-center justify-center">
+                            <i class="bi bi-cup-hot text-lg"></i>
                         </div>
-                        <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Total Income</span>
+                        <span class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest text-right leading-tight">Cups Sold</span>
                     </div>
                     <div>
-                        <h3 id="display-total-income" class="text-5xl font-[800] text-slate-900 mb-1">
-                            ${{ total_income|floatformat:2|default:"0.00" }}
-                        </h3>
-                        <p class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest">Gross Revenue</p>
+                        <h3 id="display-total-cups" class="text-3xl font-[800] text-slate-900 mb-1">{{ total_cups }}</h3>
+                        <p class="text-slate-500 text-[9px] font-[800] uppercase tracking-widest">Volume</p>
                     </div>
                 </div>
 
-                <!-- Total Expense -->
-                <div class="bento-card p-6 rounded-[2.5rem] flex flex-col justify-center shadow-sm">
+                <div class="bento-card p-6 rounded-[2.5rem] flex flex-col justify-between shadow-sm border-emerald-100 bg-emerald-50/10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-10 h-10 bg-emerald-100 rounded-xl border-2 border-emerald-200 text-emerald-600 flex items-center justify-center">
+                            <i class="bi bi-cash-stack text-lg"></i>
+                        </div>
+                        <span class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest text-right leading-tight">Income</span>
+                    </div>
+                    <div>
+                        <h3 id="display-total-income" class="text-3xl font-[800] text-slate-900 mb-1">${{ total_income|floatformat:2 }}</h3>
+                        <p class="text-slate-500 text-[9px] font-[800] uppercase tracking-widest">Gross Revenue</p>
+                    </div>
+                </div>
+
+                <div class="bento-card p-5 rounded-[2.5rem] flex flex-col justify-center shadow-sm">
                     <div class="flex items-center justify-between mb-2">
-                        <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Total Expense</p>
+                        <p class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest">Expense</p>
                         <i class="bi bi-receipt text-slate-300"></i>
                     </div>
-                    <div class="flex items-baseline gap-1 mb-2">
-                        <h3 id="display-total-expense" class="text-2xl font-[900] text-slate-900">
-                            ${{ total_expense|floatformat:2|default:"0.00" }}
-                        </h3>
-                    </div>
-                    <div class="h-[60px] w-full relative">
+                    <h3 id="display-total-expense" class="text-xl font-[900] text-slate-900 mb-1">${{ total_expense|floatformat:2 }}</h3>
+                    <div class="h-[40px] w-full relative">
                         <canvas id="miniChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bento-card p-6 rounded-[2.5rem] flex flex-col justify-between shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-10 h-10 bg-rose-50 rounded-xl border-2 border-rose-100 text-rose-500 flex items-center justify-center">
+                            <i class="bi bi-percent text-lg"></i>
+                        </div>
+                        <span class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest text-right leading-tight">Total Tax</span>
+                    </div>
+                    <div>
+                        <h3 id="display-total-tax" class="text-3xl font-[800] text-slate-900 mb-1">${{ total_tax|floatformat:2 }}</h3>
+                        <p class="text-slate-500 text-[9px] font-[800] uppercase tracking-widest">To Pay (10%)</p>
                     </div>
                 </div>
             </div>
 
             <!-- 3. Menu Intelligence Table -->
-            <div class="bento-card rounded-[2.5rem] overflow-hidden shadow-sm">
-                <div class="p-6 border-b-2 border-slate-100 bg-white/50 flex flex-col md:flex-row gap-4 justify-between">
+            <div class="bento-card rounded-[2.5rem] overflow-hidden border-2 border-slate-100 bg-white shadow-sm mt-8">
+
+                <div class="p-6 border-b-2 border-slate-50 bg-white/50 flex flex-col md:flex-row gap-4 justify-between items-center">
+                    <h2 class="px-2 text-sm font-[900] text-slate-800 uppercase tracking-tighter flex items-center gap-2">
+                        <i class="bi bi-stack text-orange-500"></i>
+                        Live Menu Availability
+                    </h2>
                     <div class="relative flex-1 w-full max-w-md">
                         <i class="bi bi-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="productSearch" placeholder="Filter product name..." class="w-full bg-white border-2 border-slate-200 rounded-xl py-3 pl-12 pr-6 text-slate-900 font-bold focus:outline-none focus:border-orange-500 transition-all placeholder-slate-400">
+                        <input type="text" id="productSearch" onkeyup="filterProducts()" placeholder="Search drink name..." 
+                            class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3 pl-12 pr-6 text-slate-900 font-bold focus:outline-none focus:border-orange-500 focus:bg-white transition-all placeholder-slate-400">
                     </div>
                 </div>
 
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left min-w-[800px]">
-                        <thead class="bg-slate-50/50 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
-                            <tr>
-                                <th class="p-6 text-left w-1/3">Product Details</th>
-                                <th class="p-6 text-left w-1/6">Pricing</th>
-                                <th class="p-6 text-left w-1/5">Profitability</th>
-                                <th class="p-6 text-left w-1/5">Inventory (Bottleneck)</th>
-                                <th class="p-6 text-right w-1/6">Actions</th>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b-2 border-slate-50 bg-slate-50/30">
+                                <th class="px-8 py-5 text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Product Details</th>
+                                <th class="px-8 py-5 text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Price & Type</th>
+                                <th class="px-8 py-5 text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Cost per Cup</th>
+                                <th class="px-8 py-5 text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Profit per Cup</th>
+                                <th class="px-8 py-5 text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Stock Potential</th>
+                                <th class="px-8 py-5 text-[10px] font-[800] text-slate-400 uppercase tracking-widest text-right">Restock</th>
                             </tr>
                         </thead>
-                        <tbody id="productTableBody" class="divide-y-2 divide-slate-100">
+                        <tbody id="productTableBody" class="divide-y-2 divide-slate-50">
                             {% for product in products %}
-                            <tr class="product-row hover:bg-slate-50/50 transition-colors group">
-                                <td class="p-6 w-1/3">
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm">
-                                            {% if product.image %}
-                                                <img src="{{ product.image.url }}" class="w-full h-full object-cover">
-                                            {% else %}
-                                                <i class="bi bi-cup-hot-fill text-xl text-slate-300"></i>
-                                            {% endif %}
+                            <tr class="product-row group hover:bg-slate-50/50 transition-colors">
+                                
+                                <td class="px-8 py-5">
+                                    <div class="flex items-center gap-5">
+                                        <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-50 relative flex-shrink-0">
+                                            <img id="prod-img-{{ product.id }}" 
+                                                src="{% if product.image %}{{ product.image.url }}{% else %}https://placehold.co/100x100/e2e8f0/94a3b8?text=Drink{% endif %}" 
+                                                class="w-full h-full object-cover">
                                         </div>
                                         <div>
-                                            <p class="font-black text-slate-900 leading-tight productName">{{ product.name }}</p>
-                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ product.category|default:"MENU" }}</span>
+                                            <h3 id="prod-name-{{ product.id }}" class="font-[800] text-slate-900 leading-tight text-sm">{{ product.name }}</h3>
+                                            <p id="prod-category-{{ product.id }}" class="text-slate-400 text-[10px] font-[800] uppercase tracking-widest mt-1">{{ product.category }}</p>
                                         </div>
                                     </div>
                                 </td>
 
-                                <td class="p-6 w-1/6">
+                                <td class="px-8 py-5">
+                                    <div class="flex flex-col gap-2">
+                                        <div class="flex items-baseline gap-0.5">
+                                            <span class="text-[10px] font-[900] text-orange-500">$</span>
+                                            <span id="prod-price-{{ product.id }}" class="text-lg font-[900] text-slate-900">{{ product.base_price }}</span>
+                                        </div>
+                                        <div id="prod-tags-{{ product.id }}" class="flex gap-1">
+                                            {% if product.can_be_hot %}<span class="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-[9px] font-black shadow-sm" title="Hot Available">H</span>{% endif %}
+                                            {% if product.can_be_iced %}<span class="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[9px] font-black shadow-sm" title="Iced Available">I</span>{% endif %}
+                                            {% if product.can_be_frappe %}<span class="w-5 h-5 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-[9px] font-black shadow-sm" title="Frappe Available">F</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="px-8 py-5">
                                     <div class="flex flex-col">
-                                        <span class="text-[9px] font-black text-orange-500 uppercase tracking-tighter">Sale: ${{ product.base_price|floatformat:2 }}</span>
-                                        <span class="text-[10px] font-bold text-slate-400">Cost: ${{ product.total_cost|default:"0.00"|floatformat:2 }}</span>
-                                    </div>
-                                </td>
-
-                                <td class="p-6 w-1/5">
-                                    <div class="flex flex-col gap-1.5 max-w-[140px]">
-                                        <div class="flex justify-between font-black text-[9px] uppercase">
-                                            <span class="text-emerald-500">+${{ product.real_profit|floatformat:2 }}</span>
-                                            <span class="text-slate-400">{{ product.profit_percentage|floatformat:0 }}%</span>
-                                        </div>
-                                        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                            <div class="h-full bg-orange-500" style="width: {{ product.profit_percentage }}%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <td class="p-6 w-1/5">
-                                    <div class="flex flex-col gap-1.5 max-w-[140px]">
-                                        <div class="flex justify-between items-center font-black text-[9px] uppercase">
-                                            <span class="text-slate-400">Potential</span>
-                                            <span id="potential-{{ product.id }}" class="potential-display {% if product.calculated_stock <= 0 %}text-red-600 animate-pulse{% elif product.calculated_stock < 10 %}text-amber-500{% else %}text-slate-700{% endif %}">
-                                                {% if product.calculated_stock <= 0 %}SOLD OUT{% else %}{{ product.calculated_stock }} Cups{% endif %}
+                                        <div class="flex items-baseline gap-0.5">
+                                            <span class="text-[10px] font-[900] text-rose-500">-$</span>
+                                            <span id="prod-cost-{{ product.id }}" class="text-lg font-[900] text-rose-600">
+                                                {{ product.get_production_cost|floatformat:2 }}
                                             </span>
                                         </div>
-                                        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
-                                            <div class="h-full transition-all duration-500 
-                                                {% if product.calculated_stock <= 0 %}
-                                                    animate-critical w-full
-                                                {% elif product.calculated_stock < 10 %}
-                                                    bg-amber-400
-                                                {% else %}
-                                                    bg-emerald-400
-                                                {% endif %}" 
-                                                style="width: {% if product.calculated_stock > 100 %}100{% else %}{{ product.calculated_stock }}{% endif %}%">
-                                            </div>
+                                        <span class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest">Base Expense</span>
+                                    </div>
+                                </td>
+
+                                <td class="px-8 py-5">
+                                    <div class="flex flex-col">
+                                        <div class="flex items-baseline gap-0.5">
+                                            <span class="text-[10px] font-[900] text-emerald-500">+$</span>
+                                            <span id="prod-profit-{{ product.id }}" class="text-lg font-[900] text-emerald-600">
+                                                {{ product.get_profit|floatformat:2 }}
+                                            </span>
+                                        </div>
+                                        <span class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest">Net / Serving</span>
+                                    </div>
+                                </td>
+
+                                <td class="px-8 py-5">
+                                    <div class="flex flex-col gap-2 min-w-[140px]">
+                                        <span id="potential-{{ product.id }}" class="text-[11px] font-[900] uppercase tracking-tighter {% if product.calculated_stock <= 0 %}text-red-500 animate-pulse{% elif product.calculated_stock < 10 %}text-amber-500{% else %}text-emerald-500{% endif %}">
+                                            {% if product.calculated_stock <= 0 %}SOLD OUT{% else %}{{ product.calculated_stock }} Cups Ready{% endif %}
+                                        </span>
+                                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-50">
+                                            <div class="h-full transition-all duration-700 {% if product.calculated_stock <= 0 %}bg-red-500 w-full animate-pulse{% elif product.calculated_stock < 10 %}bg-amber-400 w-[25%]{% else %}bg-emerald-400 w-[75%]{% endif %}"
+                                                style="width: {% if product.calculated_stock > 100 %}100{% else %}{{ product.calculated_stock|default:0 }}{% endif %}%;"></div>
                                         </div>
                                     </div>
                                 </td>
 
-                                <td class="p-6 w-1/6 text-right">
-                                    <div class="flex justify-end gap-2">
-                                        {% if product.limiting_ing %}
-                                            <button type="button"
-                                                id="update-btn-{{ product.id }}"
-                                                onclick="openUpdateModal('{{ product.limiting_ing.id }}', '{{ product.limiting_ing.name|escapejs }}', '{{ product.limiting_ing.initial_stock_per_item }}', '{{ product.limiting_ing.last_purchase_price }}')"
-                                                class="bg-white border-2 border-slate-200 text-slate-600 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 px-4 py-2 rounded-xl text-[10px] font-black transition uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(203,213,225,0.7)] active:translate-y-[1px]">
-                                                Update
-                                            </button>
-                                        {% else %}
-                                            <span class="text-[8px] text-slate-300 italic">No Recipe</span>
-                                        {% endif %}
-                                        <!-- ... pencil and trash buttons ... -->
-                                    </div>
+                                <td class="px-8 py-5 text-right">
+                                    <button id="update-btn-{{ product.id }}" 
+                                            onclick="openUpdateModal('{{ product.limiting_ing.id }}', '{{ product.limiting_ing.name|escapejs }}', '{{ product.limiting_ing.initial_stock_per_item }}', '{{ product.limiting_ing.last_purchase_price }}')" 
+                                            class="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-50 text-slate-400 hover:bg-orange-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:shadow-orange-200">
+                                        <i class="bi bi-plus-lg text-lg"></i>
+                                    </button>
                                 </td>
                             </tr>
-                            {% empty %}
-                            <tr><td colspan="5" class="p-16 text-center text-slate-400 uppercase font-black text-sm">No drinks found.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -383,15 +403,135 @@
 
     <script>
         // 1. BROADCAST CHANNEL SETUP
-        // Communication channel to sync data across different browser tabs
         const stockChannel = new BroadcastChannel('stock_updates');
 
-        // Listen for updates from other tabs (e.g., updates made on the Inventory page)
         stockChannel.onmessage = (event) => {
+            // --- A. Handle Global Inventory Stats sync ---
             if (event.data === 'refresh_data') {
-                console.log("Received sync command from another tab...");
-                // Silently refresh dashboard stats and table rows
                 if (typeof updateDashboardData === 'function') updateDashboardData();
+            } 
+            
+            // --- B. Handle New Product Creation (Real-time Table Injection) ---
+            else if (event.data && event.data.type === 'add_product') {
+                const p = event.data.product;
+                const tableBody = document.getElementById('productTableBody');
+                if (!tableBody) return;
+
+                const newRow = document.createElement('tr');
+                newRow.className = "product-row group hover:bg-slate-50/50 transition-all duration-500 bg-orange-50/50"; 
+                
+                newRow.innerHTML = `
+                    <td class="px-8 py-5">
+                        <div class="flex items-center gap-5">
+                            <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-50 relative flex-shrink-0">
+                                <img id="prod-img-${p.id}" src="${p.image_url || 'https://placehold.co/100x100/e2e8f0/94a3b8?text=Drink'}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <h3 id="prod-name-${p.id}" class="font-[800] text-slate-900 leading-tight text-sm">${p.name}</h3>
+                                <p id="prod-category-${p.id}" class="text-slate-400 text-[10px] font-[800] uppercase tracking-widest mt-1">${p.category}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-8 py-5">
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-baseline gap-0.5">
+                                <span class="text-[10px] font-[900] text-orange-500">$</span>
+                                <span id="prod-price-${p.id}" class="text-lg font-[900] text-slate-900">${parseFloat(p.price).toFixed(2)}</span>
+                            </div>
+                            <div id="prod-tags-${p.id}" class="flex gap-1">
+                                ${p.can_be_hot ? '<span class="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-[9px] font-black shadow-sm">H</span>' : ''}
+                                ${p.can_be_iced ? '<span class="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[9px] font-black shadow-sm">I</span>' : ''}
+                                ${p.can_be_frappe ? '<span class="w-5 h-5 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-[9px] font-black shadow-sm">F</span>' : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-8 py-5">
+                        <div class="flex flex-col">
+                            <div class="flex items-baseline gap-0.5">
+                                <span class="text-[10px] font-[900] text-rose-500">-$</span>
+                                <span id="prod-cost-${p.id}" class="text-lg font-[900] text-rose-600">${parseFloat(p.cost || 0).toFixed(2)}</span>
+                            </div>
+                            <span class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest">Base Expense</span>
+                        </div>
+                    </td>
+                    <td class="px-8 py-5">
+                        <div class="flex flex-col">
+                            <div class="flex items-baseline gap-0.5">
+                                <span class="text-[10px] font-[900] text-emerald-500">+$</span>
+                                <span id="prod-profit-${p.id}" class="text-lg font-[900] text-emerald-600">${parseFloat(p.profit || 0).toFixed(2)}</span>
+                            </div>
+                            <span class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest">Net / Serving</span>
+                        </div>
+                    </td>
+                    <td class="px-8 py-5">
+                        <div class="flex flex-col gap-2 min-w-[140px]">
+                            <span id="potential-${p.id}" class="text-[11px] font-[900] uppercase tracking-tighter text-amber-500 animate-pulse">Syncing...</span>
+                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-50">
+                                <div class="h-full transition-all duration-700 bg-slate-300 w-full animate-pulse"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-8 py-5 text-right">
+                        <button id="update-btn-${p.id}" class="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-50 text-slate-400 hover:bg-orange-500 hover:text-white transition-all duration-300">
+                            <i class="bi bi-plus-lg text-lg"></i>
+                        </button>
+                    </td>
+                `;
+
+                tableBody.prepend(newRow); 
+
+                // Trigger global sync to calculate potential stock for the new product
+                setTimeout(() => {
+                    if (typeof updateDashboardData === 'function') updateDashboardData();
+                    newRow.classList.remove('bg-orange-50/50');
+                }, 1000);
+            }
+
+            // --- C. Handle Live Product Edits (Image, Price, Profit, Tags) ---
+            else if (event.data && event.data.type === 'update_product') {
+                const p = event.data.product;
+                
+                const nameEl = document.getElementById(`prod-name-${p.id}`);
+                const priceEl = document.getElementById(`prod-price-${p.id}`);
+                const profitEl = document.getElementById(`prod-profit-${p.id}`);
+                const costEl = document.getElementById(`prod-cost-${p.id}`);
+                const imgEl = document.getElementById(`prod-img-${p.id}`);
+                const tagsEl = document.getElementById(`prod-tags-${p.id}`);
+                const categoryEl = document.getElementById(`prod-category-${p.id}`);
+                
+                if (nameEl) nameEl.innerText = p.name;
+                if (categoryEl) categoryEl.innerText = p.category;
+                if (priceEl) priceEl.innerText = parseFloat(p.price).toFixed(2);
+                if (costEl && p.cost) costEl.innerText = parseFloat(p.cost).toFixed(2);
+                if (profitEl && p.profit) profitEl.innerText = parseFloat(p.profit).toFixed(2);
+                
+                // Handle image live update with cache buster
+                if (imgEl && p.image_url) {
+                    imgEl.src = p.image_url.includes('?') ? p.image_url : `${p.image_url}?t=${new Date().getTime()}`;
+                }
+                
+                if (tagsEl) {
+                    tagsEl.innerHTML = '';
+                    if (p.can_be_hot) tagsEl.innerHTML += `<span class="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-[9px] font-black shadow-sm">H</span>`;
+                    if (p.can_be_iced) tagsEl.innerHTML += `<span class="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[9px] font-black shadow-sm">I</span>`;
+                    if (p.can_be_frappe) tagsEl.innerHTML += `<span class="w-5 h-5 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-[9px] font-black shadow-sm">F</span>`;
+                }
+
+                const row = nameEl ? nameEl.closest('tr') : null;
+                if (row) {
+                    row.classList.add('bg-orange-50');
+                    setTimeout(() => row.classList.remove('bg-orange-50'), 1000);
+                }
+            }
+
+            // --- D. Handle Live Deletion (Removes Row) ---
+            else if (event.data && event.data.type === 'delete_product') {
+                const row = document.getElementById(`prod-name-${event.data.product_id}`)?.closest('tr');
+                if (row) {
+                    row.classList.add('opacity-0', 'bg-red-50', 'scale-95');
+                    row.style.transition = 'all 0.5s ease';
+                    setTimeout(() => row.remove(), 500);
+                }
             }
         };
 
@@ -545,66 +685,118 @@
                 if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.json();
 
-                // Update Summary Stats & Progress Bar
+                // 1. Update Global Avg Profitability Stats
                 const profitText = document.getElementById('display-avg-profit');
                 const profitBar = document.getElementById('bar-avg-profit');
                 if (profitText) profitText.innerText = `${data.avg_profit}%`;
                 if (profitBar) profitBar.style.width = `${data.avg_profit}%`;
 
+                // 2. Update Profitability Ratio
+                const ratioDisplay = document.getElementById('display-margin-ratio');
+                if (ratioDisplay && data.margin_ratio !== undefined) {
+                    ratioDisplay.innerText = data.margin_ratio.toFixed(2);
+                }
+
+                // 3. Update Order and Cup Volumes
+                const orderDisplay = document.getElementById('display-total-orders');
+                if (orderDisplay) orderDisplay.innerText = data.orders;
+
+                const cupsDisplay = document.getElementById('display-total-cups');
+                if (cupsDisplay) cupsDisplay.innerText = data.total_cups;
+
+                // 4. Update Financial Cards (Income, Tax, Expense)
                 const incomeDisplay = document.getElementById('display-total-income');
-                if (incomeDisplay) incomeDisplay.innerText = `$${data.income.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                if (incomeDisplay) {
+                    incomeDisplay.innerText = `$${data.income.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })}`;
+                }
+
+                const taxDisplay = document.getElementById('display-total-tax');
+                if (taxDisplay) {
+                    taxDisplay.innerText = `$${data.tax.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })}`;
+                }
 
                 const expenseDisplay = document.getElementById('display-total-expense');
-                if (expenseDisplay) expenseDisplay.innerText = `$${data.expense.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                if (expenseDisplay) {
+                    expenseDisplay.innerText = `$${data.expense.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })}`;
+                }
 
-                // Sync Mini Trend Chart
+                // 5. Sync Expense Trend Chart
                 if (window.miniChartInstance) {
                     window.miniChartInstance.data.labels = data.labels;
                     window.miniChartInstance.data.datasets[0].data = data.expense_data;
                     window.miniChartInstance.update('none');
                 }
 
-                // Sync Menu Table Rows (Potential Stock)
+                // 6. Sync Detailed Menu Table Rows
                 if (data.product_potentials) {
                     for (const [productId, info] of Object.entries(data.product_potentials)) {
                         const textElement = document.getElementById(`potential-${productId}`);
+                        const costElement = document.getElementById(`prod-cost-${productId}`);
+                        const profitElement = document.getElementById(`prod-profit-${productId}`);
                         const updateBtn = document.getElementById(`update-btn-${productId}`);
 
+                        // --- Sync Individual Product Finance ---
+                        if (costElement && info.cost !== undefined) {
+                            costElement.innerText = info.cost.toFixed(2);
+                        }
+                        if (profitElement && info.profit !== undefined) {
+                            profitElement.innerText = info.profit.toFixed(2);
+                        }
+
+                        // --- Sync Stock Potential & Progress Bars ---
                         if (textElement) {
                             const stockValue = info.stock;
-                            textElement.innerText = stockValue <= 0 ? "SOLD OUT" : `${stockValue} Cups`;
-                            textElement.className = "potential-display font-black ";
+                            textElement.innerText = stockValue <= 0 ? "SOLD OUT" : `${stockValue} Cups Ready`;
                             
+                            // Apply conditional text coloring
+                            textElement.className = "potential-display font-black ";
                             if (stockValue <= 0) {
-                                textElement.classList.add('text-red-600', 'animate-pulse');
+                                textElement.classList.add('text-red-500', 'animate-pulse');
                             } else if (stockValue < 10) {
                                 textElement.classList.add('text-amber-500');
                             } else {
-                                textElement.classList.add('text-slate-700');
+                                textElement.classList.add('text-emerald-500');
                             }
 
-                            // Update progress bar visual styling
+                            // Sync the visual progress bar
                             const barElement = textElement.closest('td')?.querySelector('.h-full.transition-all');
                             if (barElement) {
-                                barElement.style.width = `${Math.min(stockValue, 100)}%`;
-                                barElement.className = "h-full transition-all duration-500 ";
-                                if (stockValue <= 0) barElement.classList.add('animate-critical', 'w-full');
-                                else if (stockValue < 10) barElement.classList.add('bg-amber-400');
-                                else barElement.classList.add('bg-emerald-400');
+                                const barWidth = Math.min(stockValue, 100);
+                                barElement.style.width = `${barWidth}%`;
+                                
+                                barElement.className = "h-full transition-all duration-700 ";
+                                if (stockValue <= 0) {
+                                    barElement.classList.add('bg-red-500', 'w-full', 'animate-pulse');
+                                } else if (stockValue < 10) {
+                                    barElement.classList.add('bg-amber-400');
+                                } else {
+                                    barElement.classList.add('bg-emerald-400');
+                                }
                             }
                         }
 
-                        // Dynamically re-bind the update button to target the current bottleneck ingredient
+                        // --- Re-bind Restock Button ---
                         if (updateBtn && info.ing_id) {
                             updateBtn.onclick = function() {
-                                openUpdateModal(info.ing_id, info.ing_name, info.ing_size, info.ing_price);
+                                openUpdateModal(
+                                    info.ing_id, 
+                                    info.ing_name, 
+                                    info.ing_size, 
+                                    info.ing_price
+                                );
                             };
                         }
                     }
                 }
-
-                const orderDisplay = document.getElementById('display-total-orders');
-                if (orderDisplay) orderDisplay.innerText = data.orders;
 
             } catch (error) {
                 console.error('Dashboard Sync Error:', error);
@@ -616,33 +808,47 @@
             const modal = document.getElementById('updateStockModal');
             if (!modal) return;
 
-            // Populate modal fields
+            // 1. Set the basic hidden ID and display name
             document.getElementById('modalIngId').value = id;
             document.getElementById('modalIngName').innerText = name;
             
+            // 2. Pre-fill the "Size per Box/Item" (The quantity inside one unit)
             const sizeInput = document.getElementById('modalUnitSize');
             if (sizeInput) sizeInput.value = unitSize;
             
+            // 3. Setup Auto-Calculating Price logic
             const qtyInput = document.getElementById('modalQty');
             const priceInput = document.querySelector('input[name="batch_price"]');
             
             if (qtyInput && priceInput) {
-                qtyInput.value = ""; 
+                qtyInput.value = ""; // Clear for new entry
                 priceInput.value = ""; 
-                priceInput.placeholder = `Usual: $${parseFloat(lastPurchasePrice).toFixed(2)}`;
+                
+                // Convert to float to ensure toFixed works even if passed as string
+                const lastPrice = parseFloat(lastPurchasePrice) || 0;
+                priceInput.placeholder = `Usual: $${lastPrice.toFixed(2)}`;
 
-                // Real-time cost estimation
+                // Calculate total as you type quantity
                 qtyInput.oninput = function() {
                     const qty = parseFloat(qtyInput.value) || 0;
-                    if (qty > 0) priceInput.value = (qty * parseFloat(lastPurchasePrice)).toFixed(2);
-                    else priceInput.value = "";
+                    if (qty > 0) {
+                        priceInput.value = (qty * lastPrice).toFixed(2);
+                    } else {
+                        priceInput.value = "";
+                    }
                 };
             }
             
-            // Update form action URL to point to the correct ingredient ID
+            // 4. Set form destination to the API view
             const form = document.getElementById('updateStockForm');
-            if (form) form.action = `/inventory/update/${id}/`; 
+            if (form) {
+                /** * IMPORTANT: This path must match the one in urls.py linked to api_update_stock.
+                * Using the /inventory/update/ prefix ensures consistency across both pages.
+                */
+                form.action = `/inventory/update/${id}/`; 
+            }
             
+            // 5. Show the modal
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
@@ -653,6 +859,21 @@
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             }
+        }
+
+        function filterProducts() {
+            let input = document.getElementById('productSearch').value.toLowerCase();
+            let rows = document.querySelectorAll('.product-row');
+            
+            rows.forEach(row => {
+                let name = row.querySelector('h3').innerText.toLowerCase();
+                let category = row.querySelector('p').innerText.toLowerCase();
+                if (name.includes(input) || category.includes(input)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
         }
     </script>
 </body>
