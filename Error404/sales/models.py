@@ -16,7 +16,9 @@ class Product(models.Model):
 
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=20, choices=CATEGORIES, default='Coffee')
-    base_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Base Price for SMALL HOT (Tax Inclusive)")
+    price_small = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Price for Small (Tax Inclusive)")
+    price_medium = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Price for Medium (Tax Inclusive)")
+    price_large = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Price for Large (Tax Inclusive)")
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     
     # Pricing increments
@@ -40,15 +42,15 @@ class Product(models.Model):
 
     @property
     def price(self):
-        return self.base_price
+        return self.price_small
 
     @property
     def total_cost(self):
-        return self.get_production_cost(size='Small')
+        return self.get_product_cost(size='Small')
 
     @property
     def net_income(self):
-        return round(self.base_price / Decimal('1.10'), 2)
+        return round(self.price_small / Decimal('1.10'), 2)
 
     @property
     def profit_percentage(self):
@@ -62,56 +64,84 @@ class Product(models.Model):
 
     # --- PRICING & TAX LOGIC ---
 
-    from decimal import Decimal
-
-    def get_final_price(self, size='Small', drink_type='Hot'):
+    def get_final_price(self, size='Small', product_type='Hot'):
         # Force everything to Decimal to prevent "str + int" errors
         # We use Decimal(str()) as a safety net for any data type
         try:
-            price = Decimal(str(self.base_price))
+            if size == 'Large':
+                price = Decimal(str(self.price_large))
+            elif size == 'Medium':
+                price = Decimal(str(self.price_medium))
+            else:
+                price = Decimal(str(self.price_small))
         except (ValueError, TypeError):
             price = Decimal('0.00')
 
-        # 1. Handle Variants (Size modifiers)
-        variant = getattr(self, 'variants', None)
-        if variant:
-            v_obj = variant.filter(attribute_value=size).first()
-            if v_obj:
-                try:
-                    price += Decimal(str(v_obj.price_modifier))
-                except (ValueError, TypeError):
-                    pass # Modifier is 0 if invalid
-
-        # 2. Handle Drink Type Upcharges
+        # 2. Handle Product Type Upcharges
         try:
-            if drink_type == 'Iced':
+            if product_type == 'Iced':
                 price += Decimal(str(self.ice_upcharge))
-            elif drink_type == 'Frappe':
+            elif product_type == 'Frappe':
                 price += Decimal(str(self.frappe_upcharge))
         except (ValueError, TypeError):
             pass # Upcharge is 0 if invalid
 
         return price
 
-    def get_net_income(self, size='Small', drink_type='Hot'):
-        total_price = self.get_final_price(size, drink_type)
+    def get_net_income(self, size='Small', product_type='Hot'):
+        total_price = self.get_final_price(size, product_type)
         return total_price / Decimal('1.10')
 
-    def get_profit(self, size='Small', drink_type='Hot'):
-        net_income = self.get_net_income(size, drink_type)
-        production_cost = self.get_production_cost(size)
-        return net_income - production_cost
+    def get_profit(self, size='Small', product_type='Hot'):
+        net_income = self.get_net_income(size, product_type)
+        product_cost = self.get_product_cost(size, product_type)
+        return net_income - product_cost
 
-    def get_production_cost(self, size='Small'):
+    def get_product_cost(self, size='Small', product_type=None):
+        # Determine default type if none provided (useful for dashboard fallbacks)
+        if product_type is None:
+            if self.can_be_hot: product_type = 'Hot'
+            elif self.can_be_iced: product_type = 'Iced'
+            elif self.can_be_frappe: product_type = 'Frappe'
+            else: product_type = 'Hot'
+
         total_cost = Decimal('0.00')
         rules = self.recipes.filter(size=size) 
         for rule in rules:
             total_cost += rule.quantity * rule.ingredient.unit_cost
+            
+        # Add Standard Packaging Costs (Cup, Lid, Straw)
+        pkg_cats = []
+        if product_type == 'Hot':
+            pkg_cats = ['HOT_CUP', 'HOT_LID', 'HOT_STRAW']
+        else:
+            pkg_cats = ['COLD_CUP', 'COLD_LID', 'COLD_STRAW']
+
+        for cat in pkg_cats:
+            query = Ingredient.objects.filter(packaging_type=cat)
+            if cat in ['HOT_CUP', 'COLD_CUP']:
+                query = query.filter(name__icontains=size)
+            
+            pkg_item = query.first()
+            if pkg_item:
+                total_cost += pkg_item.unit_cost
+                
         return total_cost
 
     @property
     def real_profit(self):
         return self.net_income - self.total_cost
+
+    @property
+    def cost_medium(self): return self.get_product_cost('Medium')
+    @property
+    def cost_large(self): return self.get_product_cost('Large')
+
+    @property
+    def profit_medium(self): return self.get_profit('Medium')
+    @property
+    def profit_large(self): return self.get_profit('Large')
+
 
     def reduce_stock(self, quantity):
         if self.stock >= quantity:
@@ -156,7 +186,7 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     size = models.CharField(max_length=20, default='Medium')
     sugar = models.CharField(max_length=20, default='100%')
-    drink_type = models.CharField(max_length=20, default='Hot')
+    product_type = models.CharField(max_length=20, default='Hot')
 
     # --- ADD THESE TWO NEW FIELDS ---
     # This freezes the math so future menu changes don't ruin your past reports
@@ -215,6 +245,10 @@ class Ingredient(models.Model):
     @property
     def is_low_stock(self):
         return self.stock_percent < 20
+
+    @property
+    def stock_value(self):
+        return self.stock_quantity * self.unit_cost
     
     def add_new_stock(self, new_items_count, price_paid):
         """When you buy more, this automatically lowers/raises your product profits"""
@@ -222,10 +256,13 @@ class Ingredient(models.Model):
         
         self.items_count += new_items_count
         self.stock_quantity += added_quantity
-        self.last_purchase_price = price_paid
+
+        # Store the price per single item (e.g. per box) to maintain consistent calculations
+        if new_items_count > 0:
+            self.last_purchase_price = Decimal(str(price_paid)) / Decimal(str(new_items_count))
         
         if added_quantity > 0:
-            # Updating the cost-per-unit ensures the Product profit is always live
+            # Updating the cost-per-unit ensures the product profit is always live
             self.unit_cost = Decimal(str(price_paid)) / added_quantity
             
         self.save()

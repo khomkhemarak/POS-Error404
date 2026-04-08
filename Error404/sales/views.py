@@ -8,7 +8,7 @@ from urllib import request
 
 # Django Core
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -21,7 +21,13 @@ from django.db.models.functions import ExtractHour, ExtractDay, ExtractMonth, Tr
 # Decorators
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, user_passes_test
-from itertools import groupby, product
+from django.template.loader import render_to_string
+try:
+    import weasyprint
+    HAS_WEASYPRINT = True
+except (ImportError, OSError):
+    HAS_WEASYPRINT = False
+from itertools import groupby
 
 # Local App Models
 from .models import (
@@ -60,8 +66,8 @@ def owner_view(request):
 
     for item in items:
         # Use Snapshot data if it exists (>0), otherwise fallback to current product data
-        price = item.price_at_sale if item.price_at_sale > 0 else item.product.base_price
-        cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_production_cost(item.size)
+        price = item.price_at_sale if item.price_at_sale > 0 else item.product.price_small
+        cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_product_cost(item.size)
 
         # Performance Math (Net income after 10% tax)
         net_income_per_unit = price / Decimal('1.10')
@@ -87,7 +93,7 @@ def owner_view(request):
         'popular_items': popular_items,
         'labels': labels,
         'sales_data': sales_data,
-        'all_ingredients': Ingredient.objects.all().order_by('stock_quantity'),
+        'all_ingredients': Ingredient.objects.filter(is_packaging=False).order_by('stock_quantity'),
         'products': Product.objects.all(),
         'categories': Category.objects.all(),
         'top_customers': Customer.objects.order_by('-points')[:5],
@@ -119,18 +125,20 @@ def add_product(request):
 
         # Create the product
         product = Product.objects.create(
-            name=name, 
-            base_price=price, 
+            name=name,
+            price_small=Decimal(request.POST.get('price_small', price)),
+            price_medium=Decimal(request.POST.get('price_medium', price)),
+            price_large=Decimal(request.POST.get('price_large', price)),
             image=image,
             can_be_hot=is_hot,
             can_be_iced=is_iced,
             can_be_frappe=is_frappe,
-            category=category_obj.name 
+            category=category_obj.name
         )
 
-        # Helper to safely get costs/profits for a new drink (might not have recipe yet)
+        # Helper to safely get costs/profits for a new product (might not have recipe yet)
         try:
-            prod_cost = float(product.get_production_cost())
+            prod_cost = float(product.get_product_cost())
         except:
             prod_cost = 0.0
             
@@ -142,11 +150,13 @@ def add_product(request):
 
         return JsonResponse({
             'status': 'success',
-            'message': f'Drink "{name}" added successfully!',
+            'message': f'Product "{name}" added successfully!',
             'product': {
                 'id': product.id,
                 'name': product.name,
-                'price': str(product.base_price),
+                'price_small': str(product.price_small),
+                'price_medium': str(product.price_medium),
+                'price_large': str(product.price_large),
                 'category_id': category_id,
                 'category': product.category,
                 'cost': prod_cost,
@@ -182,7 +192,12 @@ def edit_product(request, product_id):
     if request.method == "POST":
         product.name = request.POST.get('name')
         raw_price = request.POST.get('price')
-        product.base_price = Decimal(raw_price) if raw_price else Decimal('0.00')
+        
+        # Update prices (handling both old single-price input and new per-size inputs)
+        product.price_small = Decimal(request.POST.get('price_small', raw_price or '0'))
+        if request.POST.get('price_medium'): product.price_medium = Decimal(request.POST.get('price_medium'))
+        if request.POST.get('price_large'): product.price_large = Decimal(request.POST.get('price_large'))
+
         
         # Handle Category
         category_id = request.POST.get('category')
@@ -206,7 +221,9 @@ def edit_product(request, product_id):
             'product': {
                 'id': product.id,
                 'name': product.name,
-                'price': str(product.base_price),
+                'price_small': str(product.price_small),
+                'price_medium': str(product.price_medium),
+                'price_large': str(product.price_large),
                 'category_id': category_id,
                 'category': product.category,
                 'profit': f"{product.get_profit():.2f}" if hasattr(product, 'get_profit') else "0.00",
@@ -224,6 +241,105 @@ def pos_screen(request):
         'products': Product.objects.all(),
         'categories': Category.objects.all(), # This line is required!
     })
+
+def generate_daily_report(request):
+    if not HAS_WEASYPRINT:
+        error_message = "PDF generation library (weasyprint) is not installed or configured correctly."
+        detailed_instructions = """
+            <p>To enable PDF reports, please ensure you have installed WeasyPrint and its system dependencies:</p>
+            <h3>1. Install WeasyPrint via pip:</h3>
+            <pre><code>pip install WeasyPrint</code></pre>
+            <h3>2. Install System Dependencies:</h3>
+            <p><strong>For Debian/Ubuntu:</strong></p>
+            <pre><code>sudo apt-get install libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libgdk-pixbuf2.0-0</code></pre>
+            <p><strong>For Windows:</strong> You typically need to install the <a href="https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases" target="_blank">GTK for Windows Runtime</a>. Download and run the latest .exe installer.</p>
+            <p><strong>For macOS:</strong> You might need Homebrew: <pre><code>brew install pango cairo gdk-pixbuf</code></pre></p>
+            <p>After installing, please restart your Django development server.</p>
+        """
+        return HttpResponse(f"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>PDF Generation Error</title>
+            <style>body {{ font-family: sans-serif; margin: 20px; line-height: 1.6; }} h1 {{ color: #dc2626; }} pre {{ background-color: #f0f0f0; padding: 10px; border-radius: 5px; overflow-x: auto; }}</style>
+            </head>
+            <body>
+                <h1>PDF Generation Error</h1><p>{error_message}</p>{detailed_instructions}
+                <p><a href="javascript:window.close()">Close this tab</a></p>
+            </body></html>
+        """, content_type="text/html")
+
+    now = timezone.now()
+    start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Re-use logic from owner_view/api_dashboard_stats for 'today'
+    orders = Order.objects.filter(is_completed=True, created_at__gte=start_date)
+    order_count = orders.count()
+
+    total_income = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    
+    total_profit = Decimal('0.00')
+    total_expense = Decimal('0.00')
+    total_cups = 0
+    total_tax = Decimal('0.00')
+
+    items = OrderItem.objects.filter(order__in=orders).select_related('product')
+    for item in items:
+        price = item.price_at_sale if item.price_at_sale > 0 else item.product.price_small
+        cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_product_cost(item.size)
+        
+        net_income_per_unit = price / Decimal('1.10')
+        total_profit += (net_income_per_unit - cost) * item.quantity
+        total_expense += cost * item.quantity
+        total_cups += item.quantity
+
+    for order in orders:
+        total_tax += order.tax_amount
+
+    income_val = float(total_income)
+    if income_val <= 4000:
+        annual_rate = 0
+    elif income_val <= 6000:
+        annual_rate = 0.05
+    elif income_val <= 25500:
+        annual_rate = 0.10
+    elif income_val <= 37500:
+        annual_rate = 0.15
+    else:
+        annual_rate = 0.20
+        
+    annual_tax_amount = Decimal(str(income_val * annual_rate))
+    net_after_annual_tax = total_income - annual_tax_amount
+
+    popular_items = OrderItem.objects.filter(order__in=orders).values('product__name').annotate(
+        total_qty=Sum('quantity')
+    ).order_by('-total_qty')[:5]
+
+    low_stock_products = Product.objects.filter(stock__lt=10)
+    low_stock_ingredients = Ingredient.objects.filter(stock_quantity__lt=500)
+
+    context = {
+        'report_date': now.strftime('%Y-%m-%d'),
+        'total_income': total_income.quantize(Decimal('0.01')),
+        'total_profit': total_profit.quantize(Decimal('0.01')),
+        'total_expense': total_expense.quantize(Decimal('0.01')),
+        'order_count': order_count,
+        'total_cups': total_cups,
+        'total_tax': total_tax.quantize(Decimal('0.01')),
+        'annual_tax_amount': annual_tax_amount.quantize(Decimal('0.01')),
+        'annual_tax_rate': int(annual_rate * 100),
+        'net_after_annual_tax': net_after_annual_tax.quantize(Decimal('0.01')),
+        'popular_items': popular_items,
+        'low_stock_products': low_stock_products,
+        'low_stock_ingredients': low_stock_ingredients,
+    }
+
+    html_string = render_to_string('daily_report_template.html', context)
+    
+    response = HttpResponse(content_type="application/pdf")
+    response['Content-Disposition'] = f'inline; filename="daily_report_{now.strftime("%Y%m%d")}.pdf"'
+    
+    weasyprint.HTML(string=html_string).write_pdf(response)
+    return response
 
 ################################
 ######## inventory page ########
@@ -295,9 +411,35 @@ def api_inventory_list(request):
             'is_low_stock': ing.is_low_stock,
             'last_purchase_price': float(ing.last_purchase_price),
             'unit_cost': float(ing.unit_cost),
+            'stock_value': float(ing.stock_value),
         })
         
     return JsonResponse({'ingredients': data})
+
+def api_inventory_logs(request):
+    """Returns grouped stock history logs for AJAX refresh."""
+    raw_logs = StockHistory.objects.select_related('ingredient').all().order_by('-created_at')[:20]
+    data = []
+    for notes, items in groupby(raw_logs, lambda x: x.notes):
+        items_list = list(items)
+        if notes and "Order #" in notes:
+            data.append({
+                'is_group': True,
+                'notes': notes,
+                'created_at': items_list[0].created_at.strftime("%H:%M %p"),
+                'items': [{'name': i.ingredient.name, 'amount': float(i.amount), 'unit': i.ingredient.unit} for i in items_list]
+            })
+        else:
+            for item in items_list:
+                data.append({
+                    'is_group': False,
+                    'name': item.ingredient.name,
+                    'amount': float(item.amount),
+                    'unit': item.ingredient.unit,
+                    'created_at': item.created_at.strftime("%H:%M %p"),
+                    'notes': item.notes
+                })
+    return JsonResponse({'logs': data})
 
 def add_ingredient(request):
     if request.method == "POST":
@@ -351,6 +493,7 @@ def add_ingredient(request):
                     'is_low_stock': ing.is_low_stock,
                     'last_purchase_price': float(ing.last_purchase_price),
                     'unit_cost': float(ing.unit_cost),
+                    'stock_value': float(ing.stock_value),
                 }
             })
             
@@ -412,6 +555,17 @@ def delete_ingredient(request, pk):
         messages.success(request, f"'{name}' has been removed from inventory.")
     return redirect('inventory_list')
 
+@csrf_exempt
+def rename_ingredient(request, pk):
+    if request.method == "POST":
+        ingredient = get_object_or_404(Ingredient, pk=pk)
+        new_name = request.POST.get('name')
+        if new_name:
+            ingredient.name = new_name
+            ingredient.save()
+            return JsonResponse({'status': 'success', 'message': f'Renamed to {new_name}'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
 def check_stock(request, product_id):
     product = Product.objects.get(id=product_id)
     recipes = Recipe.objects.filter(product=product)
@@ -446,14 +600,10 @@ def complete_checkout(request):
             deduct_stock(straw_type, 1)
             
             # C. Deduct the Carrier (ONLY if Takeout AND not Hot)
-            # Most cafes don't put hot drinks in plastic carriers unless requested, 
+            # Most cafes don't put hot products in plastic carriers unless requested, 
             # but let's follow your logic for Ice/Frappe takeout:
             if item['service'] == 'Takeout' and item['type'] != 'Hot':
                 deduct_stock('CARRIER', 1)
-
-            # D. Deduct regular ingredients (Coffee, Milk, etc.)
-            # product = Product.objects.get(id=item['id'])
-            # product.reduce_ingredients_stock() 
 
         return JsonResponse({'status': 'success'})
 
@@ -705,7 +855,7 @@ def process_payment(request):
             for item in cart_items:
                 product = Product.objects.get(id=item.get('id'))
                 target_size = item.get('size', 'Medium') 
-                drink_type = item.get('type', 'Hot')     
+                product_type = item.get('type', 'Hot')     
                 qty = int(item.get('qty', 1))
                 
                 # --- A. DEDUCT BEVERAGE INGREDIENTS ---
@@ -740,7 +890,7 @@ def process_payment(request):
                         )
 
                 # --- B. SMART PACKAGING DEDUCTION ---
-                if drink_type == 'Hot':
+                if product_type == 'Hot':
                     cup_cat, lid_cat, straw_cat = 'HOT_CUP', 'HOT_LID', 'HOT_STRAW'
                 else:
                     cup_cat, lid_cat, straw_cat = 'COLD_CUP', 'COLD_LID', 'COLD_STRAW'
@@ -795,10 +945,10 @@ def process_payment(request):
                     quantity=qty,
                     size=target_size, 
                     sugar=item.get('sugar', '100%'),
-                    drink_type=drink_type,
+                    product_type=product_type,
                     # LOCK THE DATA: This makes your owner_view reports "Fixed"
-                    price_at_sale=product.get_final_price(target_size, drink_type),
-                    cost_at_sale=product.get_production_cost(target_size)
+                    price_at_sale=product.get_final_price(target_size, product_type),
+                    cost_at_sale=product.get_product_cost(target_size, product_type)
                 )
 
         return JsonResponse({'status': 'success', 'order_id': new_order.id})
@@ -872,14 +1022,12 @@ def manager_view(request):
             
         servings_data = []
         for r in recipes:
-            # Calculate how many servings this specific ingredient allows
             count = int(r.ingredient.stock_quantity / r.quantity) if r.ingredient.stock_quantity > 0 else 0
             servings_data.append({'count': count, 'ing': r.ingredient})
         
-        # The bottleneck is the ingredient with the LOWEST number of servings
         bottleneck = min(servings_data, key=lambda x: x['count'])
         product.calculated_stock = bottleneck['count']
-        product.limiting_ing = bottleneck['ing'] # Used by the "Update" button in HTML
+        product.limiting_ing = bottleneck['ing']
 
     # --- 2. Summary Stats (Today) ---
     today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -889,13 +1037,12 @@ def manager_view(request):
     total_profit = Decimal('0.00')
     total_expense = Decimal('0.00')
     total_cups = 0
-    total_tax = Decimal('0.00')
+    total_tax = Decimal('0.00') # This is order-based tax (VAT)
     
-    # Calculate costs and profit for the initial display
     items = OrderItem.objects.filter(order__in=todays_orders).select_related('product')
     for item in items:
-        cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_production_cost(item.size)
-        price = item.price_at_sale if item.price_at_sale > 0 else item.product.base_price
+        cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_product_cost(item.size)
+        price = item.price_at_sale if item.price_at_sale > 0 else item.product.price_small
         
         total_expense += (cost * item.quantity)
         total_profit += ((price / Decimal('1.10')) - cost) * item.quantity
@@ -904,9 +1051,25 @@ def manager_view(request):
     for order in todays_orders:
         total_tax += order.tax_amount
 
+    # --- NEW: Annual Income Tax Calculation ---
+    income_val = float(total_income)
+    if income_val <= 4000:
+        annual_rate = 0
+    elif income_val <= 6000:
+        annual_rate = 0.05
+    elif income_val <= 25500:
+        annual_rate = 0.10
+    elif income_val <= 37500:
+        annual_rate = 0.15
+    else:
+        annual_rate = 0.20
+        
+    annual_tax_amount = Decimal(str(income_val * annual_rate))
+    net_after_annual_tax = total_income - annual_tax_amount
+
     avg_profitability = (float(total_profit) / float(total_income) * 100) if total_income > 0 else 0
 
-    # --- 3. Initial Chart Data (Income by Hour) ---
+    # --- 3. Initial Chart Data ---
     sales_by_hour = todays_orders.annotate(hour=ExtractHour('created_at')).values('hour').annotate(total=Sum('total_amount')).order_by('hour')
     chart_labels = [f"{item['hour']}:00" for item in sales_by_hour]
     chart_data = [float(item['total']) for item in sales_by_hour]
@@ -915,16 +1078,44 @@ def manager_view(request):
         'products': products,
         'total_income': total_income,
         'total_expense': total_expense,
-        'toral_orders' : todays_orders.count(),
+        'total_orders' : todays_orders.count(),
         'total_cups': total_cups,
         'total_tax': total_tax,
+        'annual_tax_amount': annual_tax_amount, # Pass to manager.html
+        'annual_tax_rate': int(annual_rate * 100), # Pass to manager.html
+        'net_income_after_tax': net_after_annual_tax, # Pass to manager.html
         'avg_profitability': round(avg_profitability, 1), 
         'chart_labels': chart_labels,
         'chart_data': chart_data,
-        'all_ingredients': Ingredient.objects.all(), # Used for the quick-update list
+        'all_ingredients': Ingredient.objects.all(),
     }
     return render(request, 'manager.html', context)
 
+def order_history_view(request):
+    return render(request, 'order_history.html')
+
+def api_order_history(request):
+    # Fetch last 50 orders with related items and products to avoid N+1 queries
+    orders = Order.objects.prefetch_related('items__product').all().order_by('-created_at')[:50]
+    
+    order_list = []
+    for order in orders:
+        items_data = [
+            {
+                'product_name': item.product.name,
+                'quantity': item.quantity
+            } for item in order.items.all()
+        ]
+        
+        order_list.append({
+            'id': order.id,
+            'created_at': order.created_at.strftime('%d %b %Y | %H:%M'),
+            'total_amount': float(order.total_amount),
+            'is_completed': order.is_completed,
+            'items': items_data
+        })
+        
+    return JsonResponse({'orders': order_list})
 
 def api_dashboard_stats(request):
     range_type = request.GET.get('range', 'today')
@@ -934,30 +1125,46 @@ def api_dashboard_stats(request):
     # --- 1. SET DATE RANGES & GROUPING ---
     if range_type == 'today':
         start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        group_by_order = ExtractHour('order__created_at')
+        date_func = ExtractHour
         label_fmt = lambda x: f"{x}:00"
     elif range_type == 'week':
         start_date = now - timedelta(days=now.weekday())
         start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        group_by_order = ExtractDay('order__created_at')
+        date_func = ExtractDay
         label_fmt = lambda x: f"{current_month_name} {x}"
     elif range_type in ['month', '30days']:
         start_date = now.replace(day=1, hour=0, minute=0, second=0) 
-        group_by_order = ExtractDay('order__created_at')
+        date_func = ExtractDay
         label_fmt = lambda x: f"{current_month_name} {x}"
     elif range_type == 'year':
         start_date = now.replace(month=1, day=1, hour=0, minute=0)
-        group_by_order = ExtractMonth('order__created_at')
+        date_func = ExtractMonth
         label_fmt = lambda x: calendar.month_name[x][:3]
     else:
         start_date = now.replace(hour=0, minute=0, second=0)
-        group_by_order = ExtractHour('order__created_at')
+        date_func = ExtractHour
         label_fmt = lambda x: f"{x}:00"
 
     # --- 2. FINANCIAL CALCULATIONS ---
     orders = Order.objects.filter(is_completed=True, created_at__gte=start_date)
     total_rev = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
     
+    # --- NEW: Annual Income Tax Logic for API ---
+    income_val = float(total_rev)
+    if income_val <= 4000:
+        annual_rate = 0
+    elif income_val <= 6000:
+        annual_rate = 0.05
+    elif income_val <= 25500:
+        annual_rate = 0.10
+    elif income_val <= 37500:
+        annual_rate = 0.15
+    else:
+        annual_rate = 0.20
+    
+    annual_tax_amount = Decimal(str(income_val * annual_rate))
+    net_after_annual_tax = total_rev - annual_tax_amount
+
     total_profit = Decimal('0.00')
     total_expense = Decimal('0.00')
     total_cups = 0
@@ -965,8 +1172,8 @@ def api_dashboard_stats(request):
     
     items = OrderItem.objects.filter(order__in=orders).select_related('product')
     for item in items:
-        price = item.price_at_sale if item.price_at_sale > 0 else item.product.base_price
-        cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_production_cost(item.size)
+        price = item.price_at_sale if item.price_at_sale > 0 else item.product.price_small
+        cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_product_cost(item.size)
         
         # Net income after 10% tax
         net_income_per_unit = price / Decimal('1.10')
@@ -981,30 +1188,36 @@ def api_dashboard_stats(request):
     profit_margin_ratio = (float(total_profit) / float(total_rev)) if total_rev > 0 else 0
 
     # --- 3. EXPENSE TREND DATA ---
+    revenue_trend_query = orders.annotate(
+        unit=date_func('created_at')
+    ).values('unit').annotate(
+        total_rev=Sum('total_amount')
+    ).order_by('unit')
+
     expense_trend_query = OrderItem.objects.filter(
         order__is_completed=True, 
         order__created_at__gte=start_date
     ).annotate(
-        unit=group_by_order
+        unit=date_func('order__created_at')
     ).values('unit').annotate(
         total_cost=Sum(
             F('quantity') * Case(
                 When(cost_at_sale__gt=0, then=F('cost_at_sale')),
-                default=F('product__base_price') * Value(Decimal('0.40')), 
+                default=F('product__price_small') * Value(Decimal('0.40')), 
                 output_field=DecimalField()
             )
         )
     ).order_by('unit')
 
-    # --- 4. POTENTIAL STOCK & PRODUCT ANALYTICS ---
+    # --- 4. POTENTIAL STOCK & product ANALYTICS ---
     products = Product.objects.all()
     product_stock_data = {}
     for product in products:
         recipes = Recipe.objects.filter(product=product).select_related('ingredient')
         
         # Calculate current live cost and profit
-        # (Assuming your Product model has these methods as discussed)
-        current_cost = product.get_production_cost()
+        # (Assuming your product model has these methods as discussed)
+        current_cost = product.get_product_cost()
         current_profit = product.get_profit()
 
         if not recipes.exists():
@@ -1029,22 +1242,38 @@ def api_dashboard_stats(request):
             'ing_name': limit['ing'].name,
             'ing_size': float(limit['ing'].initial_stock_per_item),
             'ing_price': float(limit['ing'].last_purchase_price),
-            # NEW: Individual product financial data for the manager table
-            'cost': float(current_cost),
-            'profit': float(current_profit)
+            'prices': {
+                'S': float(product.price_small),
+                'M': float(product.price_medium),
+                'L': float(product.price_large)
+            },
+            'costs': {
+                'Small': float(product.get_product_cost('Small')),
+                'Medium': float(product.get_product_cost('Medium')),
+                'Large': float(product.get_product_cost('Large'))
+            },
+            'profits': {
+                'Small': float(product.get_profit('Small')),
+                'Medium': float(product.get_profit('Medium')),
+                'Large': float(product.get_profit('Large'))
+            }
         }
 
     return JsonResponse({
         'income': float(total_rev),
         'expense': float(total_expense.quantize(Decimal('0.01'))),
         'tax' : float(total_tax.quantize(Decimal('0.01'))),
+        'annual_tax': float(annual_tax_amount.quantize(Decimal('0.01'))), # NEW
+        'annual_rate': int(annual_rate * 100), # NEW
+        'net_after_tax': float(net_after_annual_tax.quantize(Decimal('0.01'))), # NEW
         'profit': float(total_profit.quantize(Decimal('0.01'))),
         'margin_ratio': round(profit_margin_ratio, 2),
         'avg_profit': round((float(total_profit) / float(total_rev) * 100), 1) if total_rev > 0 else 0,
         'orders': orders.count(),
         'total_cups' : total_cups,
         'product_potentials': product_stock_data,
-        'labels': [label_fmt(x['unit']) for x in expense_trend_query],
+        'labels': [label_fmt(x['unit']) for x in revenue_trend_query],
+        'sales_data': [float(x['total_rev']) for x in revenue_trend_query],
         'expense_data': [float(x['total_cost']) for x in expense_trend_query],
     })
 

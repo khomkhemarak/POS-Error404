@@ -69,6 +69,9 @@
 <body class="bg-[#f8fafc] text-slate-900 overflow-hidden">
 
     {% csrf_token %}
+    <!-- Notification Container -->
+    <div id="notification-container" class="fixed top-5 right-5 z-[200] space-y-3 pointer-events-none"></div>
+
     <div class="flex h-screen w-full">
         
         <div class="w-3/4 flex flex-col p-6 space-y-6">
@@ -109,7 +112,9 @@
                     <button onclick="addToCart(
                         '{{ product.id }}', 
                         '{{ product.name|escapejs }}', 
-                        '{{ product.base_price }}', 
+                        '{{ product.price_small }}', 
+                        '{{ product.price_medium }}', 
+                        '{{ product.price_large }}', 
                         '{{ product.ice_upcharge }}', 
                         '{{ product.frappe_upcharge }}', 
                         {{ product.can_be_hot|yesno:'true,false' }}, 
@@ -142,7 +147,7 @@
                         <div class="relative z-10 flex justify-between items-end">
                             <div class="flex flex-col">
                                 <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mb-0.5">Price</span>
-                                <span class="product-price text-2xl font-[800] text-slate-900">${{ product.base_price }}</span>
+                                <span class="product-price text-2xl font-[800] text-slate-900">${{ product.price_small }}</span>
                             </div>
                             <div class="w-10 h-10 bg-slate-50 border-2 border-slate-200 rounded-xl group-hover:bg-orange-500 group-hover:border-orange-500 group-hover:text-white text-slate-400 flex items-center justify-center transition-all">
                                 <i class="bi bi-plus-lg font-bold"></i>
@@ -238,7 +243,7 @@
             </div>
 
             <div class="mb-6">
-                <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Drink Type</p>
+                <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">product Type</p>
                 <div class="grid grid-cols-3 gap-3">
                     <button id="type-Hot" onclick="selectType('Hot')" class="type-btn bg-white text-slate-500 border-2 border-slate-200 py-4 rounded-[1.5rem] transition-all font-[800] text-xs flex flex-col items-center gap-2">
                         <i class="bi bi-thermometer-sun text-2xl"></i> Hot
@@ -340,38 +345,158 @@
         let cart = []; 
         let currentItem = null; 
         let selectedCustomerId = null; 
-        let currentBasePrice = 0; 
+        let currentPriceSmall = 0;
+        let currentPriceMedium = 0;
+        let currentPriceLarge = 0;
         let currentIceUpcharge = 0; 
         let currentFrappeUpcharge = 0; 
         let currentService = 'Dine-in'; 
+        let editIndex = null; 
         let activeInputId = 'reg-name';
+        const stockChannel = new BroadcastChannel('stock_updates');
 
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'productUpdate' && event.newValue) {
-                const product = JSON.parse(event.newValue);
-                const card = document.querySelector(`[data-product-id="${product.id}"]`);
-
+        stockChannel.onmessage = (event) => {
+            console.log("POS received broadcast:", event.data);
+            if (event.data === 'refresh_data') return;
+            
+            const { type, product, product_id } = event.data;
+            
+            if (type === 'add_product') {
+                renderproductCard(product);
+                showNotification(`New product Added: ${product.name}`, 'success');
+            } else if (type === 'update_product') {
+                updateproductCard(product);
+                showNotification(`product Updated: ${product.name}`, 'info');
+            } else if (type === 'delete_product') {
+                const card = document.querySelector(`[data-product-id="${product_id}"]`);
+                const productName = card?.querySelector('.product-name')?.innerText || 'product';
                 if (card) {
-                    // 1. Update Visuals
-                    card.querySelector('.product-name').innerText = product.name;
-                    card.querySelector('.product-price').innerText = `$${parseFloat(product.price).toFixed(2)}`;
-                    card.querySelector('.product-category').innerText = product.category;
-                    if (product.image_url) {
-                        card.querySelector('.product-img').src = product.image_url;
-                    }
+                    card.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => card.remove(), 300);
+                }
+                showNotification(`product Removed: ${productName}`, 'info');
+            }
+        };
 
-                    // 2. Update the addToCart Button Function
-                    const btn = card.querySelector('button');
-                    // We update the onclick attribute so the cart gets the new price/name
-                    const newOnClick = `addToCart('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price}', '0', '0', true, true, true)`; 
-                    btn.setAttribute('onclick', newOnClick);
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notification-container');
+            if (!container) return;
 
-                    // 3. Visual "Pulse" to show it updated
-                    card.classList.add('scale-105', 'border-orange-500');
-                    setTimeout(() => card.classList.remove('scale-105', 'border-orange-500'), 500);
+            const notification = document.createElement('div');
+            notification.className = `transform transition-all duration-500 translate-x-full opacity-0 flex items-center p-4 min-w-[300px] rounded-2xl border-2 shadow-lg pointer-events-auto ${
+                type === 'success' ? 'bg-emerald-50 border-emerald-400 text-emerald-800' : 'bg-orange-50 border-orange-400 text-orange-800'
+            }`;
+            
+            const icon = type === 'success' ? 'bi-check-circle-fill text-emerald-500' : 'bi-info-circle-fill text-orange-500';
+            
+            notification.innerHTML = `
+                <i class="bi ${icon} text-xl mr-3"></i>
+                <p class="font-black uppercase tracking-widest text-[10px]">${message}</p>
+                <button onclick="this.parentElement.remove()" class="ml-auto pl-4 opacity-50 hover:opacity-100 transition-opacity">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
+            `;
+
+            container.appendChild(notification);
+            requestAnimationFrame(() => {
+                notification.classList.remove('translate-x-full', 'opacity-0');
+                notification.classList.add('translate-x-0', 'opacity-100');
+            });
+
+            setTimeout(() => {
+                notification.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => notification.remove(), 500);
+            }, 4000);
+        }
+
+        function updateproductCard(product) {
+            const card = document.querySelector(`[data-product-id="${product.id}"]`);
+            if (!card) return;
+
+            card.setAttribute('data-category', product.category);
+            card.querySelector('.product-name').innerText = product.name;
+            card.querySelector('.product-price').innerText = `$${parseFloat(product.price_small).toFixed(2)}`;
+            card.querySelector('.product-category').innerText = product.category;
+            
+            if (product.image_url) {
+                let img = card.querySelector('.product-img');
+                if (img) {
+                    img.src = product.image_url;
                 }
             }
-        });
+
+            const iconContainer = card.querySelector('.flex.gap-1\\.5');
+            if (iconContainer) {
+                iconContainer.innerHTML = `
+                    ${product.can_be_hot ? '<i class="bi bi-thermometer-sun text-[10px] text-orange-500"></i>' : ''}
+                    ${product.can_be_iced ? '<i class="bi bi-snow text-[10px] text-blue-500"></i>' : ''}
+                    ${product.can_be_frappe ? '<i class="bi bi-stars text-[10px] text-purple-500"></i>' : ''}
+                `;
+            }
+
+            const btn = card.querySelector('button');
+            const newOnClick = `addToCart('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price_small}', '${product.price_medium}', '${product.price_large}', '${product.ice_upcharge || 0.25}', '${product.frappe_upcharge || 0.50}', ${product.can_be_hot}, ${product.can_be_iced}, ${product.can_be_frappe})`; 
+            btn.setAttribute('onclick', newOnClick);
+
+            card.classList.add('scale-105', 'border-orange-500');
+            setTimeout(() => card.classList.remove('scale-105', 'border-orange-500'), 500);
+        }
+
+        function renderproductCard(product) {
+            const grid = document.getElementById('product-grid');
+            if (!grid) return;
+
+            const div = document.createElement('div');
+            div.className = "product-item transition-all duration-300";
+            div.setAttribute('data-product-id', product.id);
+            div.setAttribute('data-category', product.category);
+
+            const displayImage = product.image_url 
+                ? `<img src="${product.image_url}" class="product-img absolute inset-0 w-full h-full object-cover opacity-5 group-hover:opacity-10 transition-opacity grayscale group-hover:grayscale-0">`
+                : '';
+
+            div.innerHTML = `
+                <button onclick="addToCart('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price_small}', '${product.price_medium}', '${product.price_large}', '${product.ice_upcharge || 0.25}', '${product.frappe_upcharge || 0.50}', ${product.can_be_hot}, ${product.can_be_iced}, ${product.can_be_frappe})"                            
+                class="product-button group w-full bg-white p-5 rounded-[2rem] border-2 border-slate-200 hover:border-orange-400 transition-all text-left flex flex-col justify-between h-52 relative overflow-hidden shadow-sm hover:shadow-md">
+                    ${displayImage}
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start">
+                            <span class="product-category text-[9px] font-[800] uppercase tracking-widest text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">${product.category}</span>
+                            <div class="flex gap-1.5 bg-white p-1.5 rounded-full border border-slate-100 shadow-sm opacity-80 group-hover:opacity-100 transition">
+                                ${product.can_be_hot ? '<i class="bi bi-thermometer-sun text-[10px] text-orange-500"></i>' : ''}
+                                ${product.can_be_iced ? '<i class="bi bi-snow text-[10px] text-blue-500"></i>' : ''}
+                                ${product.can_be_frappe ? '<i class="bi bi-stars text-[10px] text-purple-500"></i>' : ''}
+                            </div>
+                        </div>
+                        <h3 class="product-name text-lg font-[800] mt-3 text-slate-900 group-hover:text-orange-600 transition-colors leading-tight">${product.name}</h3>
+                    </div>
+                    <div class="relative z-10 flex justify-between items-end">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mb-0.5">Price</span>
+                            <span class="product-price text-2xl font-[800] text-slate-900">$${parseFloat(product.price_small).toFixed(2)}</span>
+                        </div>
+                        <div class="w-10 h-10 bg-slate-50 border-2 border-slate-200 rounded-xl group-hover:bg-orange-500 group-hover:border-orange-500 group-hover:text-white text-slate-400 flex items-center justify-center transition-all">
+                            <i class="bi bi-plus-lg font-bold"></i>
+                        </div>
+                    </div>
+                </button>
+            `;
+
+            grid.prepend(div);
+            
+            // Apply current filter logic
+            const activeCategoryBtn = document.querySelector('.cat-btn.bg-orange-50');
+            if (activeCategoryBtn) {
+                const onclick = activeCategoryBtn.getAttribute('onclick');
+                const match = onclick.match(/filterCategory\('"['"]\)/);
+                if (match) {
+                    const currentFilter = match[1];
+                    if (currentFilter !== 'All' && product.category !== currentFilter) {
+                        div.classList.add('hidden');
+                    }
+                }
+            }
+        }
 
         function filterCategory(category) {
             const buttons = document.querySelectorAll('.cat-btn');
@@ -546,19 +671,25 @@
             }
         }
 
-        async function addToCart(id, name, basePrice, iceUp, frappeUp, canH, canI, canF) {
+        async function addToCart(id, name, pSmall, pMedium, pLarge, iceUp, frappeUp, canH, canI, canF) {
+            editIndex = null; // Reset edit mode
             const modal = document.getElementById('option-modal');
             if (modal) modal.classList.remove('hidden');
 
             document.getElementById('modal-product-name').innerText = name;
 
-            currentBasePrice = parseFloat(basePrice);
+            currentPriceSmall = parseFloat(pSmall);
+            currentPriceMedium = parseFloat(pMedium);
+            currentPriceLarge = parseFloat(pLarge);
             currentIceUpcharge = parseFloat(iceUp);
             currentFrappeUpcharge = parseFloat(frappeUp);
 
             currentItem = { 
                 id: id, name: name, size: 'Medium', sugar: '100%', type: 'Hot',
-                totalCalculatedPrice: currentBasePrice 
+                totalCalculatedPrice: 0,
+                canH: canH,
+                canI: canI,
+                canF: canF
             };
 
             const btnHot = document.getElementById('type-Hot');
@@ -576,6 +707,44 @@
             selectSize('Medium'); 
             selectSugar('100%');
             calculateDynamicPrice(); 
+        }
+
+        function editCartItem(index) {
+            editIndex = index;
+            const item = cart[index];
+            
+            const modal = document.getElementById('option-modal');
+            if (modal) modal.classList.remove('hidden');
+
+            document.getElementById('modal-product-name').innerText = item.name;
+
+            // Load pricing metadata stored in the cart item
+            currentPriceSmall = item.pSmall;
+            currentPriceMedium = item.pMedium;
+            currentPriceLarge = item.pLarge;
+            currentIceUpcharge = item.iceUp;
+            currentFrappeUpcharge = item.frappeUp;
+
+            currentItem = { 
+                id: item.id, name: item.name, size: item.size, sugar: item.sugar, type: item.type,
+                totalCalculatedPrice: item.price,
+                canH: item.canH, canI: item.canI, canF: item.canF
+            };
+
+            const btnHot = document.getElementById('type-Hot');
+            const btnIced = document.getElementById('type-Iced');
+            const btnFrappe = document.getElementById('type-Frappe');
+
+            if(btnHot) btnHot.style.display = (item.canH === true) ? 'flex' : 'none';
+            if(btnIced) btnIced.style.display = (item.canI === true) ? 'flex' : 'none';
+            if(btnFrappe) btnFrappe.style.display = (item.canF === true) ? 'flex' : 'none';
+
+            selectType(item.type);
+            selectSize(item.size);
+            selectSugar(item.sugar);
+            
+            document.getElementById('modal-qty').value = item.qty;
+            calculateDynamicPrice();
         }
 
         function selectSize(size) {
@@ -622,16 +791,27 @@
             const sugarMultiplier = sugarMap[currentItem.sugar] || 0;
 
             const uniqueKey = `${currentItem.id}-${currentItem.size}-${currentItem.sugar}-${currentItem.type}`;
-            const existing = cart.find(i => i.uniqueKey === uniqueKey);
-            
-            if (existing) { existing.qty += qty; } 
-            else {
-                cart.push({
-                    uniqueKey: uniqueKey, id: currentItem.id, name: currentItem.name,
-                    size: currentItem.size, type: currentItem.type, sugar: currentItem.sugar,
-                    sugar_multiplier: sugarMultiplier, price: currentItem.totalCalculatedPrice, qty: qty
-                });
+            const itemData = {
+                uniqueKey: uniqueKey, id: currentItem.id, name: currentItem.name,
+                size: currentItem.size, type: currentItem.type, sugar: currentItem.sugar,
+                sugar_multiplier: sugarMultiplier, price: currentItem.totalCalculatedPrice, qty: qty,
+                // Save metadata for future editing re-population
+                pSmall: currentPriceSmall, pMedium: currentPriceMedium, pLarge: currentPriceLarge,
+                iceUp: currentIceUpcharge, frappeUp: currentFrappeUpcharge,
+                canH: currentItem.canH, canI: currentItem.canI, canF: currentItem.canF
+            };
+
+            if (editIndex !== null) {
+                cart[editIndex] = itemData;
+            } else {
+                const existing = cart.find(i => i.uniqueKey === uniqueKey);
+                if (existing) {
+                    existing.qty += qty;
+                } else {
+                    cart.push(itemData);
+                }
             }
+            
             closeModal(); renderCart();
         }
 
@@ -650,10 +830,10 @@
             }
 
             list.innerHTML = cart.map((item, index) => `
-                <div class="bg-white p-4 rounded-2xl border-2 border-slate-100 flex justify-between items-center hover:border-orange-200 transition-colors shadow-sm">
+                <div onclick="editCartItem(${index})" class="bg-white p-4 rounded-2xl border-2 border-slate-100 flex justify-between items-center hover:border-orange-200 transition-colors shadow-sm cursor-pointer group/cart">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
-                            <p class="font-[800] text-sm text-slate-900 leading-none">${item.name}</p>
+                            <p class="font-[800] text-sm text-slate-900 leading-none group-hover/cart:text-orange-600">${item.name}</p>
                             <span class="text-[8px] px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 font-[800] uppercase tracking-widest">${item.type}</span>
                         </div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">${item.size} | ${item.sugar} Sugar</p>
@@ -712,6 +892,10 @@
                 const result = await response.json();
                 if (result.status === 'success') {
                     alert(`Order #${result.order_id} Success!\nPackaging and Ingredients have been updated.`);
+                    
+                    // BROADCAST: Notify Owner and Inventory pages to refresh
+                    stockChannel.postMessage('refresh_data');
+
                     clearCart(); removeCustomer();
                 } else { alert("Transaction Failed: " + result.message); }
             } catch (error) {
@@ -733,20 +917,24 @@
 
         function calculateDynamicPrice() {
             if (!currentItem) return;
-            let price = currentBasePrice;
+            let price = 0;
+
+            if (currentItem.size === 'Small') price = currentPriceSmall;
+            else if (currentItem.size === 'Medium') price = currentPriceMedium;
+            else if (currentItem.size === 'Large') price = currentPriceLarge;
 
             if (currentItem.type === 'Iced') price += currentIceUpcharge;
             if (currentItem.type === 'Frappe') price += currentFrappeUpcharge;
-
-            if (currentItem.size === 'Medium') price = price * 1.2;
-            if (currentItem.size === 'Large') price = price * 1.5;
 
             const qty = parseInt(document.getElementById('modal-qty').value) || 1;
             let finalTotal = price * qty;
             currentItem.totalCalculatedPrice = price; 
 
             const confirmBtnText = document.getElementById('confirm-btn-text');
-            if (confirmBtnText) confirmBtnText.innerText = `ADD TO CART — $${finalTotal.toFixed(2)}`;
+            if (confirmBtnText) {
+                const label = editIndex !== null ? 'UPDATE CART' : 'ADD TO CART';
+                confirmBtnText.innerText = `${label} — $${finalTotal.toFixed(2)}`;
+            }
         }
 
         function setServiceType(type) {

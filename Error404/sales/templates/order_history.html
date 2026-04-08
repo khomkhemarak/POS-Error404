@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error404 | Order History</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .bento-card {
+            background-color: #ffffff;
+            border: 2px solid #e2e8f0;
+            box-shadow: 4px 4px 0px 0px rgba(203, 213, 225, 0.4);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900 flex flex-col md:flex-row min-h-screen">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden bg-white border-b-2 border-slate-200 p-4 flex justify-between items-center sticky top-0 z-[100]">
+        <h1 class="text-xl font-[800] tracking-tighter text-orange-600">Error404</h1>
+        <button onclick="toggleSidebar()" class="text-2xl text-slate-600"><i class="bi bi-list"></i></button>
+    </div>
+
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 shrink-0 bg-white border-r border-slate-200 p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[150] md:sticky md:top-0 md:h-screen">
+        <div class="mb-10">
+            <h1 class="text-2xl font-800 tracking-tighter text-orange-600">Error404</h1>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management Suite</p>
+        </div>
+        
+        <nav class="space-y-1 flex-grow">
+            <a href="{% url 'manager_display' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+                <i class="bi bi-grid-1x2"></i> Manager Analyst
+            </a>
+            <a href="{% url 'order_history' %}" class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100">
+                <i class="bi bi-clock-history"></i> Order History
+            </a>
+            <a href="{% url 'inventory_list' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+                <i class="bi bi-box-seam"></i> Inventory
+            </a>
+            <a href="{% url 'kitchen_view' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+                <i class="bi bi-cup-hot"></i> Kitchen
+            </a>
+        </nav>
+        <div class="pt-6 border-t border-slate-100">
+            <a href="{% url 'pos_home' %}" class="flex items-center gap-3 p-3 text-slate-400 hover:text-slate-900 transition-all text-sm font-bold uppercase tracking-tighter">
+                <i class="bi bi-arrow-left-right"></i> Switch to POS
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 w-full p-4 md:p-8 lg:p-10 max-w-[1600px] mx-auto overflow-y-auto custom-scrollbar">
+        <header class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-[800] tracking-tight text-slate-900 uppercase">Order History</h1>
+            <p class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest mt-1">Live Transaction Log</p>
+        </header>
+
+        <div class="bento-card rounded-[2.5rem] overflow-hidden bg-white">
+            <div class="p-6 border-b-2 border-slate-50 flex flex-col md:flex-row gap-4 justify-between items-center">
+                <h2 class="text-sm font-[900] text-slate-800 uppercase tracking-tighter flex items-center gap-2">
+                    <i class="bi bi-receipt text-orange-500"></i> Recent Orders
+                </h2>
+                <div class="relative flex-1 w-full max-w-md">
+                    <i class="bi bi-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="orderSearch" placeholder="Search Order ID..." 
+                        class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3 pl-12 pr-6 text-slate-900 font-bold focus:outline-none focus:border-orange-500 transition-all placeholder-slate-400">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b-2 border-slate-50 bg-slate-50/30">
+                            <th class="px-8 py-5 text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Order ID</th>
+                            <th class="px-8 py-5 text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Time</th>
+                            <th class="px-8 py-5 text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Items</th>
+                            <th class="px-8 py-5 text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Amount</th>
+                            <th class="px-8 py-5 text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTableBody" class="divide-y-2 divide-slate-50">
+                        <tr><td colspan="5" class="px-8 py-10 text-center text-slate-400 font-bold">Fetching latest orders...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
+
+        async function fetchOrders() {
+            try {
+                const response = await fetch('/api/orders/history/');
+                const data = await response.json();
+                renderOrders(data.orders);
+            } catch (err) { console.error("Sync Error:", err); }
+        }
+
+        function renderOrders(orders) {
+            const tableBody = document.getElementById('orderTableBody');
+            if (!orders.length) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="px-8 py-10 text-center text-slate-400 font-bold">No orders found.</td></tr>';
+                return;
+            }
+            tableBody.innerHTML = orders.map(order => `
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="px-8 py-5 font-black text-slate-900">#${order.id}</td>
+                    <td class="px-8 py-5 text-xs font-bold text-slate-500 uppercase">${order.created_at}</td>
+                    <td class="px-8 py-5">
+                        <div class="flex flex-col gap-1">
+                            ${order.items.map(i => `<span class="text-[11px] font-bold text-slate-700"><span class="text-orange-500">${i.quantity}x</span> ${i.product_name}</span>`).join('')}
+                        </div>
+                    </td>
+                    <td class="px-8 py-5 font-black text-slate-900">$${parseFloat(order.total_amount).toFixed(2)}</td>
+                    <td class="px-8 py-5">
+                        <span class="px-3 py-1 ${order.is_completed ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'} rounded-full text-[10px] font-black uppercase">
+                            ${order.is_completed ? 'Completed' : 'Processing'}
+                        </span>
+                    </td>
+                </tr>`).join('');
+        }
+
+        fetchOrders();
+        setInterval(fetchOrders, 10000); // Live update every 10s
+
+        document.getElementById('orderSearch').addEventListener('keyup', function(e) {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('#orderTableBody tr').forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

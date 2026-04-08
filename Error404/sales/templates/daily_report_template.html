@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Closing Report - {{ report_date }}</title>
+    <style>
+        /* Basic Reset & Typography */
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 20mm; /* Standard print margin */
+            color: #333;
+            line-height: 1.6;
+            font-size: 10pt;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin-top: 0;
+            margin-bottom: 0.5em;
+            color: #1a202c;
+        }
+        h1 { font-size: 24pt; font-weight: 800; color: #f97316; } /* Orange-500 */
+        h2 { font-size: 18pt; font-weight: 800; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.3em; margin-bottom: 1em; }
+        h3 { font-size: 14pt; font-weight: 700; margin-bottom: 0.8em; }
+        p { margin-bottom: 0.5em; }
+
+        /* Layout */
+        .container {
+            max-width: 180mm; /* A4 width minus margins */
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30mm;
+        }
+        .section {
+            margin-bottom: 20mm;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15mm;
+        }
+        .grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .grid-item {
+            padding: 10mm;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+
+        /* Text & Colors */
+        .text-orange-600 { color: #f97316; }
+        .text-emerald-600 { color: #10b981; }
+        .text-red-600 { color: #ef4444; }
+        .text-blue-600 { color: #3b82f6; }
+        .text-slate-900 { color: #1e293b; }
+        .text-slate-500 { color: #64748b; }
+        .text-sm { font-size: 9pt; }
+        .text-xs { font-size: 8pt; }
+        .font-bold { font-weight: 700; }
+        .font-extrabold { font-weight: 800; }
+        .uppercase { text-transform: uppercase; }
+        .tracking-widest { letter-spacing: 0.1em; }
+        .text-right { text-align: right; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1em;
+        }
+        th, td {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            font-size: 9pt;
+            text-transform: uppercase;
+            color: #475569;
+        }
+        td {
+            font-size: 9pt;
+        }
+        .table-striped tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        /* Specific elements */
+        .metric-value {
+            font-size: 20pt;
+            font-weight: 800;
+            color: #1e293b;
+            margin-top: 0.2em;
+        }
+        .metric-label {
+            font-size: 8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+        .alert-item {
+            background-color: #fef2f2; /* red-50 */
+            border: 1px solid #fecaca; /* red-200 */
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 9pt;
+        }
+        .alert-item.low-stock {
+            color: #ef4444; /* red-500 */
+            font-weight: 700;
+        }
+        .alert-item.low-ing {
+            color: #f59e0b; /* amber-500 */
+            font-weight: 700;
+        }
+
+        /* Print specific styles */
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+            .grid {
+                display: block; /* Grids can break across pages poorly, revert to block */
+            }
+            .grid-item {
+                margin-bottom: 10mm;
+                page-break-inside: avoid; /* Prevent items from breaking in half */
+            }
+            table {
+                page-break-inside: auto;
+            }
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            thead {
+                display: table-header-group;
+            }
+            tfoot {
+                display: table-footer-group;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Error404 Cafe</h1>
+            <p class="text-slate-500 text-sm">Daily Closing Report for <span class="font-bold text-slate-900">{{ report_date }}</span></p>
+        </div>
+
+        <div class="section">
+            <h2>Financial Summary</h2>
+            <div class="grid grid-3">
+                <div class="grid-item">
+                    <p class="metric-label">Total Income</p>
+                    <p class="metric-value text-emerald-600">${{ total_income }}</p>
+                </div>
+                <div class="grid-item">
+                    <p class="metric-label">Total Profit</p>
+                    <p class="metric-value text-emerald-600">${{ total_profit }}</p>
+                </div>
+                <div class="grid-item">
+                    <p class="metric-label">Total Expense</p>
+                    <p class="metric-value text-red-600">${{ total_expense }}</p>
+                </div>
+                <div class="grid-item">
+                    <p class="metric-label">Total Orders</p>
+                    <p class="metric-value text-blue-600">{{ order_count }}</p>
+                </div>
+                <div class="grid-item">
+                    <p class="metric-label">Cups Sold</p>
+                    <p class="metric-value text-blue-600">{{ total_cups }}</p>
+                </div>
+                <div class="grid-item">
+                    <p class="metric-label">VAT (10%)</p>
+                    <p class="metric-value text-orange-600">${{ total_tax }}</p>
+                </div>
+            </div>
+            <div style="margin-top: 15mm;">
+                <h3>Annual Tax Impact (Based on Today's Income)</h3>
+                <p class="text-sm">If today's income of ${{ total_income }} were typical for the year, your estimated annual tax rate would be <span class="font-bold">{{ annual_tax_rate }}%</span>, amounting to <span class="font-bold text-red-600">${{ annual_tax_amount }}</span>. Your net income after this hypothetical annual tax would be <span class="font-bold text-emerald-600">${{ net_after_annual_tax }}</span>.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Top Selling Items</h2>
+            {% if popular_items %}
+            <table class="table-striped">
+                <thead>
+                    <tr>
+                        <th>Drink Name</th>
+                        <th class="text-right">Quantity Sold</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in popular_items %}
+                    <tr>
+                        <td>{{ item.product__name }}</td>
+                        <td class="text-right">{{ item.total_qty }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-slate-500 text-sm">No sales data for today.</p>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h2>Stock Alerts</h2>
+            {% if low_stock_products or low_stock_ingredients %}
+            <h3>Low Stock Ingredients (Calculated Potential)</h3>
+            {% if low_stock_products %}
+                {% for product in low_stock_products %}
+                <div class="alert-item low-stock">
+                    {{ product.name }} (Stock: {{ product.stock }} cups)
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-slate-500 text-xs">No ingredients are currently at low stock levels.</p>
+            {% endif %}
+
+            <h3 style="margin-top: 1em;">Low Stock Ingredients</h3>
+            {% if low_stock_ingredients %}
+                {% for ingredient in low_stock_ingredients %}
+                <div class="alert-item low-ing">
+                    {{ ingredient.name }} (Stock: {{ ingredient.stock_quantity|floatformat:2 }}{{ ingredient.unit }})
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-slate-500 text-xs">No ingredients are currently at low stock levels.</p>
+            {% endif %}
+            {% else %}
+            <p class="text-slate-500 text-sm">No stock alerts for today. Everything looks good!</p>
+            {% endif %}
+        </div>
+
+        <div class="section" style="text-align: center; margin-top: 50mm;">
+            <p class="text-xs text-slate-500">Report generated by Error404 POS System on {{ report_date }}</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -131,10 +131,10 @@
                         <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full uppercase">{{ item.sugar }} Sugar</span>
                         
                         <span class="text-[10px] font-bold px-3 py-1 rounded-full uppercase ml-auto shadow-sm
-                            {% if item.drink_type == 'Hot' %} bg-red-500 text-white
-                            {% elif item.drink_type == 'Iced' %} bg-cyan-500 text-white
+                            {% if item.product_type == 'Hot' %} bg-red-500 text-white
+                            {% elif item.product_type == 'Iced' %} bg-cyan-500 text-white
                             {% else %} bg-purple-500 text-white {% endif %}">
-                            {{ item.drink_type }}
+                            {{ item.product_type }}
                         </span>
                     </div>
 

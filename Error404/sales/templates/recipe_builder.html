@@ -91,9 +91,9 @@
                     <form id="recipeForm" method="POST" class="space-y-5">
                         {% csrf_token %}
                         <div>
-                            <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Target Product</label>
+                            <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Target product</label>
                             <select name="product" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold appearance-none">
-                                <option value="" disabled selected>Select Product...</option>
+                                <option value="" disabled selected>Select product...</option>
                                 {% for p in products %}
                                     <option value="{{ p.id }}">{{ p.name }}</option>
                                 {% endfor %}
@@ -183,7 +183,7 @@
                         <table class="w-full text-left border-collapse" id="recipeTable">
                             <thead>
                                 <tr class="border-b-2 border-slate-50">
-                                    <th class="p-6 text-[10px] font-800 uppercase text-slate-400 tracking-widest">Product</th>
+                                    <th class="p-6 text-[10px] font-800 uppercase text-slate-400 tracking-widest">product</th>
                                     <th class="p-6 text-[10px] font-800 uppercase text-slate-400 tracking-widest">Ingredient</th>
                                     <th class="p-6 text-[10px] font-800 uppercase text-slate-400 tracking-widest text-right">Cost</th>
                                     <th class="p-6"></th>
@@ -361,7 +361,7 @@
             // Restore Recipe Form selections
             const recipeForm = document.getElementById('recipeForm');
             if (recipeForm) {
-                const savedProduct = localStorage.getItem('recipe_form_product');
+                const savedproduct = localStorage.getItem('recipe_form_product');
                 const savedIngredient = localStorage.getItem('recipe_form_ingredient');
                 const savedFormSize = localStorage.getItem('recipe_form_size');
                 const savedPackageItem = localStorage.getItem('recipe_form_package_item');
@@ -371,8 +371,8 @@
                 const sizeSelect = recipeForm.querySelector('select[name="size"]');
                 const packageSelect = recipeForm.querySelector('select[name="package_item"]');
 
-                if (productSelect && savedProduct) {
-                    productSelect.value = savedProduct;
+                if (productSelect && savedproduct) {
+                    productSelect.value = savedproduct;
                 }
                 if (ingredientSelect && savedIngredient) {
                     ingredientSelect.value = savedIngredient;

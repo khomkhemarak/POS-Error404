@@ -61,6 +61,10 @@
                 <i class="bi bi-grid-1x2"></i> Dashboard
             </a>
 
+            {% comment %} <a href="{% url 'order_history' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+                <i class="bi bi-clock-history"></i> Order History
+            </a> {% endcomment %}
+
             <a href="{% url 'inventory_list' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
                 <i class="bi bi-box-seam"></i> Inventory
             </a>
@@ -89,352 +93,395 @@
     
     <main class="flex-1 p-4 md:p-8 lg:p-10 max-w-[1600px] mx-auto w-full overflow-y-auto overflow-x-hidden custom-scrollbar">
 
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-            <div class="flex items-center gap-3">
-                <h1 class="text-3xl md:text-4xl font-[800] tracking-tight text-slate-900 uppercase">Executive Summary</h1>
-                <span class="relative flex h-3 w-3">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                </span>
-            </div>
-            <p class="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1">Live Business Telemetry</p>
-        </div>
-
-        <div class="flex flex-col sm:flex-row w-full md:w-auto gap-4">
-            <!-- Calendar Filter Container -->
-            <div class="relative w-full md:w-64 group">
-                <!-- 
-                    Added 'range-btn' and 'active-range' classes. 
-                    The 'data-range' will be updated dynamically by the JS function below.
-                -->
-                    
-                <select id="dateRange" 
-                    onchange="handleDropdownChange(this)" 
-                    data-range="today"
-                    class="range-btn active-range w-full bg-white border-2 border-slate-200 text-slate-900 text-[11px] font-[800] uppercase tracking-wider rounded-2xl appearance-none block p-4 pr-12 focus:ring-orange-500 focus:border-orange-500 transition-all cursor-pointer shadow-[4px_4px_0px_0px_rgba(203,213,225,0.4)] hover:border-slate-300 outline-none">
-                    <option value="today">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="30days">Last 30 Days</option>
-                    <option value="year">Year to Date</option>
-                </select>
-                
-                <!-- Positioned Calendar Icon -->
-                <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center border-l-2 border-slate-100 pl-3">
-                    <i class="bi bi-calendar3 text-orange-500 text-base"></i>
-                </div>
-            </div>
-
-            <button onclick="openAddModal()" class="w-full md:w-auto bg-orange-500 border-2 border-orange-500 text-white px-6 py-4 rounded-2xl font-[800] transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest hover:bg-orange-600 shadow-[4px_4px_0px_0px_rgba(203,213,225,0.7)] active:translate-y-[2px] active:shadow-none">
-                <i class="bi bi-plus-lg text-lg"></i> Add New Drink
-            </button>
-        </div>
-    </header>
-
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 mb-8">
-        
-        <div class="md:col-span-7 lg:col-span-8 bento-card p-8 rounded-[3rem] border-orange-100 bg-gradient-to-br from-white to-orange-50/50 flex flex-col justify-between min-h-[200px]">
-            <div class="flex justify-between items-start">
-                <div class="w-14 h-14 bg-orange-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-orange-200">
-                    <i class="bi bi-currency-dollar"></i>
-                </div>
-            </div>
-            <div class="mt-4">
-                <p class="text-sm font-[800] text-slate-400 uppercase tracking-widest mb-1">Total income</p>
-                <h2 id="incomeValue" class="text-5xl font-[800] text-slate-900">${{ total_income|floatformat:2 }}</h2>
-            </div>
-        </div>
-
-        <div class="md:col-span-5 lg:col-span-4 bento-card p-8 rounded-[3rem] border-emerald-100 bg-emerald-50/30 flex flex-col justify-between min-h-[200px]">
-            <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl border-2 border-emerald-200">
-                <i class="bi bi-graph-up-arrow"></i>
-            </div>
-            <div class="mt-4">
-                <p class="text-sm font-[800] text-emerald-600/70 uppercase tracking-widest mb-1">Total Profit</p>
-                <h2 id="profitValue" class="text-4xl font-[800] text-emerald-700">${{ total_profit|floatformat:2 }}</h2>
-            </div>
-        </div>
-
-        <div class="md:col-span-4 bento-card p-6 rounded-[2.5rem] flex items-center gap-5">
-            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl border-2 border-blue-100">
-                <i class="bi bi-bag-check"></i>
-            </div>
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
-                <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Orders</p>
-                <h2 id="orderCount" class="text-2xl font-[800] text-slate-900">{{ order_count }}</h2>
-            </div>
-        </div>
-
-        <div id="stockAlertCard" class="md:col-span-4 bento-card p-6 rounded-[2.5rem] flex items-center gap-5 transition-colors duration-500">
-            <div id="stockIcon" class="w-12 h-12 rounded-xl flex items-center justify-center text-xl">
-                <i class="bi bi-exclamation-triangle"></i>
-            </div>
-            <div>
-                <p id="stockAlertLabel" class="text-[10px] font-[800] uppercase tracking-widest">Stock Alerts</p>
-                <h2 id="stockAlertValue" class="text-2xl font-[800]">
-                    {{ low_stock_products.count|add:low_stock_ingredients.count }}
-                </h2>
-            </div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-        
-        <div class="lg:col-span-8 bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col min-h-[400px]">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">Sales Trend</h3>
-            </div>
-            <div class="flex-grow w-full relative">
-                <canvas id="salesChart"></canvas>
-            </div>
-        </div>
-
-        <div class="lg:col-span-4 flex flex-col gap-6">
-            <div class="bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col flex-1">
-                <h3 class="text-lg font-[800] mb-4 text-slate-900 tracking-tight uppercase">Top Sellers</h3>
-                <div id="topSellersList" class="divide-y-2 divide-slate-100 flex-grow">
-                    {% for item in popular_items|slice:":3" %}
-                    <div class="flex justify-between items-center py-3 group">
-                        <span class="font-bold text-slate-700 group-hover:text-orange-600 transition-colors">{{ item.product__name }}</span>
-                        <span class="bg-orange-50 text-orange-600 border border-orange-100 px-3 py-1 rounded-lg text-[10px] font-[800] tracking-widest uppercase">
-                            {{ item.total_qty }}
-                        </span>
-                    </div>
-                    {% empty %}
-                    <p class="text-slate-400 font-semibold py-4 text-sm">No sales data.</p>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div class="bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col flex-1">
-                <h3 class="text-lg font-[800] mb-4 text-slate-900 tracking-tight uppercase flex justify-between items-center">
-                    VIP Loyalty <i class="bi bi-star-fill text-amber-400"></i>
-                </h3>
-                <div class="divide-y-2 divide-slate-100 flex-grow">
-                    {% for customer in top_customers|slice:":3" %}
-                    <div class="flex justify-between items-center py-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-slate-50 border-2 border-slate-100 text-slate-500 flex items-center justify-center text-xs font-[800]">
-                                #{{ forloop.counter }}
-                            </div>
-                            <div>
-                                <p class="font-bold text-slate-800 text-sm leading-tight">{{ customer.name }}</p>
-                                <p class="text-[9px] text-slate-400 font-[800] tracking-widest uppercase">{{ customer.phone }}</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-[800] text-amber-500">{{ customer.points }} <span class="text-[8px] text-slate-400 uppercase tracking-widest">pts</span></p>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <p class="text-slate-400 font-semibold py-4 text-sm">No customers yet.</p>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bento-card rounded-[2.5rem] p-6 md:p-8 mb-6">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">Raw Materials Overview</h3>
-            <a href="{% url 'inventory_list' %}" class="text-[10px] font-[800] text-orange-500 hover:text-orange-600 uppercase tracking-widest transition-colors bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">Manage &rarr;</a>
-        </div>
-        <div id="rawMaterialsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {% for ing in all_ingredients %}
-            <div class="p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-orange-200 transition-colors">
-                <div class="flex justify-between items-start mb-2">
-                    <p class="text-slate-500 text-[10px] font-[800] tracking-widest uppercase truncate pr-2">{{ ing.name }}</p>
-                    <span class="text-[10px] font-[800] {% if ing.is_low_stock %}text-red-500{% else %}text-emerald-500{% endif %}">
-                        {{ ing.stock_percent|floatformat:0 }}%
+                <div class="flex items-center gap-3">
+                    <h1 class="text-3xl md:text-4xl font-[800] tracking-tight text-slate-900 uppercase">Executive Summary</h1>
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                     </span>
                 </div>
-                <div class="flex items-end gap-1">
-                    <p class="text-2xl font-[800] text-slate-900">{{ ing.stock_quantity|floatformat:0 }}</p>
-                    <span class="text-[10px] font-[800] text-slate-400 uppercase pb-1">{{ ing.unit }}</span>
-                </div>
-                <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden border border-slate-300">
-                    <div class="h-full transition-all duration-500 {% if ing.is_low_stock %} bg-red-500 {% else %} bg-emerald-500 {% endif %}" 
-                        style="width: {{ ing.stock_percent }}%; min-width: 4px;"> </div>
-                </div>
+                <p class="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1">Live Business Telemetry</p>
             </div>
-            {% endfor %}
-        </div>
-    </div>
 
-    <div class="bento-card rounded-[2.5rem] p-6 md:p-8">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">Menu Catalog</h3>
-            <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-lg">{{ products.count }} Items</span>
-        </div>
-        <div id="menuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {% for product in products %}
-            {% if product.category != 'Matcha' %}
-            <!-- 1. Added data-product-id here -->
-            <div data-product-id="{{ product.id }}" class="relative bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[140px]">
-                <div class="flex gap-4">
-                    {% if product.image %}
-                    <img src="{{ product.image.url }}" class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 shrink-0">
-                    {% else %}
-                    <div class="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 border-2 border-slate-100 shrink-0"><i class="bi bi-cup text-xl"></i></div>
-                    {% endif %}
-                    <div>
-                        <!-- 2. Added class="product-name" -->
-                        <p class="product-name font-[800] text-slate-900 text-sm leading-tight">{{ product.name }}</p>
-                        <!-- 3. Added class="product-category" -->
-                        <span class="product-category inline-block mt-1 text-[8px] bg-slate-50 border border-slate-200 text-slate-500 px-2 py-0.5 rounded-md font-[800] tracking-widest uppercase">{{ product.category }}</span>
-                    </div>
-                </div>
-                
-                <div class="flex items-end justify-between mt-4 pt-4 border-t-2 border-slate-50">
-                    <div>
-                        <span class="text-[8px] font-[800] text-emerald-500 uppercase tracking-widest block mb-0.5">Profit</span>
-                        <span class="product-profit text-sm font-[800] text-slate-700">${{ product.get_profit|stringformat:".2f" }}</span>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-[8px] font-[800] text-slate-400 uppercase tracking-widest block mb-0.5">Price</span>
-                        <span class="product-price text-sm font-[800] text-orange-600">${{ product.base_price }}</span>
+            <div class="flex flex-col sm:flex-row w-full md:w-auto gap-4">
+                <!-- Calendar Filter Container -->
+                <div class="relative w-full md:w-64 group">
+                    <!-- 
+                        Added 'range-btn' and 'active-range' classes. 
+                        The 'data-range' will be updated dynamically by the JS function below.
+                    -->
+                        
+                    <select id="dateRange" 
+                        onchange="handleDropdownChange(this)" 
+                        data-range="today"
+                        class="range-btn active-range w-full bg-white border-2 border-slate-200 text-slate-900 text-[11px] font-[800] uppercase tracking-wider rounded-2xl appearance-none block p-4 pr-12 focus:ring-orange-500 focus:border-orange-500 transition-all cursor-pointer shadow-[4px_4px_0px_0px_rgba(203,213,225,0.4)] hover:border-slate-300 outline-none">
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="30days">Last 30 Days</option>
+                        <option value="year">Year to Date</option>
+                    </select>
+                    
+                    <!-- Positioned Calendar Icon -->
+                    <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center border-l-2 border-slate-100 pl-3">
+                        <i class="bi bi-calendar3 text-orange-500 text-base"></i>
                     </div>
                 </div>
 
-                <!-- Buttons ... -->
-                <div class="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="openEditModal('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.base_price }}', '{{ product.category }}', '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" 
-                            class="w-8 h-8 bg-white text-orange-500 rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm">
-                        <i class="bi bi-pencil-fill text-xs"></i>
-                    </button>
-                    <button type="button" onclick="openDeleteModal('{{ product.id }}', '{{ product.name|escapejs }}')" class="w-8 h-8 bg-white text-red-500 rounded-lg flex items-center justify-center hover:bg-red-50 border border-slate-200 shadow-sm">
-                        <i class="bi bi-trash3-fill text-xs"></i>
-                    </button>
+                <button onclick="openAddModal()" class="w-full md:w-auto bg-orange-500 border-2 border-orange-500 text-white px-6 py-4 rounded-2xl font-[800] transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest hover:bg-orange-600 shadow-[4px_4px_0px_0px_rgba(203,213,225,0.7)] active:translate-y-[2px] active:shadow-none">
+                    <i class="bi bi-plus-lg text-lg"></i> Add New Drink
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 mb-8">
+            
+            <div class="md:col-span-7 lg:col-span-8 bento-card p-8 rounded-[3rem] border-orange-100 bg-gradient-to-br from-white to-orange-50/50 flex flex-col justify-between min-h-[200px]">
+                <div class="flex justify-between items-start">
+                    <div class="w-14 h-14 bg-orange-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-orange-200">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-sm font-[800] text-slate-400 uppercase tracking-widest mb-1">Total income</p>
+                    <h2 id="incomeValue" class="text-5xl font-[800] text-slate-900">${{ total_income|floatformat:2 }}</h2>
                 </div>
             </div>
-            {% endif %}
-            {% endfor %}
+
+            <div class="md:col-span-5 lg:col-span-4 bento-card p-8 rounded-[3rem] border-emerald-100 bg-emerald-50/30 flex flex-col justify-between min-h-[200px]">
+                <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl border-2 border-emerald-200">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="mt-4">
+                    <p class="text-sm font-[800] text-emerald-600/70 uppercase tracking-widest mb-1">Total Profit</p>
+                    <h2 id="profitValue" class="text-4xl font-[800] text-emerald-700">${{ total_profit|floatformat:2 }}</h2>
+                </div>
+            </div>
+
+            <div class="md:col-span-4 bento-card p-6 rounded-[2.5rem] flex items-center gap-5">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl border-2 border-blue-100">
+                    <i class="bi bi-bag-check"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Orders</p>
+                    <h2 id="orderCount" class="text-2xl font-[800] text-slate-900">{{ order_count }}</h2>
+                </div>
+            </div>
+
+            <div id="stockAlertCard" class="md:col-span-4 bento-card p-6 rounded-[2.5rem] flex items-center gap-5 transition-colors duration-500">
+                <div id="stockIcon" class="w-12 h-12 rounded-xl flex items-center justify-center text-xl">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <p id="stockAlertLabel" class="text-[10px] font-[800] uppercase tracking-widest">Stock Alerts</p>
+                    <h2 id="stockAlertValue" class="text-2xl font-[800]">
+                        {{ low_stock_products.count|add:low_stock_ingredients.count }}
+                    </h2>
+                </div>
+            </div>
         </div>
-    </div>
-</main>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+            
+            <div class="lg:col-span-8 bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col min-h-[400px]">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">Sales Trend</h3>
+                </div>
+                <div class="flex-grow w-full relative">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="lg:col-span-4 flex flex-col gap-6">
+                <div class="bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col flex-1">
+                    <h3 class="text-lg font-[800] mb-4 text-slate-900 tracking-tight uppercase">Top Sellers</h3>
+                    <div id="topSellersList" class="divide-y-2 divide-slate-100 flex-grow">
+                        {% for item in popular_items|slice:":3" %}
+                        <div class="flex justify-between items-center py-3 group">
+                            <span class="font-bold text-slate-700 group-hover:text-orange-600 transition-colors">{{ item.product__name }}</span>
+                            <span class="bg-orange-50 text-orange-600 border border-orange-100 px-3 py-1 rounded-lg text-[10px] font-[800] tracking-widest uppercase">
+                                {{ item.total_qty }}
+                            </span>
+                        </div>
+                        {% empty %}
+                        <p class="text-slate-400 font-semibold py-4 text-sm">No sales data.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col flex-1">
+                    <h3 class="text-lg font-[800] mb-4 text-slate-900 tracking-tight uppercase flex justify-between items-center">
+                        VIP Loyalty <i class="bi bi-star-fill text-amber-400"></i>
+                    </h3>
+                    <div class="divide-y-2 divide-slate-100 flex-grow">
+                        {% for customer in top_customers|slice:":3" %}
+                        <div class="flex justify-between items-center py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-slate-50 border-2 border-slate-100 text-slate-500 flex items-center justify-center text-xs font-[800]">
+                                    #{{ forloop.counter }}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-slate-800 text-sm leading-tight">{{ customer.name }}</p>
+                                    <p class="text-[9px] text-slate-400 font-[800] tracking-widest uppercase">{{ customer.phone }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-[800] text-amber-500">{{ customer.points }} <span class="text-[8px] text-slate-400 uppercase tracking-widest">pts</span></p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-slate-400 font-semibold py-4 text-sm">No customers yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bento-card rounded-[2.5rem] p-6 md:p-8 mb-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">Raw Materials Overview</h3>
+                <a href="{% url 'inventory_list' %}" class="text-[10px] font-[800] text-orange-500 hover:text-orange-600 uppercase tracking-widest transition-colors bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">Manage &rarr;</a>
+            </div>
+            <div id="rawMaterialsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {% for ing in all_ingredients %}
+                <div class="p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-orange-200 transition-colors">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-slate-500 text-[10px] font-[800] tracking-widest uppercase truncate pr-2">{{ ing.name }}</p>
+                        <span class="text-[10px] font-[800] {% if ing.is_low_stock %}text-red-500{% else %}text-emerald-500{% endif %}">
+                            {{ ing.stock_percent|floatformat:0 }}%
+                        </span>
+                    </div>
+                    <div class="flex items-end gap-1">
+                        <p class="text-2xl font-[800] text-slate-900">{{ ing.stock_quantity|floatformat:0 }}</p>
+                        <span class="text-[10px] font-[800] text-slate-400 uppercase pb-1">{{ ing.unit }}</span>
+                    </div>
+                    <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden border border-slate-300">
+                        <div class="h-full transition-all duration-500 {% if ing.is_low_stock %} bg-red-500 {% else %} bg-emerald-500 {% endif %}" 
+                            style="width: {{ ing.stock_percent }}%; min-width: 4px;"> </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bento-card rounded-[2.5rem] p-6 md:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">Menu Catalog</h3>
+                <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-lg">{{ products.count }} Items</span>
+            </div>
+            <div id="menuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {% for product in products %}
+                {% if product.category != 'Matcha' %}
+                <!-- 1. Added data-product-id here -->
+                <div data-product-id="{{ product.id }}" class="relative bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[140px]">
+                    <div class="flex gap-4">
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 shrink-0">
+                        {% else %}
+                        <div class="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 border-2 border-slate-100 shrink-0"><i class="bi bi-cup text-xl"></i></div>
+                        {% endif %}
+                        <div>
+                            <!-- 2. Added class="product-name" -->
+                            <p class="product-name font-[800] text-slate-900 text-sm leading-tight">{{ product.name }}</p>
+                            <!-- 3. Added class="product-category" -->
+                            <span class="product-category inline-block mt-1 text-[8px] bg-slate-50 border border-slate-200 text-slate-500 px-2 py-0.5 rounded-md font-[800] tracking-widest uppercase">{{ product.category }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-end justify-between mt-4 pt-4 border-t-2 border-slate-50">
+                        <div>
+                            <span class="text-[8px] font-[800] text-emerald-500 uppercase tracking-widest block mb-0.5">Profit</span>
+                            <span class="product-profit text-sm font-[800] text-slate-700">${{ product.get_profit|stringformat:".2f" }}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[8px] font-[800] text-slate-400 uppercase tracking-widest block mb-0.5">Price</span>
+                            <span class="product-price text-sm font-[800] text-orange-600">${{ product.price_small }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Buttons ... -->
+                    <div class="absolute top-2 right-2 flex flex-col gap-2 group-hover:opacity-100 transition-opacity">
+                        <button onclick="openEditModal('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price_small }}', '{{ product.price_medium }}', '{{ product.price_large }}', '{{ product.category }}', '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" 
+                                class="w-8 h-8 bg-white text-orange-500 rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm">
+                            <i class="bi bi-pencil-fill text-xs"></i>
+                        </button>
+                        <button type="button" onclick="openDeleteModal('{{ product.id }}', '{{ product.name|escapejs }}')" class="w-8 h-8 bg-white text-red-500 rounded-lg flex items-center justify-center hover:bg-red-50 border border-slate-200 shadow-sm">
+                            <i class="bi bi-trash3-fill text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </main>
 
     <div id="productModal" 
-        class="hidden fixed inset-0 z-[999] flex items-center justify-center p-2 bg-slate-900/60 backdrop-blur-md">
+        class="hidden fixed inset-0 z-[999] flex items-center justify-center p-2 bg-slate-900/70 backdrop-blur-md">
         
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-6 md:p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(15,23,42,0.15)] relative 
-                    animate-in fade-in zoom-in duration-300 transform transition-all mx-auto">
+        <div class="bg-white w-full max-w-[28rem] rounded-[2.5rem] p-6 md:p-7 border-[3px] border-slate-900 shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] relative 
+                    animate-in fade-in zoom-in duration-300 transform transition-all mx-auto max-h-[95vh] overflow-y-auto">
             
-            <div class="flex justify-between items-center mb-5">
+            <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h2 id="modalTitle" class="text-xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Create Drink</h2>
-                    <div class="h-1 w-10 bg-orange-500 mt-2 rounded-full"></div>
+                    <h2 id="modalTitle" class="text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Create product</h2>
+                    <div class="h-1.5 w-12 bg-orange-500 mt-2 rounded-full"></div>
                 </div>
-                <button onclick="toggleProductModal()" 
-                        class="w-10 h-10 bg-slate-50 rounded-xl text-slate-900 hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center border-2 border-slate-200">
-                    <i class="bi bi-x-lg text-lg"></i>
+                <button onclick="toggleproductModal()" 
+                        class="w-11 h-11 bg-slate-50 rounded-2xl text-slate-900 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center border-2 border-slate-200 hover:border-red-600 shadow-sm">
+                    <i class="bi bi-x-lg text-xl"></i>
                 </button>
             </div>
             
-            <form id="productForm" action="{% url 'add_product' %}" method="POST" enctype="multipart/form-data" class="space-y-4">
+            <form id="productForm" action="{% url 'add_product' %}" method="POST" enctype="multipart/form-data" class="space-y-5">
                 {% csrf_token %}
                 
-                <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all">
-                    <label class="block text-[9px] font-[900] uppercase text-slate-400 mb-1 tracking-[0.15em]">Drink Identity</label>
+                <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all shadow-sm">
+                    <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">product Identity</label>
                     <input type="text" name="name" placeholder="e.g. Amber Latte" required
-                        class="w-full bg-transparent text-slate-900 text-base outline-none placeholder-slate-300 font-[800]">
+                        class="w-full bg-transparent text-slate-900 text-lg outline-none placeholder-slate-300 font-[800]">
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
-                        <label class="block text-[9px] font-[900] uppercase text-slate-400 mb-1 tracking-[0.15em]">Base Price</label>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+                        <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Small Price</label>
                         <div class="flex items-center">
-                            <span class="text-slate-400 font-black mr-1 text-base">$</span>
-                            <input type="number" step="0.01" name="price" placeholder="4.50" required
-                                class="w-full bg-transparent text-slate-900 text-base outline-none font-[800]">
+                            <span class="text-slate-900 font-black mr-1 text-xs">$</span>
+                            <input type="number" step="0.01" name="price_small" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
                         </div>
                     </div>
-                    
-                    <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
-                        <label class="block text-[9px] font-[900] uppercase text-slate-400 mb-1 tracking-[0.15em]">Category</label>
-                        <div class="relative">
-                            <select name="category" required
-                                    class="w-full bg-transparent text-slate-900 outline-none cursor-pointer appearance-none font-[800] text-sm">
-                                <option value="" disabled selected>Choose...</option>
-                                {% for category in categories %}
-                                    {% if category.name != 'Matcha' %}
-                                    <option value="{{ category.id }}">{{ category.name }}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
-                            <i class="bi bi-chevron-down absolute right-0 top-0 text-slate-400 pointer-events-none"></i>
+                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+                        <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Medium Price</label>
+                        <div class="flex items-center">
+                            <span class="text-slate-900 font-black mr-1 text-xs">$</span>
+                            <input type="number" step="0.01" name="price_medium" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
                         </div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+                        <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Large Price</label>
+                        <div class="flex items-center">
+                            <span class="text-slate-900 font-black mr-1 text-xs">$</span>
+                            <input type="number" step="0.01" name="price_large" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
+                        </div>
+                    </div>
+                </div>
+                    
+                <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+                    <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">Category</label>
+                    <div class="relative">
+                        <select name="category" required
+                                class="w-full bg-transparent text-slate-900 outline-none cursor-pointer appearance-none font-[800] text-base">
+                            <option value="" disabled selected>Select Category...</option>
+                            {% for category in categories %}
+                                {% if category.name != 'Matcha' %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <i class="bi bi-chevron-down absolute right-0 top-0 text-slate-900 pointer-events-none"></i>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[9px] font-[900] uppercase text-slate-500 mb-2 ml-1 tracking-widest">Available Variations</label>
-                    <div class="grid grid-cols-3 gap-2">
+                    <label class="block text-[10px] font-[900] uppercase text-slate-500 mb-3 ml-1 tracking-widest text-center">Available Variations</label>
+                    <div class="grid grid-cols-3 gap-3">
                         <label class="cursor-pointer group">
                             <input type="checkbox" name="can_be_hot" class="hidden peer" checked>
-                            <div class="flex flex-col items-center justify-center py-3 rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">
-                                <i class="bi bi-thermometer-sun text-xl mb-0.5"></i>
-                                <span class="text-[8px] font-[900] uppercase tracking-wider">Hot</span>
+                            <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all shadow-sm">
+                                <i class="bi bi-thermometer-sun text-2xl mb-1"></i>
+                                <span class="text-[9px] font-[900] uppercase tracking-wider">Hot</span>
                             </div>
                         </label>
                         <label class="cursor-pointer group">
                             <input type="checkbox" name="can_be_iced" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-3 rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all">
-                                <i class="bi bi-snow text-xl mb-0.5"></i>
-                                <span class="text-[8px] font-[900] uppercase tracking-wider">Iced</span>
+                            <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all shadow-sm">
+                                <i class="bi bi-snow text-2xl mb-1"></i>
+                                <span class="text-[9px] font-[900] uppercase tracking-wider">Iced</span>
                             </div>
                         </label>
                         <label class="cursor-pointer group">
                             <input type="checkbox" name="can_be_frappe" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-3 rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all">
-                                <i class="bi bi-stars text-xl mb-0.5"></i>
-                                <span class="text-[8px] font-[900] uppercase tracking-wider">Frappe</span>
+                            <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all shadow-sm">
+                                <i class="bi bi-stars text-2xl mb-1"></i>
+                                <span class="text-[9px] font-[900] uppercase tracking-wider">Frappe</span>
                             </div>
                         </label>
                     </div>
                 </div>
 
-                <div class="border-2 border-dashed border-slate-200 rounded-2xl p-4 bg-slate-50/50 group">
-                    <label class="block text-[9px] font-[900] uppercase text-slate-400 mb-2 tracking-widest">Visual Display</label>
-                    <input type="file" name="image" accept="image/*"
-                        class="w-full text-[10px] text-slate-500 file:mr-3 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:uppercase file:font-[900] file:bg-slate-900 file:text-white cursor-pointer">
+                <div class="border-2 border-dashed border-slate-300 rounded-[1.5rem] p-5 bg-slate-50/50 hover:bg-slate-50 hover:border-orange-400 transition-all group">
+                    <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-2 tracking-widest">Visual Display</label>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-slate-200 h-12 w-12 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-orange-500 transition-colors">
+                            <i class="bi bi-image text-2xl"></i>
+                        </div>
+                        <input type="file" name="image" accept="image/*"
+                            class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:uppercase file:font-[900] file:bg-slate-900 file:text-white cursor-pointer hover:file:bg-orange-600 transition-all">
+                    </div>
                 </div>
 
                 <div class="pt-2">
                     <button id="modalSubmitBtn" type="submit" 
-                            class="w-full bg-slate-900 text-white py-4 rounded-2xl font-[900] transition-all text-[11px] tracking-[0.2em] uppercase hover:bg-orange-600 shadow-[6px_6px_0px_0px_rgba(249,115,22,0.3)] active:translate-y-1 active:shadow-none">
-                        Confirm & Save Drink
+                            class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-[900] transition-all text-sm tracking-[0.15em] uppercase hover:bg-orange-600 shadow-[0px_8px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none">
+                        Confirm & Save product
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-md border-4 border-slate-100 shadow-2xl overflow-hidden">
+    <div id="editModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[999] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-lg border-[3px] border-slate-900 shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] overflow-hidden animate-in fade-in zoom-in duration-300">
             
-            <div class="p-6 bg-slate-50 border-b-2 border-slate-100 flex justify-between items-center">
-                <h3 id="modalTitle" class="text-xl font-[900] text-slate-900 uppercase tracking-tight">Edit Drink Detail</h3>
-                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-900"><i class="bi bi-x-lg"></i></button>
+            <div class="p-7 bg-slate-50 border-b-[3px] border-slate-900 flex justify-between items-center">
+                <div>
+                    <h3 id="modalTitle" class="text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Edit product Detail</h3>
+                    <div class="h-1.5 w-10 bg-orange-500 mt-2 rounded-full"></div>
+                </div>
+                <button onclick="closeEditModal()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border-2 border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 transition-all">
+                    <i class="bi bi-x-lg text-lg"></i>
+                </button>
             </div>
 
-            <form id="editProductForm" method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
+            <form id="editproductForm" method="POST" enctype="multipart/form-data" class="p-7 space-y-5">
                 {% csrf_token %}
                 
-                <div class="space-y-1">
-                    <label class="text-[10px] font-[900] text-slate-400 uppercase tracking-widest ml-1">Name</label>
-                    <input type="text" id="editProductName" name="name" required class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 font-[800]">
+                <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all">
+                    <label class="block text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">product Name</label>
+                    <input type="text" id="editproductName" name="name" required 
+                        class="w-full bg-transparent outline-none text-slate-900 font-[800] text-lg placeholder-slate-300">
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
+                        <label class="block text-[9px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Small</label>
+                        <div class="flex items-center text-slate-900 font-[900]">
+                            <span class="mr-1">$</span>
+                            <input type="number" step="0.01" id="editPriceSmall" name="price_small" required class="w-full bg-transparent outline-none">
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
+                        <label class="block text-[9px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Medium</label>
+                        <div class="flex items-center text-slate-900 font-[900]">
+                            <span class="mr-1">$</span>
+                            <input type="number" step="0.01" id="editPriceMedium" name="price_medium" required class="w-full bg-transparent outline-none">
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
+                        <label class="block text-[9px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Large</label>
+                        <div class="flex items-center text-slate-900 font-[900]">
+                            <span class="mr-1">$</span>
+                            <input type="number" step="0.01" id="editPriceLarge" name="price_large" required class="w-full bg-transparent outline-none">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-[900] text-slate-400 uppercase tracking-widest ml-1">Base Price</label>
-                        <input type="number" step="0.01" id="editProductPrice" name="price" required class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 font-[800]">
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-[900] text-slate-400 uppercase tracking-widest ml-1">Category</label>
-                        <select id="editProductCategory" name="category" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 font-[800]">
+                    <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
+                        <label class="block text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Category</label>
+                        <select id="editproductCategory" name="category" class="w-full bg-transparent outline-none font-[800] text-slate-900 cursor-pointer">
                             {% for cat in categories %}
                                 {% if cat.name != 'Matcha' %}
                                 <option value="{{ cat.id }}">{{ cat.name }}</option>
@@ -442,47 +489,64 @@
                             {% endfor %}
                         </select>
                     </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-orange-400 transition-all relative">
+                        <label class="block text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Update Image</label>
+                        <input type="file" name="image" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                        <div class="flex items-center text-slate-400 text-[10px] font-bold">
+                            <i class="bi bi-cloud-arrow-up mr-2 text-base"></i> Browse...
+                        </div>
+                    </div>
                 </div>
 
-                <div class="space-y-2 py-2">
-                    <label class="text-[10px] font-[900] text-slate-400 uppercase tracking-widest ml-1">Available Types</label>
+                <div class="space-y-3">
+                    <label class="block text-[10px] font-[900] text-slate-500 uppercase tracking-widest text-center">Available Variations</label>
                     <div class="flex gap-3">
-                        <label class="flex-1 flex items-center justify-center gap-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-100 cursor-pointer has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50 transition-all">
-                            <input type="checkbox" name="can_be_hot" id="editCanHot" class="hidden">
-                            <span class="text-[10px] font-black uppercase">Hot</span>
+                        <label class="flex-1 cursor-pointer group">
+                            <input type="checkbox" name="can_be_hot" id="editCanHot" class="hidden peer">
+                            <div class="flex flex-col items-center justify-center py-3 rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">
+                                <i class="bi bi-thermometer-sun text-xl mb-1"></i>
+                                <span class="text-[9px] font-[900] uppercase">Hot</span>
+                            </div>
                         </label>
-                        <label class="flex-1 flex items-center justify-center gap-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-100 cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-all">
-                            <input type="checkbox" name="can_be_iced" id="editCanIced" class="hidden">
-                            <span class="text-[10px] font-black uppercase">Iced</span>
+                        <label class="flex-1 cursor-pointer group">
+                            <input type="checkbox" name="can_be_iced" id="editCanIced" class="hidden peer">
+                            <div class="flex flex-col items-center justify-center py-3 rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all">
+                                <i class="bi bi-snow text-xl mb-1"></i>
+                                <span class="text-[9px] font-[900] uppercase">Iced</span>
+                            </div>
                         </label>
-                        <label class="flex-1 flex items-center justify-center gap-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-100 cursor-pointer has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50 transition-all">
-                            <input type="checkbox" name="can_be_frappe" id="editCanFrappe" class="hidden">
-                            <span class="text-[10px] font-black uppercase">Frappe</span>
+                        <label class="flex-1 cursor-pointer group">
+                            <input type="checkbox" name="can_be_frappe" id="editCanFrappe" class="hidden peer">
+                            <div class="flex flex-col items-center justify-center py-3 rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all">
+                                <i class="bi bi-stars text-xl mb-1"></i>
+                                <span class="text-[9px] font-[900] uppercase">Frappe</span>
+                            </div>
                         </label>
                     </div>
                 </div>
 
-                <div class="space-y-1">
-                    <label class="text-[10px] font-[900] text-slate-400 uppercase tracking-widest ml-1">Change Image</label>
-                    <input type="file" name="image" class="w-full text-xs font-bold file:bg-orange-100 file:border-0 file:rounded-lg file:px-3 file:py-1 file:text-orange-600">
-                </div>
-
-                <div class="flex gap-3 mt-4">
-                    <button type="button" onclick="closeEditModal()" class="flex-1 py-3 rounded-2xl font-black text-[10px] uppercase border-2 border-slate-100 text-slate-400">Cancel</button>
-                    <button type="submit" id="modalSubmitBtn" class="flex-1 py-3 bg-orange-500 text-white rounded-2xl font-black text-[10px] uppercase shadow-[4px_4px_0px_0px_rgba(203,213,225,1)]">Update Drink</button>
+                <div class="flex gap-4 pt-2">
+                    <button type="button" onclick="closeEditModal()" 
+                            class="flex-1 py-4 rounded-2xl font-[900] text-xs uppercase border-2 border-slate-200 text-slate-400 hover:bg-slate-50 transition-all">
+                        Cancel
+                    </button>
+                    <button type="submit" id="modalSubmitBtn" 
+                            class="flex-[1.5] py-4 bg-slate-900 text-white rounded-2xl font-[900] text-xs uppercase shadow-[0px_6px_0px_0px_#f97316] hover:bg-orange-600 active:translate-y-1 active:shadow-none transition-all">
+                        Update product
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="deleteProductModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[250] flex items-center justify-center p-4">
+    <div id="deleteproductModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[250] flex items-center justify-center p-4">
         <div class="bg-white rounded-[2.5rem] border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(239,68,68,0.2)] w-full max-w-sm overflow-hidden p-8 text-center relative">
             
             <div class="w-24 h-24 bg-red-50 border-2 border-red-100 text-red-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6 transform -rotate-6 shadow-sm">
                 <i class="bi bi-trash3 text-4xl"></i>
             </div>
             
-            <h3 class="text-2xl font-[800] text-slate-900 mb-2 uppercase tracking-tight">Erase Drink?</h3>
+            <h3 class="text-2xl font-[800] text-slate-900 mb-2 uppercase tracking-tight">Erase product?</h3>
             <p class="text-slate-500 font-medium text-sm mb-8 leading-relaxed">
                 You are about to permanently delete <br>
                 <span id="deleteProdName" class="font-[800] text-red-500 bg-red-50 px-2 py-0.5 rounded-md"></span>. 
@@ -497,7 +561,7 @@
                 </button>
                 
                 <button type="button" 
-                        onclick="closeDeleteProductModal()" 
+                        onclick="closeDeleteproductModal()" 
                         class="w-full py-4 text-slate-400 font-[800] hover:text-slate-900 transition-colors uppercase tracking-widest text-[10px]">
                     No, Keep it
                 </button>
@@ -510,13 +574,70 @@
     <script>
         const stockChannel = new BroadcastChannel('stock_updates');
         let productToDeleteId = null;
+        let salesChart;
+
+        // --- 0. CHART INITIALIZATION & UPDATES ---
+        function updateChart(labels, salesData) {
+            const canvas = document.getElementById('salesChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            if (salesChart) {
+                salesChart.data.labels = labels;
+                salesChart.data.datasets[0].data = salesData;
+                salesChart.update();
+            } else {
+                salesChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Revenue',
+                            data: salesData,
+                            borderColor: '#f97316',
+                            backgroundColor: 'rgba(249, 115, 22, 0.05)',
+                            borderWidth: 4,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#f97316',
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#1e293b',
+                                titleFont: { size: 10, weight: 'bold' },
+                                bodyFont: { size: 12, weight: '900' },
+                                padding: 12,
+                                displayColors: false,
+                                callbacks: {
+                                    label: (ctx) => ` $${ctx.parsed.y.toFixed(2)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { weight: '800', size: 10 }, color: '#94a3b8' } },
+                            x: { grid: { display: false }, ticks: { font: { weight: '800', size: 10 }, color: '#94a3b8' } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function handleDropdownChange(select) { refreshDashboardStats(); }
 
         // --- 1. MODAL CONTROLS ---
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         }
 
-        function toggleProductModal() {
+        function toggleproductModal() {
             const modal = document.getElementById('productModal');
             modal.classList.toggle('hidden');
             modal.classList.toggle('flex');
@@ -534,17 +655,21 @@
             document.getElementById('modalTitle').innerText = "Create Drink";
             document.getElementById('modalSubmitBtn').innerText = "Confirm & Save Drink";
             form.action = "{% url 'add_product' %}";
-            toggleProductModal();
+            toggleproductModal();
         }
 
-        function openEditModal(id, name, price, categoryName, canH, canI, canF) {
+        function openEditModal(id, name, pSmall, pMedium, pLarge, categoryName, canH, canI, canF) {
             const modal = document.getElementById('editModal');
-            const form = document.getElementById('editProductForm');
+            const form = document.getElementById('editproductForm');
+            document.getElementById('modalTitle').innerText = "Edit Drink";
+            document.getElementById('modalSubmitBtn');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
             form.querySelector('input[name="name"]').value = name;
-            form.querySelector('input[name="price"]').value = price;
+            form.querySelector('input[name="price_small"]').value = pSmall;
+            form.querySelector('input[name="price_medium"]').value = pMedium;
+            form.querySelector('input[name="price_large"]').value = pLarge;
 
             const categorySelect = form.querySelector('select[name="category"]');
             let selectedCategoryValue = '';
@@ -582,13 +707,13 @@
         function openDeleteModal(id, name) {
             productToDeleteId = id;
             const nameSpan = document.getElementById('deleteProdName');
-            const modal = document.getElementById('deleteProductModal');
+            const modal = document.getElementById('deleteproductModal');
             if (nameSpan) nameSpan.innerText = name;
             if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
         }
 
-        function closeDeleteProductModal() {
-            const modal = document.getElementById('deleteProductModal');
+        function closeDeleteproductModal() {
+            const modal = document.getElementById('deleteproductModal');
             if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
             productToDeleteId = null;
         }
@@ -611,7 +736,7 @@
                         card.classList.add('opacity-0', 'scale-95');
                         setTimeout(() => card.remove(), 300);
                     }
-                    closeDeleteProductModal();
+                    closeDeleteproductModal();
                 }
             } catch (error) { console.error(error); }
         }
@@ -647,12 +772,12 @@
                     </div>
                     <div class="text-right">
                         <span class="text-[8px] font-[800] text-slate-400 uppercase tracking-widest block mb-0.5">Price</span>
-                        <span class="product-price text-sm font-[800] text-orange-600">$${parseFloat(product.price).toFixed(2)}</span>
+                        <span class="product-price text-sm font-[800] text-orange-600">$${parseFloat(product.price_small).toFixed(2)}</span>
                     </div>
                 </div>
 
                 <div class="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="openEditModal('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price}', '${product.category_id || ''}', '${canH}', '${canI}', '${canF}')" 
+                    <button onclick="openEditModal('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price_small}', '${product.price_medium}', '${product.price_large}', '${product.category_id || ''}', '${canH}', '${canI}', '${canF}')" 
                             class="w-8 h-8 bg-white text-orange-500 rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm">
                         <i class="bi bi-pencil-fill text-xs"></i>
                     </button>
@@ -680,7 +805,7 @@
 
         // --- 4. FORM HANDLERS ---
         
-        // Add Product Handler
+        // Add product Handler
         document.getElementById('productForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
             const formData = new FormData(this);
@@ -691,7 +816,7 @@
                 });
                 const data = await response.json();
                 if (data.status === 'success') {
-                    toggleProductModal();
+                    toggleproductModal();
                     const canH = formData.get('can_be_hot') === 'on' ? 'True' : 'False';
                     const canI = formData.get('can_be_iced') === 'on' ? 'True' : 'False';
                     const canF = formData.get('can_be_frappe') === 'on' ? 'True' : 'False';
@@ -702,7 +827,7 @@
             } catch (error) { console.error(error); }
         });
 
-        document.getElementById('editProductForm')?.addEventListener('submit', async function(e) {
+        document.getElementById('editproductForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
             const formData = new FormData(this);
             try {
@@ -763,7 +888,9 @@
                             editBtn.setAttribute('onclick', `openEditModal(
                                 '${data.product.id}', 
                                 '${data.product.name.replace(/'/g, "\\'")}', 
-                                '${data.product.price}', 
+                                '${data.product.price_small}', 
+                                '${data.product.price_medium}', 
+                                '${data.product.price_large}', 
                                 '${data.product.category_id}', 
                                 '${canH}', 
                                 '${canI}', 
@@ -782,6 +909,53 @@
         });
 
         // --- 5. TELEMETRY SYNC ---
+        stockChannel.onmessage = (event) => {
+            if (event.data === 'refresh_data') {
+                console.log("Inventory update detected. Refreshing dashboard...");
+                refreshDashboardStats();
+                refreshRawMaterials();
+            }
+        };
+
+        async function refreshRawMaterials() {
+            const grid = document.getElementById('rawMaterialsGrid');
+            if (!grid) return;
+
+            try {
+                const response = await fetch('/api/inventory/list/');
+                const data = await response.json();
+
+                if (data.ingredients) {
+                    grid.innerHTML = data.ingredients.filter(ing => ing.packaging_type === 'NONE').map(ing => {
+                        const isLow = ing.is_low_stock;
+                        const barColor = isLow ? 'bg-red-500' : 'bg-emerald-500';
+                        const textColor = isLow ? 'text-red-500' : 'text-emerald-500';
+                        
+                        return `
+                            <div class="p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-orange-200 transition-colors">
+                                <div class="flex justify-between items-start mb-2">
+                                    <p class="text-slate-500 text-[10px] font-[800] tracking-widest uppercase truncate pr-2">${ing.name}</p>
+                                    <span class="text-[10px] font-[800] ${textColor}">
+                                        ${Math.round(ing.stock_percent)}%
+                                    </span>
+                                </div>
+                                <div class="flex items-end gap-1">
+                                    <p class="text-2xl font-[800] text-slate-900">${Math.round(ing.stock_quantity)}</p>
+                                    <span class="text-[10px] font-[800] text-slate-400 uppercase pb-1">${ing.unit}</span>
+                                </div>
+                                <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden border border-slate-300">
+                                    <div class="h-full transition-all duration-500 ${barColor}" 
+                                        style="width: ${ing.stock_percent}%; min-width: 4px;"> </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error("Failed to refresh raw materials:", error);
+            }
+        }
+
         async function refreshDashboardStats() {
             try {
                 const activeRange = document.querySelector('.active-range')?.value || 'today';
@@ -790,9 +964,18 @@
                 if (document.getElementById('incomeValue')) document.getElementById('incomeValue').innerText = `$${data.income.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
                 if (document.getElementById('profitValue')) document.getElementById('profitValue').innerText = `$${data.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
                 if (document.getElementById('orderCount')) document.getElementById('orderCount').innerText = data.orders;
+                
+                if (data.labels && data.sales_data) {
+                    updateChart(data.labels, data.sales_data);
+                }
             } catch (e) { }
         }
-        setInterval(refreshDashboardStats, 5000);
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            updateChart({{ labels|safe }}, {{ sales_data|safe }});
+            setInterval(refreshDashboardStats, 5000);
+        });
     </script>
 </body>
 </html>

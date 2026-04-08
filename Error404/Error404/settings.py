@@ -120,3 +120,14 @@ STATIC_URL = 'static/'
 import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+import os
+
+# Define the GTK path
+GTK_PATH = r'C:\Program Files\GTK3-Runtime Win64\bin'
+
+# Add it to the Windows DLL search path so WeasyPrint can find it
+if os.name == 'nt' and os.path.exists(GTK_PATH):
+    os.add_dll_directory(GTK_PATH)
+    # Also add to environment path for older versions/compatibility
+    os.environ['PATH'] = GTK_PATH + os.pathsep + os.environ.get('PATH', '')
