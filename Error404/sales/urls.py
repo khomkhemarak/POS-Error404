@@ -11,7 +11,7 @@ urlpatterns = [
     
     # --- Kitchen Display System (KDS) ---
     path('kitchen/', views.kitchen_view, name='kitchen_view'),
-    path('kitchen/complete/<int:order_id>/', views.complete_order, name='complete_order'),
+    path('api/kitchen/complete/<int:order_id>/', views.complete_order, name='complete_order'),
     
     # --- Admin & product Management ---
     path('dashboard/', views.owner_view, name='owner'),
@@ -36,6 +36,7 @@ urlpatterns = [
     path('api/inventory/list/', views.api_inventory_list, name='api_inventory_list'),
     path('api/inventory/logs/', views.api_inventory_logs, name='api_inventory_logs'),
     path('api/dashboard-stats/', views.api_dashboard_stats, name='api_dashboard_stats'),
+    path('api/inventory/raw-materials/', views.api_raw_materials, name='api_raw_materials'),
 
     # --- Managerial Analytics ---
     path('manager/', views.manager_view, name='manager_display'),

@@ -100,48 +100,63 @@
                             </select>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Ingredient</label>
-                                    <select name="ingredient" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold text-sm">
-                                        <option value="" disabled selected>Select...</option>
-                                        {% for i in ingredients %}
-                                            <option value="{{ i.id }}">{{ i.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Package Item <span class="text-slate-400 font-normal">(optional)</span></label>
-                                    <select name="package_item" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold text-sm">
-                                        <option value="" selected>None</option>
-                                    <optgroup label="Hot Packaging">
-                                        {% for pkg in packaging_items %}
-                                            {% if pkg.packaging_type|slice:":3" == "HOT" %}
-                                                <option value="{{ pkg.id }}">{{ pkg.name }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </optgroup>
-                                    <optgroup label="Cold Packaging">
-                                        {% for pkg in packaging_items %}
-                                            {% if pkg.packaging_type|slice:":4" == "COLD" %}
-                                                <option value="{{ pkg.id }}">{{ pkg.name }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </optgroup>
-                                    <optgroup label="Other Packaging">
-                                        {% for pkg in packaging_items %}
-                                            {% if pkg.packaging_type != "HOT_CUP" and pkg.packaging_type != "HOT_LID" and pkg.packaging_type != "HOT_STRAW" and pkg.packaging_type != "COLD_CUP" and pkg.packaging_type != "COLD_LID" and pkg.packaging_type != "COLD_STRAW" %}
-                                                <option value="{{ pkg.id }}">{{ pkg.name }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </optgroup>
-                                    </select>
-                                </div>
+                        <div class="relative" id="smart-search-container">
+                            <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Ingredient</label>
+                            <div class="relative">
+                                <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" id="ingredientSearchInput" placeholder="Search and select ingredient..." autocomplete="off"
+                                       class="w-full bg-slate-50 border-2 border-slate-100 pl-11 pr-10 py-4 rounded-2xl outline-none focus:border-orange-500 focus:bg-white transition-all font-bold text-sm">
+                                <!-- Hidden input to store the ID for form submission -->
+                                <input type="hidden" name="ingredient" id="ingredientSelect" required>
+                                <button type="button" id="clearIngredientBtn" class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </button>
                             </div>
-                            <div>
+                            
+                            <!-- Dropdown Results -->
+                            <div id="smartDropdown" class="hidden absolute left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl z-[200] max-h-60 overflow-y-auto custom-scrollbar">
+                                {% for i in ingredients %}
+                                    <div class="ing-option p-4 hover:bg-orange-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
+                                         data-id="{{ i.id }}" data-name="{{ i.name }}">
+                                        <div class="font-bold text-sm text-slate-700">{{ i.name }}</div>
+                                        <div class="text-[10px] text-slate-400 uppercase font-800 tracking-widest">{{ i.unit }}</div>
+                                    </div>
+                                {% endfor %}
+                                <div id="noMatchFound" class="hidden p-4 text-center text-slate-400 text-[10px] font-800 uppercase tracking-widest">No matching ingredient found</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="col-span-2">
+                                <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Package Item <span class="text-slate-400 font-normal">(optional)</span></label>
+                                <select name="package_item" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold text-sm">
+                                    <option value="" selected>None</option>
+                                <optgroup label="Hot Packaging">
+                                    {% for pkg in packaging_items %}
+                                        {% if pkg.packaging_type|slice:":3" == "HOT" %}
+                                            <option value="{{ pkg.id }}">{{ pkg.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Cold Packaging">
+                                    {% for pkg in packaging_items %}
+                                        {% if pkg.packaging_type|slice:":4" == "COLD" %}
+                                            <option value="{{ pkg.id }}">{{ pkg.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Other Packaging">
+                                    {% for pkg in packaging_items %}
+                                        {% if pkg.packaging_type != "HOT_CUP" and pkg.packaging_type != "HOT_LID" and pkg.packaging_type != "HOT_STRAW" and pkg.packaging_type != "COLD_CUP" and pkg.packaging_type != "COLD_LID" and pkg.packaging_type != "COLD_STRAW" %}
+                                            <option value="{{ pkg.id }}">{{ pkg.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </optgroup>
+                                </select>
+                            </div>
+                            <div class="col-span-1">
                                 <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Size</label>
-                                <select name="size" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold">
+                                <select name="size" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold text-sm">
                                     <option value="Small">Small</option>
                                     <option value="Medium">Medium</option>
                                     <option value="Large">Large</option>
@@ -315,7 +330,7 @@
             if (!recipeForm) return;
 
             const productSelect = recipeForm.querySelector('select[name="product"]');
-            const ingredientSelect = recipeForm.querySelector('select[name="ingredient"]');
+            const ingredientSelect = recipeForm.querySelector('[name="ingredient"]');
             const sizeSelect = recipeForm.querySelector('select[name="size"]');
             const packageSelect = recipeForm.querySelector('select[name="package_item"]');
 
@@ -324,6 +339,9 @@
             }
             if (ingredientSelect) {
                 localStorage.setItem('recipe_form_ingredient', ingredientSelect.value);
+                // Save the display name for smart search persistence
+                const searchTxt = document.getElementById('ingredientSearchInput');
+                if (searchTxt) localStorage.setItem('recipe_form_ingredient_name', searchTxt.value);
             }
             if (sizeSelect) {
                 localStorage.setItem('recipe_form_size', sizeSelect.value);
@@ -367,7 +385,7 @@
                 const savedPackageItem = localStorage.getItem('recipe_form_package_item');
 
                 const productSelect = recipeForm.querySelector('select[name="product"]');
-                const ingredientSelect = recipeForm.querySelector('select[name="ingredient"]');
+                const ingredientSelect = recipeForm.querySelector('[name="ingredient"]');
                 const sizeSelect = recipeForm.querySelector('select[name="size"]');
                 const packageSelect = recipeForm.querySelector('select[name="package_item"]');
 
@@ -376,6 +394,10 @@
                 }
                 if (ingredientSelect && savedIngredient) {
                     ingredientSelect.value = savedIngredient;
+                    // Restore the display name in the smart search input
+                    const savedName = localStorage.getItem('recipe_form_ingredient_name');
+                    const searchTxt = document.getElementById('ingredientSearchInput');
+                    if (searchTxt && savedName) searchTxt.value = savedName;
                 }
                 if (sizeSelect && savedFormSize) {
                     sizeSelect.value = savedFormSize;
@@ -412,6 +434,77 @@
         function closeCopyModal() {
             document.getElementById('copyModal').classList.add('hidden');
         }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('smart-search-container');
+            const searchInput = document.getElementById('ingredientSearchInput');
+            const hiddenInput = document.getElementById('ingredientSelect');
+            const dropdown = document.getElementById('smartDropdown');
+            const options = document.querySelectorAll('.ing-option');
+            const noMatch = document.getElementById('noMatchFound');
+            const clearBtn = document.getElementById('clearIngredientBtn');
+
+            if (!searchInput || !dropdown) return;
+
+            const toggleClearBtn = () => {
+                if (clearBtn) clearBtn.classList.toggle('hidden', searchInput.value === "");
+            };
+
+            // Open dropdown on focus
+            searchInput.addEventListener('focus', () => { dropdown.classList.remove('hidden'); });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (container && !container.contains(e.target)) dropdown.classList.add('hidden');
+            });
+
+            // Clear logic
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    searchInput.value = "";
+                    hiddenInput.value = "";
+                    toggleClearBtn();
+                    dropdown.classList.add('hidden');
+                    options.forEach(opt => opt.classList.remove('hidden'));
+                    if (noMatch) noMatch.classList.add('hidden');
+                    if (typeof saveRecipeFormState === 'function') saveRecipeFormState();
+                });
+            }
+
+            // Filter logic
+            searchInput.addEventListener('input', () => {
+                const filter = searchInput.value.toLowerCase();
+                let matchCount = 0;
+
+                options.forEach(opt => {
+                    const name = opt.dataset.name.toLowerCase();
+                    const isMatch = name.includes(filter);
+                    opt.classList.toggle('hidden', !isMatch);
+                    if (isMatch) matchCount++;
+                });
+
+                toggleClearBtn();
+                if (noMatch) noMatch.classList.toggle('hidden', matchCount > 0);
+                dropdown.classList.remove('hidden');
+                if (filter === "") hiddenInput.value = "";
+            });
+
+            // Selection logic
+            options.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    searchInput.value = opt.dataset.name;
+                    hiddenInput.value = opt.dataset.id;
+                    toggleClearBtn();
+                    dropdown.classList.add('hidden');
+                    // Trigger manual state save for persistence
+                    if (typeof saveRecipeFormState === 'function') saveRecipeFormState();
+                });
+            });
+
+            // Check on load
+            toggleClearBtn();
+        });
     </script>
 </body>
 </html>

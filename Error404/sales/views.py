@@ -1,3 +1,5 @@
+from importlib import import_module
+import importlib
 import json
 import math
 from decimal import Decimal
@@ -23,9 +25,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template.loader import render_to_string
 try:
-    import weasyprint
+    weasyprint = importlib.import_module('weasyprint')
     HAS_WEASYPRINT = True
 except (ImportError, OSError):
+    weasyprint = None
     HAS_WEASYPRINT = False
 from itertools import groupby
 
@@ -414,6 +417,19 @@ def api_inventory_list(request):
             'stock_value': float(ing.stock_value),
         })
         
+    return JsonResponse({'ingredients': data})
+
+def api_raw_materials(request):
+    """API specifically for raw materials (excludes packaging)"""
+    ingredients = Ingredient.objects.filter(is_packaging=False).order_by('name')
+    data = [{
+        'id': ing.id,
+        'name': ing.name,
+        'stock_quantity': float(ing.stock_quantity),
+        'unit': ing.unit,
+        'stock_percent': float(ing.stock_percent),
+        'is_low_stock': ing.is_low_stock,
+    } for ing in ingredients]
     return JsonResponse({'ingredients': data})
 
 def api_inventory_logs(request):
@@ -990,16 +1006,19 @@ def complete_order(request, order_id):
         order.is_completed = True
         order.save()
 
-        # Deduct stock based on your Recipe models
-        for item in order.items.all():
-            # Find the specific recipe for this product and size
-            recipe_items = Recipe.objects.filter(product=item.product, size=item.size)
-            for recipe in recipe_items:
-                recipe.deduct_stock(item.quantity)
-        
-        messages.success(request, f"Order #{order.id} sent to history.")
+        with transaction.atomic():
+            # Deduct stock based on your Recipe models
+            for item in order.items.all():
+                recipe_items = Recipe.objects.filter(product=item.product, size=item.size)
+                for recipe in recipe_items:
+                    recipe.deduct_stock(item.quantity)
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Order #{order.id} completed and stock deducted.'
+        })
     
-    return redirect('kitchen_view')
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
 
 #############################
 ####### Manager View ########
@@ -1087,7 +1106,7 @@ def manager_view(request):
         'avg_profitability': round(avg_profitability, 1), 
         'chart_labels': chart_labels,
         'chart_data': chart_data,
-        'all_ingredients': Ingredient.objects.all(),
+        'all_ingredients': Ingredient.objects.filter(is_packaging=False),
     }
     return render(request, 'manager.html', context)
 

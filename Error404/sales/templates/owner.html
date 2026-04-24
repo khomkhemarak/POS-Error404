@@ -424,7 +424,7 @@
 
                 <div class="pt-2">
                     <button id="modalSubmitBtn" type="submit" 
-                            class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-[900] transition-all text-sm tracking-[0.15em] uppercase hover:bg-orange-600 shadow-[0px_8px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none">
+                            class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-[900] transition-all text-sm tracking-[0.15em] uppercase hover:bg-slate-800 shadow-[0px_8px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none">
                         Confirm & Save product
                     </button>
                 </div>
@@ -437,7 +437,7 @@
             
             <div class="p-7 bg-slate-50 border-b-[3px] border-slate-900 flex justify-between items-center">
                 <div>
-                    <h3 id="modalTitle" class="text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Edit product Detail</h3>
+                    <h3 id="modalTitle" class="text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Edit Drink Detail</h3>
                     <div class="h-1.5 w-10 bg-orange-500 mt-2 rounded-full"></div>
                 </div>
                 <button onclick="closeEditModal()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border-2 border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 transition-all">
@@ -531,8 +531,8 @@
                         Cancel
                     </button>
                     <button type="submit" id="modalSubmitBtn" 
-                            class="flex-[1.5] py-4 bg-slate-900 text-white rounded-2xl font-[900] text-xs uppercase shadow-[0px_6px_0px_0px_#f97316] hover:bg-orange-600 active:translate-y-1 active:shadow-none transition-all">
-                        Update product
+                            class="flex-[1.5] py-4 bg-slate-900 text-white rounded-2xl font-[900] text-xs uppercase shadow-[0px_6px_0px_0px_#1e293b] hover:bg-orange-600 active:translate-y-1 active:shadow-none transition-all">
+                        Update
                     </button>
                 </div>
             </form>
@@ -776,8 +776,8 @@
                     </div>
                 </div>
 
-                <div class="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="openEditModal('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price_small}', '${product.price_medium}', '${product.price_large}', '${product.category_id || ''}', '${canH}', '${canI}', '${canF}')" 
+                <div class="absolute top-2 right-2 flex flex-col gap-2  group-hover:opacity-100 transition-opacity">
+                    <button onclick="openEditModal('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price_small}', '${product.price_medium}', '${product.price_large}', '${product.category.replace(/'/g, "\\'")}', '${canH}', '${canI}', '${canF}')" 
                             class="w-8 h-8 bg-white text-orange-500 rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm">
                         <i class="bi bi-pencil-fill text-xs"></i>
                     </button>
@@ -831,7 +831,7 @@
             e.preventDefault();
             const formData = new FormData(this);
             try {
-                const response = await fetch(this.getAttribute('action'), { 
+                const response = await fetch(this.action, { 
                     method: 'POST', 
                     body: formData,
                     headers: { 
@@ -856,9 +856,9 @@
                     // 3. Update Owner Card
                     const card = document.querySelector(`[data-product-id="${data.product.id}"]`);
                     if (card) {
-                        // ALWAYS update text fields (Don't wrap these in the image check!)
+                        // ALWAYS update text fields
                         card.querySelector('.product-name').innerText = data.product.name;
-                        card.querySelector('.product-price').innerText = `$${parseFloat(data.product.price).toFixed(2)}`;
+                        card.querySelector('.product-price').innerText = `$${parseFloat(data.product.price_small).toFixed(2)}`;
                         card.querySelector('.product-category').innerText = data.product.category;
                         
                         const profitEl = card.querySelector('.product-profit');
@@ -891,7 +891,7 @@
                                 '${data.product.price_small}', 
                                 '${data.product.price_medium}', 
                                 '${data.product.price_large}', 
-                                '${data.product.category_id}', 
+                                '${data.product.category.replace(/'/g, "\\'")}', 
                                 '${canH}', 
                                 '${canI}', 
                                 '${canF}'
