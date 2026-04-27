@@ -259,12 +259,13 @@
 
             <div class="mb-6">
                 <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Sugar Level</p>
-                <div class="grid grid-cols-5 gap-2">
+                <div class="grid grid-cols-3 gap-2">
                     <button id="sugar-0%" onclick="selectSugar('0%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">0%</button>
                     <button id="sugar-25%" onclick="selectSugar('25%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">25%</button>
                     <button id="sugar-50%" onclick="selectSugar('50%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">50%</button>
                     <button id="sugar-75%" onclick="selectSugar('75%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">75%</button>
                     <button id="sugar-100%" onclick="selectSugar('100%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">100%</button>
+                    <button id="sugar-extra" onclick="selectExtraSugar()" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">Extra</button>
                 </div>
             </div>
 
@@ -297,6 +298,34 @@
                     <i class="bi bi-cart-plus-fill text-lg"></i>
                     <span id="confirm-btn-text">Add to Cart — $0.00</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extra Sugar Modal (Bento / Flat 2.0 Style) -->
+    <div id="extra-sugar-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.1)]">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-[900] text-slate-900 tracking-tight uppercase">Extra Sweetness</h2>
+                <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mt-1">Enter percentage (> 100%)</p>
+            </div>
+
+            <div class="bg-slate-50 p-6 rounded-3xl border-2 border-slate-200 mb-6 text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <input type="text" id="extra-sugar-input" readonly value="125" 
+                        class="bg-transparent text-5xl font-[900] text-orange-600 outline-none w-32 text-center">
+                    <span class="text-3xl font-[900] text-slate-300">%</span>
+                </div>
+            </div>
+
+            <!-- Numeric Keypad (Bento Grid) -->
+            <div id="sugar-keypad" class="grid grid-cols-3 gap-3 mb-8">
+                <!-- JS will inject Flat 2.0 buttons here -->
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeExtraSugarModal()" class="flex-1 py-4 text-slate-400 font-[800] text-[10px] uppercase tracking-widest">Cancel</button>
+                <button onclick="confirmExtraSugar()" class="flex-[2] bg-slate-900 text-white py-4 rounded-2xl font-[800] hover:bg-orange-600 active:translate-y-1 transition-all text-[10px] uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(15,23,42,0.2)]">Apply Sweetness</button>
             </div>
         </div>
     </div>
@@ -779,16 +808,89 @@
                 btn.classList.remove('bg-orange-50', 'text-orange-600', 'border-orange-500');
                 btn.classList.add('bg-white', 'text-slate-500', 'border-slate-200');
             });
+            
+            const extraBtn = document.getElementById('sugar-extra');
             const activeBtn = document.getElementById(`sugar-${level}`);
-            activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
-            activeBtn.classList.add('bg-orange-50', 'text-orange-600', 'border-orange-500');
+            
+            if (activeBtn) {
+                if (extraBtn) extraBtn.innerText = 'Extra';
+                activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
+                activeBtn.classList.add('bg-orange-50', 'text-orange-600', 'border-orange-500');
+            } else if (level.endsWith('%')) {
+                // Handle custom percentage labels
+                if (extraBtn) {
+                    extraBtn.innerText = level;
+                    extraBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
+                    extraBtn.classList.add('bg-orange-50', 'text-orange-600', 'border-orange-500');
+                }
+            }
+        }
+
+        // --- EXTRA SUGAR UI LOGIC ---
+        
+        function selectExtraSugar() {
+            const modal = document.getElementById('extra-sugar-modal');
+            const input = document.getElementById('extra-sugar-input');
+            const keypad = document.getElementById('sugar-keypad');
+            
+            input.value = ""; // Default
+            modal.classList.remove('hidden');
+            
+            // Build the keypad if empty
+            if (keypad.children.length === 0) {
+                const keys = ['1','2','3','4','5','6','7','8','9','CLR','0','DEL'];
+                keys.forEach(key => {
+                    const btn = document.createElement('button');
+                    btn.innerText = key;
+                    
+                    // Flat 2.0 Styling: Thick borders + Solid Shadows
+                    let baseClass = "py-4 rounded-2xl font-[900] transition-all border-2 active:translate-y-1 active:shadow-none ";
+                    if (key === 'CLR' || key === 'DEL') {
+                        baseClass += "bg-slate-50 border-slate-200 text-slate-400 text-[10px] tracking-widest shadow-[3px_3px_0px_0px_rgba(203,213,225,0.4)] uppercase";
+                    } else {
+                        baseClass += "bg-white border-slate-900 text-slate-900 text-xl shadow-[4px_4px_0px_0px_rgba(15,23,42,0.1)] hover:border-orange-500 hover:text-orange-500";
+                    }
+                    
+                    btn.className = baseClass;
+                    btn.onclick = () => {
+                        if (key === 'CLR') input.value = '';
+                        else if (key === 'DEL') input.value = input.value.slice(0, -1);
+                        else if (input.value.length < 3) input.value += key;
+                    };
+                    keypad.appendChild(btn);
+                });
+            }
+        }
+
+        function closeExtraSugarModal() {
+            document.getElementById('extra-sugar-modal').classList.add('hidden');
+        }
+
+        function confirmExtraSugar() {
+            const val = document.getElementById('extra-sugar-input').value;
+            const percent = parseInt(val);
+            
+            if (isNaN(percent) || percent <= 100) {
+                showNotification("Please enter sweetness over 100%", "info");
+                return;
+            }
+            
+            selectSugar(percent + "%");
+            closeExtraSugarModal();
+            calculateDynamicPrice();
         }
 
         function confirmCustomization() {
             const qtyInput = document.getElementById('modal-qty');
             const qty = parseInt(qtyInput.value) || 1;
-            const sugarMap = { '0%': 0.0, '25%': 0.25, '50%': 0.5, '75%': 0.75, '100%': 1.0, 'Extra': 1.5 };
-            const sugarMultiplier = sugarMap[currentItem.sugar] || 0;
+            
+            // Dynamic sugar multiplier calculation
+            let sugarMultiplier = 1.0;
+            if (currentItem.sugar === 'Extra') {
+                sugarMultiplier = 1.5;
+            } else if (currentItem.sugar.endsWith('%')) {
+                sugarMultiplier = parseInt(currentItem.sugar) / 100;
+            }
 
             const uniqueKey = `${currentItem.id}-${currentItem.size}-${currentItem.sugar}-${currentItem.type}`;
             const itemData = {

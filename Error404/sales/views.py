@@ -884,7 +884,17 @@ def process_payment(request):
                         '0%': Decimal('0.0'), '25%': Decimal('0.25'), '50%': Decimal('0.5'), 
                         '75%': Decimal('0.75'), '100%': Decimal('1.0'), 'Extra': Decimal('1.5')
                     }
-                    multiplier = sugar_map.get(item.get('sugar', '100%'), Decimal('1.0'))
+                    sugar_str = item.get('sugar', '100%')
+                    if sugar_str in sugar_map:
+                        multiplier = sugar_map[sugar_str]
+                    elif sugar_str.endswith('%'):
+                        try:
+                            # Handle custom percentages like "125%"
+                            multiplier = Decimal(sugar_str.replace('%', '')) / Decimal('100')
+                        except:
+                            multiplier = Decimal('1.0')
+                    else:
+                        multiplier = Decimal('1.0')
 
                     for recipe in recipe_items:
                         ingredient = Ingredient.objects.select_for_update().get(id=recipe.ingredient.id)
