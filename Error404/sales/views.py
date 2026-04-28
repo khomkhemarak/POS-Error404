@@ -53,7 +53,7 @@ def is_admin(user):
 
 def owner_view(request):
     # --- 1. SET TIME WINDOW (Default: Today) ---
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
     
     # Define today's completed orders
@@ -271,7 +271,7 @@ def generate_daily_report(request):
             </body></html>
         """, content_type="text/html")
 
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Re-use logic from owner_view/api_dashboard_stats for 'today'
@@ -442,7 +442,7 @@ def api_inventory_logs(request):
             data.append({
                 'is_group': True,
                 'notes': notes,
-                'created_at': items_list[0].created_at.strftime("%H:%M %p"),
+                'created_at': timezone.localtime(items_list[0].created_at).strftime("%H:%M %p"),
                 'items': [{'name': i.ingredient.name, 'amount': float(i.amount), 'unit': i.ingredient.unit} for i in items_list]
             })
         else:
@@ -452,7 +452,7 @@ def api_inventory_logs(request):
                     'name': item.ingredient.name,
                     'amount': float(item.amount),
                     'unit': item.ingredient.unit,
-                    'created_at': item.created_at.strftime("%H:%M %p"),
+                    'created_at': timezone.localtime(item.created_at).strftime("%H:%M %p"),
                     'notes': item.notes
                 })
     return JsonResponse({'logs': data})
@@ -682,6 +682,46 @@ def api_update_stock(request, pk):
                 return JsonResponse({
                     'status': 'success',
                     'message': f'Updated {ingredient.name}',
+                    'new_stock': float(ingredient.stock_quantity)
+                })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=405)
+
+@csrf_exempt
+def api_deduct_stock(request, pk):
+    if request.method == 'POST':
+        try:
+            ingredient = get_object_or_404(Ingredient, pk=pk)
+            items_to_deduct = float(request.POST.get('items_to_deduct') or 0)
+            reason = request.POST.get('reason') or "Manual Adjustment"
+            
+            if items_to_deduct > 0:
+                with transaction.atomic():
+                    # Calculate the physical quantity to remove (e.g. 1 box * 1000g)
+                    total_quantity_deducted = Decimal(str(items_to_deduct)) * ingredient.initial_stock_per_item
+                    
+                    # Deduct from quantity (preventing negative numbers)
+                    ingredient.stock_quantity = max(Decimal('0.00'), ingredient.stock_quantity - total_quantity_deducted)
+                    
+                    # Recalculate box count based on new quantity
+                    if ingredient.initial_stock_per_item > 0:
+                        ingredient.items_count = math.ceil(ingredient.stock_quantity / ingredient.initial_stock_per_item)
+                    
+                    ingredient.save()
+                    
+                    # Create log entry as ADJUST to distinguish from sales REDUCTION
+                    StockHistory.objects.create(
+                        ingredient=ingredient,
+                        amount=-total_quantity_deducted,
+                        type='ADJUST',
+                        notes=f"Deduction: {items_to_deduct} items ({reason})"
+                    )
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f'Deducted {ingredient.name}',
                     'new_stock': float(ingredient.stock_quantity)
                 })
         except Exception as e:
@@ -1059,7 +1099,7 @@ def manager_view(request):
         product.limiting_ing = bottleneck['ing']
 
     # --- 2. Summary Stats (Today) ---
-    today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today = timezone.localtime(timezone.now()).replace(hour=0, minute=0, second=0, microsecond=0)
     todays_orders = Order.objects.filter(is_completed=True, created_at__gte=today)
     
     total_income = todays_orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
@@ -1079,6 +1119,16 @@ def manager_view(request):
 
     for order in todays_orders:
         total_tax += order.tax_amount
+
+    total_inventory_value = Ingredient.objects.aggregate(
+        total=Sum(F('stock_quantity') * F('unit_cost'), output_field=DecimalField())
+    )['total'] or Decimal('0.00')
+
+    total_manual_loss = StockHistory.objects.filter(
+        type='ADJUST', 
+        amount__lt=0,
+        created_at__gte=today
+    ).aggregate(total=Sum(F('amount') * F('ingredient__unit_cost'), output_field=DecimalField()))['total'] or Decimal('0.00')
 
     # --- NEW: Annual Income Tax Calculation ---
     income_val = float(total_income)
@@ -1106,7 +1156,9 @@ def manager_view(request):
     context = {
         'products': products,
         'total_income': total_income,
-        'total_expense': total_expense,
+        'total_drinks_expense': total_expense,
+        'total_inventory_value': total_inventory_value,
+        'total_deducted_value': abs(total_manual_loss),
         'total_orders' : todays_orders.count(),
         'total_cups': total_cups,
         'total_tax': total_tax,
@@ -1138,7 +1190,7 @@ def api_order_history(request):
         
         order_list.append({
             'id': order.id,
-            'created_at': order.created_at.strftime('%d %b %Y | %H:%M'),
+            'created_at': timezone.localtime(order.created_at).strftime('%d %b %Y | %H:%M'),
             'total_amount': float(order.total_amount),
             'is_completed': order.is_completed,
             'items': items_data
@@ -1148,7 +1200,7 @@ def api_order_history(request):
 
 def api_dashboard_stats(request):
     range_type = request.GET.get('range', 'today')
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
     current_month_name = now.strftime('%b')
     
     # --- 1. SET DATE RANGES & GROUPING ---
@@ -1212,6 +1264,16 @@ def api_dashboard_stats(request):
 
     for order in orders:
         total_tax += order.tax_amount
+
+    total_inventory_value = Ingredient.objects.aggregate(
+        total=Sum(F('stock_quantity') * F('unit_cost'), output_field=DecimalField())
+    )['total'] or Decimal('0.00')
+
+    total_manual_loss = StockHistory.objects.filter(
+        type='ADJUST', 
+        amount__lt=0,
+        created_at__gte=start_date
+    ).aggregate(total=Sum(F('amount') * F('ingredient__unit_cost'), output_field=DecimalField()))['total'] or Decimal('0.00')
 
     # Fixed: Margin ratio must be calculated AFTER the profit loop
     profit_margin_ratio = (float(total_profit) / float(total_rev)) if total_rev > 0 else 0
@@ -1290,7 +1352,9 @@ def api_dashboard_stats(request):
 
     return JsonResponse({
         'income': float(total_rev),
-        'expense': float(total_expense.quantize(Decimal('0.01'))),
+        'total_drinks_expense': float(total_expense.quantize(Decimal('0.01'))),
+        'inventory_value': float(total_inventory_value.quantize(Decimal('0.01'))),
+        'deducted_value': float(abs(total_manual_loss).quantize(Decimal('0.01'))),
         'tax' : float(total_tax.quantize(Decimal('0.01'))),
         'annual_tax': float(annual_tax_amount.quantize(Decimal('0.01'))), # NEW
         'annual_rate': int(annual_rate * 100), # NEW
@@ -1318,7 +1382,7 @@ def kitchen_view(request):
     
     # 2. Orders completed in the last 12 hours (History)
     # This prevents the history tab from getting cluttered with days-old data
-    recent_time = timezone.now() - timedelta(hours=12)
+    recent_time = timezone.localtime(timezone.now()) - timedelta(hours=12)
     completed_orders = Order.objects.filter(
         is_completed=True, 
         created_at__gte=recent_time

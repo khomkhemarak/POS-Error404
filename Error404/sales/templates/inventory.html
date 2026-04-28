@@ -1,636 +1,1246 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Error404 | Inventory Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    />
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        /* Flat 2.0 Light Theme Shadows */
-        .bento-card {
-            box-shadow: 4px 4px 0px 0px rgba(203, 213, 225, 0.7);
-        }
-        .bento-card-interactive:hover {
-            box-shadow: 6px 6px 0px 0px rgba(249, 115, 22, 0.3);
-            transform: translate(-2px, -2px);
-        }
-        .bento-btn-blue:hover {
-            box-shadow: 6px 6px 0px 0px rgba(14, 165, 233, 0.3);
-            transform: translate(-2px, -2px);
-        }
-        .bento-btn-red:hover {
-            box-shadow: 6px 6px 0px 0px rgba(239, 68, 68, 0.3);
-            transform: translate(-2px, -2px);
-        }
-    </style>
-</head>
-<body class="bg-[#F4F4F5] text-slate-800 flex flex-col md:flex-row min-h-screen">
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
 
-    <div class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-[100]">
-        <h1 class="text-xl font-[800] tracking-tighter text-orange-600">Error404</h1>
-        <button onclick="toggleSidebar()" class="text-2xl text-slate-600">
-            <i class="bi bi-list"></i>
-        </button>
+      /* Flat 2.0 Light Theme Shadows */
+      .bento-card {
+        box-shadow: 4px 4px 0px 0px rgba(203, 213, 225, 0.7);
+      }
+      .bento-card-interactive:hover {
+        box-shadow: 6px 6px 0px 0px rgba(249, 115, 22, 0.3);
+        transform: translate(-2px, -2px);
+      }
+      .bento-btn-blue:hover {
+        box-shadow: 6px 6px 0px 0px rgba(14, 165, 233, 0.3);
+        transform: translate(-2px, -2px);
+      }
+      .bento-btn-red:hover {
+        box-shadow: 6px 6px 0px 0px rgba(239, 68, 68, 0.3);
+        transform: translate(-2px, -2px);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-[#F4F4F5] text-slate-800 flex flex-col md:flex-row min-h-screen"
+  >
+    <div
+      class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-[100]"
+    >
+      <h1 class="text-xl font-[800] tracking-tighter text-orange-600">
+        Error404
+      </h1>
+      <button onclick="toggleSidebar()" class="text-2xl text-slate-600">
+        <i class="bi bi-list"></i>
+      </button>
     </div>
 
-    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 shrink-0 bg-white border-r border-slate-200 p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[150] md:sticky md:top-0 md:h-screen">
-        <div class="mb-10">
-            <h1 class="text-2xl font-800 tracking-tighter text-orange-600">Error404</h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management Suite</p>
-        </div>
-        
-        <nav class="space-y-1 flex-grow">
-            <a href="{% url 'owner' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
-                <i class="bi bi-grid-1x2"></i> Dashboard
-            </a>
+    <aside
+      id="sidebar"
+      class="fixed inset-y-0 left-0 w-64 shrink-0 bg-white border-r border-slate-200 p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[150] md:sticky md:top-0 md:h-screen"
+    >
+      <div class="mb-10">
+        <h1 class="text-2xl font-800 tracking-tighter text-orange-600">
+          Error404
+        </h1>
+        <p
+          class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+        >
+          Management Suite
+        </p>
+      </div>
 
-            <a href="{% url 'inventory_list' %}" class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100">
-                <i class="bi bi-box-seam"></i> Inventory
-            </a>
+      <nav class="space-y-1 flex-grow">
+        <a
+          href="{% url 'owner' %}"
+          class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold"
+        >
+          <i class="bi bi-grid-1x2"></i> Dashboard
+        </a>
 
-            <a href="{% url 'recipe_builder' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
-                <i class="bi bi-journal-text"></i> Recipe Builder
-            </a>
-            
-            <a href="/kitchen/" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
-                <i class="bi bi-cup-hot"></i> Kitchen View
-            </a>
-        </nav>
+        <a
+          href="{% url 'inventory_list' %}"
+          class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100"
+        >
+          <i class="bi bi-box-seam"></i> Inventory
+        </a>
 
-        <div class="pt-6 border-t border-slate-100">
-            <a href="/logout/" class="flex items-center gap-3 p-3 text-slate-400 hover:text-red-500 transition-colors text-sm font-bold">
-                <i class="bi bi-box-arrow-left"></i> Logout
-            </a>
-        </div>
+        <a
+          href="{% url 'recipe_builder' %}"
+          class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold"
+        >
+          <i class="bi bi-journal-text"></i> Recipe Builder
+        </a>
+
+        <a
+          href="/kitchen/"
+          class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold"
+        >
+          <i class="bi bi-cup-hot"></i> Kitchen View
+        </a>
+      </nav>
+
+      <div class="pt-6 border-t border-slate-100">
+        <a
+          href="/logout/"
+          class="flex items-center gap-3 p-3 text-slate-400 hover:text-red-500 transition-colors text-sm font-bold"
+        >
+          <i class="bi bi-box-arrow-left"></i> Logout
+        </a>
+      </div>
     </aside>
 
-    <main class="flex-1 w-full p-4 md:p-8 lg:p-10 overflow-y-auto overflow-x-hidden custom-scrollbar max-w-[1600px] mx-auto min-w-0">
-        
-        {% if messages %}
-            <div class="fixed top-5 right-5 z-[200] space-y-3">
-            {% for message in messages %}
-                <div class="notification transform transition-all duration-500 translate-x-0 opacity-100 flex items-center p-4 min-w-[300px] rounded-2xl border-2 bento-card
-                    {% if message.tags == 'success' %} bg-emerald-50 border-emerald-400 text-emerald-800 
-                    {% else %} bg-orange-50 border-orange-400 text-orange-800 {% endif %}">
-                    
-                    <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-emerald-500{% else %}bi-info-circle-fill text-orange-500{% endif %} text-xl mr-3"></i>
-                    <p class="font-black uppercase tracking-widest text-[10px]">{{ message }}</p>
-                    
-                    <button onclick="this.parentElement.remove()" class="ml-auto pl-4 opacity-50 hover:opacity-100 transition-opacity">
-                        <i class="bi bi-x-lg text-xs"></i>
-                    </button>
-                </div>
-            {% endfor %}
-            </div>
-        {% endif %}
+    <main
+      class="flex-1 w-full p-4 md:p-8 lg:p-10 overflow-y-auto overflow-x-hidden custom-scrollbar max-w-[1600px] mx-auto min-w-0"
+    >
+      {% if messages %}
+      <div class="fixed top-5 right-5 z-[200] space-y-3">
+        {% for message in messages %}
+        <div
+          class="notification transform transition-all duration-500 translate-x-0 opacity-100 flex items-center p-4 min-w-[300px] rounded-2xl border-2 bento-card {% if message.tags == 'success' %} bg-emerald-50 border-emerald-400 text-emerald-800 {% else %} bg-orange-50 border-orange-400 text-orange-800 {% endif %}"
+        >
+          <i
+            class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-emerald-500{% else %}bi-info-circle-fill text-orange-500{% endif %} text-xl mr-3"
+          ></i>
+          <p class="font-black uppercase tracking-widest text-[10px]">
+            {{ message }}
+          </p>
 
-        <header class="mb-8 md:mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <h1 class="text-3xl md:text-4xl font-black tracking-tight text-slate-900 uppercase">Inventory</h1>
-                <p class="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1">Manage raw ingredients and stock levels</p>
-            </div>
-            <button onclick="toggleModal()" class="w-full md:w-auto bg-orange-500 border-2 border-orange-500 text-white px-6 py-4 rounded-2xl font-black bento-card bento-card-interactive transition flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest">
-                <i class="bi bi-plus-lg text-lg"></i> Add Ingredient
-            </button>
-        </header>
-
-        <div class="flex gap-4 mb-6 overflow-x-auto pb-4 pt-2 px-1 custom-scrollbar">
-            <button onclick="openPackagingModal('HOT_CUP')" class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group">
-                <i class="bi bi-cup-hot-fill text-slate-400 group-hover:text-sky-500 text-sm"></i> + Hot Cups
-            </button>
-            <button onclick="openPackagingModal('COLD_CUP')" class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group">
-                <i class="bi bi-cup-straw text-slate-400 group-hover:text-sky-500 text-sm"></i> + Cold Cups
-            </button>
-            <button onclick="openPackagingModal('HOT_STRAW')" class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group">
-                <i class="bi bi-reception-4 text-slate-400 group-hover:text-sky-500 text-sm"></i> + Hot Straws
-            </button>
-            <button onclick="openPackagingModal('COLD_STRAW')" class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group">
-                <i class="bi bi-reception-4 text-slate-400 group-hover:text-sky-500 text-sm"></i> + Cold Straws
-            </button>
-            <button onclick="openPackagingModal('CARRIER')" class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group">
-                <i class="bi bi-bag-check-fill text-slate-400 group-hover:text-sky-500 text-sm"></i> + Carriers
-            </button>
-            <button onclick="openPackagingModal('HOT_LID')" class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group">
-                <i class="bi bi-circle text-slate-400 group-hover:text-sky-500 text-sm"></i> + Hot Lid
-            </button>
-            <button onclick="openPackagingModal('COLD_LID')" class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group">
-                <i class="bi bi-circle text-slate-400 group-hover:text-sky-500 text-sm"></i> + Cold Lid
-            </button>
+          <button
+            onclick="this.parentElement.remove()"
+            class="ml-auto pl-4 opacity-50 hover:opacity-100 transition-opacity"
+          >
+            <i class="bi bi-x-lg text-xs"></i>
+          </button>
         </div>
-
-        <div class="flex items-center gap-8 mb-6 border-b-2 border-slate-200 pb-4 overflow-x-auto whitespace-nowrap">
-            <button type="button" onclick="filterInventory('all')" id="filter-all" class="text-[11px] font-black uppercase tracking-widest transition-all">
-                All Items
-            </button>
-            <button type="button" onclick="filterInventory('ingredients')" id="filter-ingredients" class="text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all">
-                Ingredients
-            </button>
-            <button type="button" onclick="filterInventory('packaging')" id="filter-packaging" class="text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all">
-                Packaging & Supplies
-            </button>
-        </div>
-
-        <div class="relative mb-6 group max-w-md">
-            <i class="bi bi-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors text-lg"></i>
-            <input type="text" id="inventorySearch" onkeyup="filterInventory(currentFilter)" placeholder="Search ingredients or supplies..." 
-                class="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-2xl pl-14 pr-4 py-4 focus:border-orange-500 outline-none transition bento-card placeholder-slate-400 font-bold">
-        </div>
-
-        <div class="bg-white rounded-[2rem] border-2 border-slate-200 bento-card overflow-hidden mb-10">
-            <div class="overflow-x-auto custom-scrollbar">
-                <table class="w-full text-left border-collapse min-w-[900px]">
-                    <thead>
-                        <tr class="border-b-2 border-slate-200 bg-slate-50">
-                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 w-1/4">Ingredient/Packaging</th>
-                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Stock Level</th>
-                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Current Qty</th>
-                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">
-                                Price Breakdown
-                                <span class="block text-[7px] text-orange-500 font-bold normal-case tracking-tight mt-0.5">Bulk vs. Unit Cost</span>
-                            </th>
-                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Stock Value</th>
-                            <th class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">Status</th>
-                            <th class="p-5 pr-8 font-black text-[10px] uppercase tracking-widest text-slate-500 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    
-                    <tbody id="inventoryRows" class="divide-y-2 divide-slate-100">
-                        {% for ing in ingredients %}
-                        <tr class="hover:bg-slate-50 transition group inventory-row bg-white" 
-                            data-is-packaging="{% if ing.packaging_type != 'NONE' %}true{% else %}false{% endif %}">
-                            
-                            <td class="p-5">
-                                <p onclick="openRenameModal('{{ ing.id }}', '{{ ing.name|escapejs }}')" 
-                                   class="font-black text-slate-800 text-sm group-hover:text-orange-600 transition cursor-pointer hover:underline decoration-orange-300 underline-offset-4">{{ ing.name }}</p>
-                                <p class="text-[9px] text-slate-500 uppercase tracking-widest mt-1 font-bold">
-                                    Unit: {% if ing.packaging_type != 'NONE' %}pc{% else %}{{ ing.unit }}{% endif %} 
-                                    <span class="text-slate-300 mx-1">|</span> 
-                                    Boxes: <span id="ing-boxes-{{ ing.id }}">{{ ing.items_count }}</span>
-                                </p>
-                            </td>
-                            
-                            <td class="p-5 min-w-[150px]">
-                                <div class="flex flex-col gap-2">
-                                    <div class="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                                        <span id="ing-percent-{{ ing.id }}" class="{% if ing.is_low_stock %}text-red-500{% else %}text-emerald-500{% endif %}">
-                                            {{ ing.stock_percent|floatformat:0 }}%
-                                        </span>
-                                    </div>
-                                    <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden border border-slate-300">
-                                        <div id="ing-bar-{{ ing.id }}" class="h-full transition-all duration-500 {% if ing.is_low_stock %}bg-red-500{% else %}bg-emerald-500{% endif %}" 
-                                            style="width: {{ ing.stock_percent }}%"></div>
-                                    </div>
-                                </div>
-                            </td>
-                            
-                            <td class="p-5 font-black text-xl text-slate-800 text-center">
-                                <span id="ing-qty-{{ ing.id }}">{{ ing.stock_quantity|floatformat:0 }}</span>
-                                <span class="text-[10px] text-slate-400 ml-1 font-bold uppercase tracking-widest">
-                                    {% if ing.packaging_type != 'NONE' %}pcs{% else %}{{ ing.unit }}{% endif %}
-                                </span>
-                            </td>
-
-                            <td class="p-5 text-center">
-                                <div class="flex flex-col">
-                                    <span class="text-slate-800 font-black">${{ ing.last_purchase_price|floatformat:2 }}</span>
-                                    <span class="text-[8px] text-slate-400 uppercase font-black tracking-widest mb-1">Per Box/Item</span>
-                                    
-                                    <div class="pt-1 border-t-2 border-slate-100">
-                                        <span class="text-orange-600 font-black text-[11px]">${{ ing.unit_cost|floatformat:4 }}</span>
-                                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-tighter">/ {% if ing.packaging_type != 'NONE' %}pc{% else %}{{ ing.unit }}{% endif %}</span>
-                                    </div>
-                                </div>
-                            </td>
-                            
-                            <td class="p-5 text-center">
-                                <div class="flex flex-col">
-                                    <span class="text-slate-900 font-black" id="ing-value-{{ ing.id }}">${{ ing.stock_value|floatformat:2 }}</span>
-                                    <span class="text-[8px] text-slate-400 uppercase font-black tracking-widest">Inventory Value</span>
-                                </div>
-                            </td>
-                            
-                            <td class="p-5 text-center">
-                                <div id="ing-status-{{ ing.id }}">
-                                    {% if ing.is_low_stock %}
-                                        <span class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-600 border border-red-200">LOW STOCK</span>
-                                    {% else %}
-                                        <span class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-200">HEALTHY</span>
-                                    {% endif %}
-                                </div>
-                            </td>
-
-                            <td class="p-5 text-right pr-8">
-                                <div class="flex justify-end items-center gap-2">
-                                    <button type="button" 
-                                        id="update-btn-{{ ing.id }}"
-                                        onclick="openUpdateModal('{{ ing.id }}', '{{ ing.name|escapejs }}', '{{ ing.initial_stock_per_item }}', '{{ ing.last_purchase_price }}')" 
-                                        class="bg-white border-2 border-slate-200 text-slate-600 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 px-4 py-2 rounded-xl text-[10px] font-black transition uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(203,213,225,0.7)] hover:shadow-[2px_2px_0px_0px_rgba(249,115,22,0.3)] active:translate-y-[1px]">
-                                        Update
-                                    </button>
-                                    <button type="button" onclick="openDeleteModal('{{ ing.id }}', '{{ ing.name|escapejs }}')" class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition border-2 border-transparent hover:border-red-200 rounded-xl">
-                                        <i class="bi bi-trash3-fill"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-
-                    <tbody id="no-results" class="hidden">
-                        <tr>
-                            <td colspan="7" class="py-24 text-center">
-                                <div class="flex flex-col items-center justify-center">
-                                    <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 border-2 border-slate-200">
-                                        <i class="bi bi-search text-2xl text-slate-400"></i>
-                                    </div>
-                                    <p class="text-slate-800 font-black text-lg tracking-tight">No results found</p>
-                                    <p class="text-slate-500 text-[10px] uppercase tracking-widest mt-1 font-bold">Try different keywords or filters</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="stock-history" class="divide-y-2 divide-slate-50 overflow-y-auto custom-scrollbar pr-2">
-    {% for entry in grouped_logs %}
-    <div class="py-4 group">
-        {% if entry.is_group %}
-            <div class="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase">
-                        {{ entry.notes }}
-                    </span>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase">
-                        {{ entry.created_at|date:"H:i A" }}
-                    </p>
-                </div>
-                
-                <div class="space-y-1">
-                    {% for item in entry.items %}
-                    <div class="flex justify-between items-center">
-                        <p class="text-[11px] font-bold text-slate-700 truncate max-w-[120px]">
-                            {{ item.ingredient.name }}
-                        </p>
-                        <p class="text-[11px] font-black text-red-500">
-                            {{ item.amount|floatformat:0 }}{{ item.ingredient.unit|default:"g" }}
-                        </p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-        {% else %}
-            <div class="flex justify-between items-start mb-1">
-                <div class="max-w-[140px]">
-                    <p class="font-black text-slate-800 text-xs truncate group-hover:text-blue-600 transition-colors">
-                        {{ entry.log.ingredient.name }}
-                    </p>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                        {{ entry.log.created_at|date:"H:i A" }} • {{ entry.log.created_at|date:"M d" }}
-                    </p>
-                </div>
-                <div class="text-right">
-                    <span class="{% if entry.log.amount < 0 %}text-red-500{% else %}text-emerald-500{% endif %} font-black text-sm">
-                        {% if entry.log.amount > 0 %}+{% endif %}{{ entry.log.amount|floatformat:0 }}<span class="text-[10px] opacity-70 ml-0.5">{{ entry.log.ingredient.unit|default:"g" }}</span>
-                    </span>
-                </div>
-            </div>
-            
-            <div class="flex justify-between items-center mt-1">
-                <span class="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md {% if entry.log.amount < 0 %}bg-red-50 text-red-400{% else %}bg-emerald-50 text-emerald-400{% endif %}">
-                    {% if entry.log.amount < 0 %}Usage{% else %}Restock{% endif %}
-                </span>
-                <span class="text-[9px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                    {{ entry.log.notes|default:"Manual Update" }}
-                </span>
-            </div>
-        {% endif %}
-    </div>
-    {% empty %}
-    <div class="text-center py-20">
-        <i class="bi bi-inbox text-slate-200 text-3xl"></i>
-        <p class="text-slate-400 text-xs font-bold mt-2">No activity recorded.</p>
-    </div>
-    {% endfor %}
-</div>
-
-{% if page_obj.has_other_pages %}
-<div class="mt-6 flex flex-col md:flex-row items-center justify-between gap-4 px-2">
-    <p class="text-[10px] uppercase tracking-widest font-black text-slate-500">
-        Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-    </p>
-    <div class="flex flex-wrap items-center gap-2">
-        {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}#stock-history" class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition">
-                Previous
-            </a>
-        {% else %}
-            <span class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-400 font-black uppercase text-[10px] tracking-widest opacity-50 cursor-not-allowed">
-                Previous
-            </span>
-        {% endif %}
-
-        {% for num in page_obj.paginator.page_range %}
-            {% if num == page_obj.number %}
-                <span class="px-4 py-2 rounded-2xl bg-orange-500 text-white font-black uppercase text-[10px] tracking-widest">
-                    {{ num }}
-                </span>
-            {% else %}
-                <a href="?page={{ num }}#stock-history" class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition">
-                    {{ num }}
-                </a>
-            {% endif %}
         {% endfor %}
+      </div>
+      {% endif %}
 
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}#stock-history" class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition">
-                Next
-            </a>
-        {% else %}
-            <span class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-400 font-black uppercase text-[10px] tracking-widest opacity-50 cursor-not-allowed">
-                Next
+      <header
+        class="mb-8 md:mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+      >
+        <div>
+          <h1
+            class="text-3xl md:text-4xl font-black tracking-tight text-slate-900 uppercase"
+          >
+            Inventory
+          </h1>
+          <p
+            class="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1"
+          >
+            Manage raw ingredients and stock levels
+          </p>
+        </div>
+        <button
+          onclick="toggleModal()"
+          class="w-full md:w-auto bg-orange-500 border-2 border-orange-500 text-white px-6 py-4 rounded-2xl font-black bento-card bento-card-interactive transition flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest"
+        >
+          <i class="bi bi-plus-lg text-lg"></i> Add Ingredient
+        </button>
+      </header>
+
+      <div
+        class="flex gap-4 mb-6 overflow-x-auto pb-4 pt-2 px-1 custom-scrollbar"
+      >
+        <button
+          onclick="openPackagingModal('HOT_CUP')"
+          class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group"
+        >
+          <i
+            class="bi bi-cup-hot-fill text-slate-400 group-hover:text-sky-500 text-sm"
+          ></i>
+          + Hot Cups
+        </button>
+        <button
+          onclick="openPackagingModal('COLD_CUP')"
+          class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group"
+        >
+          <i
+            class="bi bi-cup-straw text-slate-400 group-hover:text-sky-500 text-sm"
+          ></i>
+          + Cold Cups
+        </button>
+        <button
+          onclick="openPackagingModal('HOT_STRAW')"
+          class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group"
+        >
+          <i
+            class="bi bi-reception-4 text-slate-400 group-hover:text-sky-500 text-sm"
+          ></i>
+          + Hot Straws
+        </button>
+        <button
+          onclick="openPackagingModal('COLD_STRAW')"
+          class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group"
+        >
+          <i
+            class="bi bi-reception-4 text-slate-400 group-hover:text-sky-500 text-sm"
+          ></i>
+          + Cold Straws
+        </button>
+        <button
+          onclick="openPackagingModal('CARRIER')"
+          class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group"
+        >
+          <i
+            class="bi bi-bag-check-fill text-slate-400 group-hover:text-sky-500 text-sm"
+          ></i>
+          + Carriers
+        </button>
+        <button
+          onclick="openPackagingModal('HOT_LID')"
+          class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group"
+        >
+          <i
+            class="bi bi-circle text-slate-400 group-hover:text-sky-500 text-sm"
+          ></i>
+          + Hot Lid
+        </button>
+        <button
+          onclick="openPackagingModal('COLD_LID')"
+          class="flex items-center gap-2 whitespace-nowrap bg-white border-2 border-slate-200 px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50 transition bento-card bento-btn-blue group"
+        >
+          <i
+            class="bi bi-circle text-slate-400 group-hover:text-sky-500 text-sm"
+          ></i>
+          + Cold Lid
+        </button>
+      </div>
+
+      <div
+        class="flex items-center gap-8 mb-6 border-b-2 border-slate-200 pb-4 overflow-x-auto whitespace-nowrap"
+      >
+        <button
+          type="button"
+          onclick="filterInventory('all')"
+          id="filter-all"
+          class="text-[11px] font-black uppercase tracking-widest transition-all"
+        >
+          All Items
+        </button>
+        <button
+          type="button"
+          onclick="filterInventory('ingredients')"
+          id="filter-ingredients"
+          class="text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all"
+        >
+          Ingredients
+        </button>
+        <button
+          type="button"
+          onclick="filterInventory('packaging')"
+          id="filter-packaging"
+          class="text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all"
+        >
+          Packaging & Supplies
+        </button>
+      </div>
+
+      <div class="relative mb-6 group max-w-md">
+        <i
+          class="bi bi-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors text-lg"
+        ></i>
+        <input
+          type="text"
+          id="inventorySearch"
+          onkeyup="filterInventory(currentFilter)"
+          placeholder="Search ingredients or supplies..."
+          class="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-2xl pl-14 pr-4 py-4 focus:border-orange-500 outline-none transition bento-card placeholder-slate-400 font-bold"
+        />
+      </div>
+
+      <div
+        class="bg-white rounded-[2rem] border-2 border-slate-200 bento-card overflow-hidden mb-10"
+      >
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-left border-collapse min-w-[900px]">
+            <thead>
+              <tr class="border-b-2 border-slate-200 bg-slate-50">
+                <th
+                  class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 w-1/4"
+                >
+                  Ingredient/Packaging
+                </th>
+                <th
+                  class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center"
+                >
+                  Stock Level
+                </th>
+                <th
+                  class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center"
+                >
+                  Current Qty
+                </th>
+                <th
+                  class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center"
+                >
+                  Price Breakdown
+                  <span
+                    class="block text-[7px] text-orange-500 font-bold normal-case tracking-tight mt-0.5"
+                    >Bulk vs. Unit Cost</span
+                  >
+                </th>
+                <th
+                  class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center"
+                >
+                  Stock Value
+                </th>
+                <th
+                  class="p-5 font-black text-[10px] uppercase tracking-widest text-slate-500 text-center"
+                >
+                  Status
+                </th>
+                <th
+                  class="p-5 pr-8 font-black text-[10px] uppercase tracking-widest text-slate-500 text-right"
+                >
+                  Actions
+                </th>
+              </tr>
+            </thead>
+
+            <tbody id="inventoryRows" class="divide-y-2 divide-slate-100">
+              {% for ing in ingredients %}
+              <tr
+                class="hover:bg-slate-50 transition group inventory-row bg-white"
+                data-is-packaging="{% if ing.packaging_type != 'NONE' %}true{% else %}false{% endif %}"
+              >
+                <td class="p-5">
+                  <p
+                    onclick="openRenameModal('{{ ing.id }}', '{{ ing.name|escapejs }}')"
+                    class="font-black text-slate-800 text-sm group-hover:text-orange-600 transition cursor-pointer hover:underline decoration-orange-300 underline-offset-4"
+                  >
+                    {{ ing.name }}
+                  </p>
+                  <p
+                    class="text-[9px] text-slate-500 uppercase tracking-widest mt-1 font-bold"
+                  >
+                    Unit: {% if ing.packaging_type != 'NONE' %}pc{% else %}{{ ing.unit }}{% endif %}
+                    <span class="text-slate-300 mx-1">|</span>
+                    Boxes:
+                    <span id="ing-boxes-{{ ing.id }}"
+                      >{{ ing.items_count }}</span
+                    >
+                  </p>
+                </td>
+
+                <td class="p-5 min-w-[150px]">
+                  <div class="flex flex-col gap-2">
+                    <div
+                      class="flex justify-between items-center text-[9px] font-black uppercase tracking-widest"
+                    >
+                      <span
+                        id="ing-percent-{{ ing.id }}"
+                        class="{% if ing.is_low_stock %}text-red-500{% else %}text-emerald-500{% endif %}"
+                      >
+                        {{ ing.stock_percent|floatformat:0 }}%
+                      </span>
+                    </div>
+                    <div
+                      class="w-full bg-slate-200 h-2 rounded-full overflow-hidden border border-slate-300"
+                    >
+                      <div
+                        id="ing-bar-{{ ing.id }}"
+                        class="h-full transition-all duration-500 {% if ing.is_low_stock %}bg-red-500{% else %}bg-emerald-500{% endif %}"
+                        style="width: {{ ing.stock_percent }}%"
+                      ></div>
+                    </div>
+                  </div>
+                </td>
+
+                <td class="p-5 font-black text-xl text-slate-800 text-center">
+                  <span id="ing-qty-{{ ing.id }}"
+                    >{{ ing.stock_quantity|floatformat:0 }}</span
+                  >
+                  <span
+                    class="text-[10px] text-slate-400 ml-1 font-bold uppercase tracking-widest"
+                  >
+                    {% if ing.packaging_type != 'NONE' %}pcs{% else %}{{ ing.unit }}{% endif %}
+                  </span>
+                </td>
+
+                <td class="p-5 text-center">
+                  <div class="flex flex-col">
+                    <span class="text-slate-800 font-black"
+                      >${{ ing.last_purchase_price|floatformat:2 }}</span
+                    >
+                    <span
+                      class="text-[8px] text-slate-400 uppercase font-black tracking-widest mb-1"
+                      >Per Box/Item</span
+                    >
+
+                    <div class="pt-1 border-t-2 border-slate-100">
+                      <span class="text-orange-600 font-black text-[11px]"
+                        >${{ ing.unit_cost|floatformat:4 }}</span
+                      >
+                      <span
+                        class="text-[8px] text-slate-400 uppercase font-bold tracking-tighter"
+                        >/ {% if ing.packaging_type != 'NONE' %}pc{% else %}{{ ing.unit }}{% endif %}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <td class="p-5 text-center">
+                  <div class="flex flex-col">
+                    <span
+                      class="text-slate-900 font-black"
+                      id="ing-value-{{ ing.id }}"
+                      >${{ ing.stock_value|floatformat:2 }}</span
+                    >
+                    <span
+                      class="text-[8px] text-slate-400 uppercase font-black tracking-widest"
+                      >Inventory Value</span
+                    >
+                  </div>
+                </td>
+
+                <td class="p-5 text-center">
+                  <div id="ing-status-{{ ing.id }}">
+                    {% if ing.is_low_stock %}
+                    <span
+                      class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-600 border border-red-200"
+                      >LOW STOCK</span
+                    >
+                    {% else %}
+                    <span
+                      class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-200"
+                      >HEALTHY</span
+                    >
+                    {% endif %}
+                  </div>
+                </td>
+
+                <td class="p-5 text-right pr-8">
+                  <div class="flex justify-end items-center gap-2">
+                    <button
+                      type="button"
+                      id="update-btn-{{ ing.id }}"
+                      onclick="openUpdateModal('{{ ing.id }}', '{{ ing.name|escapejs }}', '{{ ing.initial_stock_per_item }}', '{{ ing.last_purchase_price }}')"
+                      class="bg-white border-2 border-slate-200 text-slate-600 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 px-4 py-2 rounded-xl text-[10px] font-black transition uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(203,213,225,0.7)] hover:shadow-[2px_2px_0px_0px_rgba(249,115,22,0.3)] active:translate-y-[1px]"
+                    >
+                      Update
+                    </button>
+                    <button
+                      type="button"
+                      onclick="openDeductModal('{{ ing.id }}', '{{ ing.name|escapejs }}', '{{ ing.initial_stock_per_item }}')"
+                      class="bg-white border-2 border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-300 hover:bg-red-50 px-4 py-2 rounded-xl text-[10px] font-black transition uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(203,213,225,0.7)] hover:shadow-[2px_2px_0px_0px_rgba(239,68,68,0.1)] active:translate-y-[1px]"
+                    >
+                      Deduct
+                    </button>
+                    <button
+                      type="button"
+                      onclick="openDeleteModal('{{ ing.id }}', '{{ ing.name|escapejs }}')"
+                      class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition border-2 border-transparent hover:border-red-200 rounded-xl"
+                    >
+                      <i class="bi bi-trash3-fill"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+
+            <tbody id="no-results" class="hidden">
+              <tr>
+                <td colspan="7" class="py-24 text-center">
+                  <div class="flex flex-col items-center justify-center">
+                    <div
+                      class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 border-2 border-slate-200"
+                    >
+                      <i class="bi bi-search text-2xl text-slate-400"></i>
+                    </div>
+                    <p class="text-slate-800 font-black text-lg tracking-tight">
+                      No results found
+                    </p>
+                    <p
+                      class="text-slate-500 text-[10px] uppercase tracking-widest mt-1 font-bold"
+                    >
+                      Try different keywords or filters
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div
+        id="stock-history"
+        class="divide-y-2 divide-slate-50 overflow-y-auto custom-scrollbar pr-2"
+      >
+        {% for entry in grouped_logs %}
+        <div class="py-4 group">
+          {% if entry.is_group %}
+          <div class="bg-slate-50 rounded-2xl p-3 border border-slate-100">
+            <div class="flex justify-between items-center mb-2">
+              <span
+                class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase"
+              >
+                {{ entry.notes }}
+              </span>
+              <p class="text-[9px] font-bold text-slate-400 uppercase">
+                {{ entry.created_at|date:"H:i A" }}
+              </p>
+            </div>
+
+            <div class="space-y-1">
+              {% for item in entry.items %}
+              <div class="flex justify-between items-center">
+                <p
+                  class="text-[11px] font-bold text-slate-700 truncate max-w-[120px]"
+                >
+                  {{ item.ingredient.name }}
+                </p>
+                <p class="text-[11px] font-black text-red-500">
+                  {{ item.amount|floatformat:0 }}{{ item.ingredient.unit|default:"g" }}
+                </p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          {% else %}
+          <div class="flex justify-between items-start mb-1">
+            <div class="max-w-[140px]">
+              <p
+                class="font-black text-slate-800 text-xs truncate group-hover:text-blue-600 transition-colors"
+              >
+                {{ entry.log.ingredient.name }}
+              </p>
+              <p
+                class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter"
+              >
+                {{ entry.log.created_at|date:"H:i A" }} • {{ entry.log.created_at|date:"M d" }}
+              </p>
+            </div>
+            <div class="text-right">
+              <span
+                class="{% if entry.log.amount < 0 %}text-red-500{% else %}text-emerald-500{% endif %} font-black text-sm"
+              >
+                {% if entry.log.amount > 0 %}+{% endif %}{{ entry.log.amount|floatformat:0 }}<span
+                  class="text-[10px] opacity-70 ml-0.5"
+                  >{{ entry.log.ingredient.unit|default:"g" }}</span
+                >
+              </span>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center mt-1">
+            <span
+              class="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md {% if entry.log.amount < 0 %}bg-red-50 text-red-400{% else %}bg-emerald-50 text-emerald-400{% endif %}"
+            >
+              {% if entry.log.amount < 0 %}Usage{% else %}Restock{% endif %}
             </span>
-        {% endif %}
-    </div>
-</div>
-{% endif %}
+            <span
+              class="text-[9px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100"
+            >
+              {{ entry.log.notes|default:"Manual Update" }}
+            </span>
+          </div>
+          {% endif %}
+        </div>
+        {% empty %}
+        <div class="text-center py-20">
+          <i class="bi bi-inbox text-slate-200 text-3xl"></i>
+          <p class="text-slate-400 text-xs font-bold mt-2">
+            No activity recorded.
+          </p>
+        </div>
+        {% endfor %}
+      </div>
 
+      {% if page_obj.has_other_pages %}
+      <div
+        class="mt-6 flex flex-col md:flex-row items-center justify-between gap-4 px-2"
+      >
+        <p
+          class="text-[10px] uppercase tracking-widest font-black text-slate-500"
+        >
+          Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages
+          }}
+        </p>
+        <div class="flex flex-wrap items-center gap-2">
+          {% if page_obj.has_previous %}
+          <a
+            href="?page={{ page_obj.previous_page_number }}#stock-history"
+            class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition"
+          >
+            Previous
+          </a>
+          {% else %}
+          <span
+            class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-400 font-black uppercase text-[10px] tracking-widest opacity-50 cursor-not-allowed"
+          >
+            Previous
+          </span>
+          {% endif %} {% for num in page_obj.paginator.page_range %} {% if num == page_obj.number %}
+          <span
+            class="px-4 py-2 rounded-2xl bg-orange-500 text-white font-black uppercase text-[10px] tracking-widest"
+          >
+            {{ num }}
+          </span>
+          {% else %}
+          <a
+            href="?page={{ num }}#stock-history"
+            class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition"
+          >
+            {{ num }}
+          </a>
+          {% endif %} {% endfor %} {% if page_obj.has_next %}
+          <a
+            href="?page={{ page_obj.next_page_number }}#stock-history"
+            class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition"
+          >
+            Next
+          </a>
+          {% else %}
+          <span
+            class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-400 font-black uppercase text-[10px] tracking-widest opacity-50 cursor-not-allowed"
+          >
+            Next
+          </span>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
     </main>
 
-    <div id="ingredient-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
-        <div class="bg-white w-full max-w-md rounded-[2rem] p-8 border-2 border-slate-200 bento-card transform transition-all">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-black text-slate-900 tracking-tight uppercase">New Ingredient</h2>
-                <button onclick="toggleModal()" class="w-10 h-10 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center font-bold border-2 border-transparent"><i class="bi bi-x-lg"></i></button>
-            </div>
-            
-            <form action="{% url 'add_ingredient' %}" method="POST" class="space-y-5">
-                {% csrf_token %}
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Ingredient Name</label>
-                    <input type="text" name="name" value="" placeholder="e.g. Arabica Beans" required
-                        class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition placeholder-slate-400 font-bold">
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Quantity (Items)</label>
-                        <input type="number" id="calc-qty" name="quantity_items" value="1" min="1" oninput="calculateTotal()"
-                            class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Unit</label>
-                        <select id="calc-unit" name="unit" onchange="calculateTotal()" class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none font-bold">
-                            <option value="g">Grams (g)</option>
-                            <option value="ml">Milliliters (ml)</option>
-                            <option value="pc">Pieces (pc)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="mb-5">
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Price per 1 Item ($)</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 font-black">$</span>
-                        <input type="number" name="price_per_item" value="" step="0.01" placeholder="0.00" required
-                            class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl pl-8 pr-4 py-3.5 focus:border-orange-500 outline-none transition font-black placeholder-slate-400">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Initial Stock per 1 Item</label>
-                    <input type="number" id="calc-stock" name="stock_per_item" value="" placeholder="e.g. 1000" step="0.01" oninput="calculateTotal()" required
-                        class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold placeholder-slate-400">
-                </div>
-
-                <div class="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 flex justify-between items-center mt-2">
-                    <span class="text-orange-600 font-black text-[10px] uppercase tracking-widest">Total Stock:</span>
-                    <span id="total-display" class="text-orange-600 font-black text-xl">0g (0)</span>
-                </div>
-
-                <div class="pt-4">
-                    <button type="submit" class="w-full bg-orange-500 border-2 border-orange-500 text-white py-4 rounded-xl font-black shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] hover:bg-orange-600 transition active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[10px]">
-                        Save Ingredient
-                    </button>
-                </div>
-                <input type="hidden" name="packaging_type" id="packaging_type_input" value="NONE">
-            </form>
+    <div
+      id="ingredient-modal"
+      class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4"
+    >
+      <div
+        class="bg-white w-full max-w-md rounded-[2rem] p-8 border-2 border-slate-200 bento-card transform transition-all"
+      >
+        <div class="flex justify-between items-center mb-8">
+          <h2
+            class="text-2xl font-black text-slate-900 tracking-tight uppercase"
+          >
+            New Ingredient
+          </h2>
+          <button
+            onclick="toggleModal()"
+            class="w-10 h-10 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center font-bold border-2 border-transparent"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
+
+        <form
+          action="{% url 'add_ingredient' %}"
+          method="POST"
+          class="space-y-5"
+        >
+          {% csrf_token %}
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+              >Ingredient Name</label
+            >
+            <input
+              type="text"
+              name="name"
+              value=""
+              placeholder="e.g. Arabica Beans"
+              required
+              class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition placeholder-slate-400 font-bold"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+                >Quantity (Items)</label
+              >
+              <input
+                type="number"
+                id="calc-qty"
+                name="quantity_items"
+                value="1"
+                min="1"
+                oninput="calculateTotal()"
+                class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold"
+              />
+            </div>
+            <div>
+              <label
+                class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+                >Unit</label
+              >
+              <select
+                id="calc-unit"
+                name="unit"
+                onchange="calculateTotal()"
+                class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none font-bold"
+              >
+                <option value="g">Grams (g)</option>
+                <option value="ml">Milliliters (ml)</option>
+                <option value="pc">Pieces (pc)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-5">
+            <label
+              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+              >Price per 1 Item ($)</label
+            >
+            <div class="relative">
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 font-black"
+                >$</span
+              >
+              <input
+                type="number"
+                name="price_per_item"
+                value=""
+                step="0.01"
+                placeholder="0.00"
+                required
+                class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl pl-8 pr-4 py-3.5 focus:border-orange-500 outline-none transition font-black placeholder-slate-400"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+              >Initial Stock per 1 Item</label
+            >
+            <input
+              type="number"
+              id="calc-stock"
+              name="stock_per_item"
+              value=""
+              placeholder="e.g. 1000"
+              step="0.01"
+              oninput="calculateTotal()"
+              required
+              class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold placeholder-slate-400"
+            />
+          </div>
+
+          <div
+            class="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 flex justify-between items-center mt-2"
+          >
+            <span
+              class="text-orange-600 font-black text-[10px] uppercase tracking-widest"
+              >Total Stock:</span
+            >
+            <span id="total-display" class="text-orange-600 font-black text-xl"
+              >0g (0)</span
+            >
+          </div>
+
+          <div class="pt-4">
+            <button
+              type="submit"
+              class="w-full bg-orange-500 border-2 border-orange-500 text-white py-4 rounded-xl font-black shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] hover:bg-orange-600 transition active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[10px]"
+            >
+              Save Ingredient
+            </button>
+          </div>
+          <input
+            type="hidden"
+            name="packaging_type"
+            id="packaging_type_input"
+            value="NONE"
+          />
+        </form>
+      </div>
     </div>
 
-    <div id="packaging-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
-        <div class="bg-white w-full max-w-md rounded-[2rem] p-8 border-2 border-slate-200 bento-card transform transition-all">
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h2 class="text-2xl font-black text-slate-900 tracking-tight uppercase">Packaging</h2>
-                    <p class="text-sky-500 font-bold uppercase tracking-widest text-[9px] mt-1">Cups, straws, & carriers</p>
-                </div>
-                <button onclick="togglePackagingModal()" class="w-10 h-10 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center font-bold border-2 border-transparent"><i class="bi bi-x-lg"></i></button>
-            </div>
-            
-            <form action="{% url 'add_ingredient' %}" method="POST" class="space-y-5">
-                {% csrf_token %}
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Item Name</label>
-                    <input type="text" name="name" id="pkg-name" placeholder="e.g. 12oz Cold Cup" required
-                        class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-sky-500 outline-none transition font-bold placeholder-slate-400">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Packaging Type</label>
-                    <select name="packaging_type" id="pkg-type-select" class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-sky-500 outline-none font-bold">
-                        <option value="HOT_CUP">Hot Cup</option>
-                        <option value="COLD_CUP">Cold Cup</option>
-                        <option value="HOT_STRAW">Hot Straw</option>
-                        <option value="COLD_STRAW">Cold/Frappe Straw</option>
-                        <option value="CARRIER">Plastic Carrier</option>
-                        <option value="HOT_LID">Hot Lid</option>
-                        <option value="COLD_LID">Cold Lid</option>
-                    </select>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Box/Pack Count</label>
-                        <input type="number" name="quantity_items" value="1" min="1"
-                            class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-sky-500 outline-none transition font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Pcs per Box</label>
-                        <input type="number" name="stock_per_item" placeholder="500" required
-                            class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-sky-500 outline-none transition font-bold placeholder-slate-400">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Price per Box ($)</label>
-                        <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sky-500 font-black">$</span>
-                            <input type="number" name="price_per_item" step="0.01" placeholder="0.00" required
-                                class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl pl-8 pr-4 py-3.5 focus:border-sky-500 outline-none transition font-black placeholder-slate-400">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Unit</label>
-                        <div class="w-full bg-slate-100 border-2 border-slate-200 text-slate-500 rounded-xl px-4 py-3.5 font-bold flex items-center gap-2">
-                            <i class="bi bi-tag-fill text-sky-500"></i>
-                            <span id="display-unit">pcs</span>
-                            <input type="hidden" name="unit" id="hidden-unit-input" value="pc">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-4">
-                    <button type="submit" class="w-full bg-sky-500 border-2 border-sky-500 text-white py-4 rounded-xl font-black shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] hover:bg-sky-600 transition active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[10px]">
-                        Save Packaging
-                    </button>
-                </div>
-            </form>
+    <div
+      id="packaging-modal"
+      class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4"
+    >
+      <div
+        class="bg-white w-full max-w-md rounded-[2rem] p-8 border-2 border-slate-200 bento-card transform transition-all"
+      >
+        <div class="flex justify-between items-center mb-8">
+          <div>
+            <h2
+              class="text-2xl font-black text-slate-900 tracking-tight uppercase"
+            >
+              Packaging
+            </h2>
+            <p
+              class="text-sky-500 font-bold uppercase tracking-widest text-[9px] mt-1"
+            >
+              Cups, straws, & carriers
+            </p>
+          </div>
+          <button
+            onclick="togglePackagingModal()"
+            class="w-10 h-10 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center font-bold border-2 border-transparent"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
+
+        <form
+          action="{% url 'add_ingredient' %}"
+          method="POST"
+          class="space-y-5"
+        >
+          {% csrf_token %}
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+              >Item Name</label
+            >
+            <input
+              type="text"
+              name="name"
+              id="pkg-name"
+              placeholder="e.g. 12oz Cold Cup"
+              required
+              class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-sky-500 outline-none transition font-bold placeholder-slate-400"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+              >Packaging Type</label
+            >
+            <select
+              name="packaging_type"
+              id="pkg-type-select"
+              class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-sky-500 outline-none font-bold"
+            >
+              <option value="HOT_CUP">Hot Cup</option>
+              <option value="COLD_CUP">Cold Cup</option>
+              <option value="HOT_STRAW">Hot Straw</option>
+              <option value="COLD_STRAW">Cold/Frappe Straw</option>
+              <option value="CARRIER">Plastic Carrier</option>
+              <option value="HOT_LID">Hot Lid</option>
+              <option value="COLD_LID">Cold Lid</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+                >Box/Pack Count</label
+              >
+              <input
+                type="number"
+                name="quantity_items"
+                value="1"
+                min="1"
+                class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-sky-500 outline-none transition font-bold"
+              />
+            </div>
+            <div>
+              <label
+                class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+                >Pcs per Box</label
+              >
+              <input
+                type="number"
+                name="stock_per_item"
+                placeholder="500"
+                required
+                class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-sky-500 outline-none transition font-bold placeholder-slate-400"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+                >Price per Box ($)</label
+              >
+              <div class="relative">
+                <span
+                  class="absolute left-4 top-1/2 -translate-y-1/2 text-sky-500 font-black"
+                  >$</span
+                >
+                <input
+                  type="number"
+                  name="price_per_item"
+                  step="0.01"
+                  placeholder="0.00"
+                  required
+                  class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl pl-8 pr-4 py-3.5 focus:border-sky-500 outline-none transition font-black placeholder-slate-400"
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+                >Unit</label
+              >
+              <div
+                class="w-full bg-slate-100 border-2 border-slate-200 text-slate-500 rounded-xl px-4 py-3.5 font-bold flex items-center gap-2"
+              >
+                <i class="bi bi-tag-fill text-sky-500"></i>
+                <span id="display-unit">pcs</span>
+                <input
+                  type="hidden"
+                  name="unit"
+                  id="hidden-unit-input"
+                  value="pc"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4">
+            <button
+              type="submit"
+              class="w-full bg-sky-500 border-2 border-sky-500 text-white py-4 rounded-xl font-black shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] hover:bg-sky-600 transition active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[10px]"
+            >
+              Save Packaging
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- Rename Modal -->
-    <div id="rename-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
-        <div class="bg-white w-full max-w-md rounded-[2rem] p-8 border-2 border-slate-200 bento-card transform transition-all">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-black text-slate-900 tracking-tight uppercase">Rename ធ្វើអី?</h2>
-                <button onclick="closeRenameModal()" class="w-10 h-10 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center font-bold border-2 border-transparent"><i class="bi bi-x-lg"></i></button>
-            </div>
-            
-            <form id="renameForm" method="POST" class="space-y-5">
-                {% csrf_token %}
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">New Name</label>
-                    <input type="text" name="name" id="renameInput" required
-                        class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold">
-                </div>
-                <button type="submit" class="w-full bg-orange-500 border-2 border-orange-500 text-white py-4 rounded-xl font-black shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] hover:bg-orange-600 transition active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[10px]">Update Name</button>
-            </form>
+    <div
+      id="rename-modal"
+      class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4"
+    >
+      <div
+        class="bg-white w-full max-w-md rounded-[2rem] p-8 border-2 border-slate-200 bento-card transform transition-all"
+      >
+        <div class="flex justify-between items-center mb-8">
+          <h2
+            class="text-2xl font-black text-slate-900 tracking-tight uppercase"
+          >
+            Rename ធ្វើអី?
+          </h2>
+          <button
+            onclick="closeRenameModal()"
+            class="w-10 h-10 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center font-bold border-2 border-transparent"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
+
+        <form id="renameForm" method="POST" class="space-y-5">
+          {% csrf_token %}
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+              >New Name</label
+            >
+            <input
+              type="text"
+              name="name"
+              id="renameInput"
+              required
+              class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-orange-500 border-2 border-orange-500 text-white py-4 rounded-xl font-black shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] hover:bg-orange-600 transition active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[10px]"
+          >
+            Update Name
+          </button>
+        </form>
+      </div>
     </div>
 
-    <div id="updateStockModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[2rem] p-8 border-2 border-slate-200 bento-card">
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h3 class="text-2xl font-black text-slate-900 tracking-tight uppercase">Update Stock</h3>
-                    <p id="modalIngName" class="text-orange-600 font-black uppercase tracking-widest text-[9px] mt-1"></p>
-                </div>
-                <button type="button" onclick="closeStockModal()" class="w-10 h-10 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center font-bold border-2 border-transparent self-start">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-            
-            <form id="updateStockForm" method="POST" action="" class="space-y-5">
-                {% csrf_token %}
-                <input type="hidden" name="ingredient_id" id="modalIngId">
-                
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Quantity (Boxes/Items Added)</label>
-                    <input type="number" name="items_to_add" id="modalQty" required
-                        class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold placeholder-slate-400" 
-                        placeholder="e.g. 5">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Total Price for this Batch ($)</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 font-black">$</span>
-                        <input type="number" name="batch_price" step="0.01" placeholder="Optional"
-                            class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl pl-8 pr-4 py-3.5 focus:border-orange-500 outline-none transition font-black placeholder-slate-400">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Size per Box/Item (g, ml, pc)</label>
-                    <input type="number" name="unit_size" id="modalUnitSize" 
-                        class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold" 
-                        step="0.01">
-                </div>
-
-                <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closeStockModal()" class="w-1/3 bg-white border-2 border-slate-200 text-slate-600 py-4 rounded-xl font-black hover:bg-slate-50 transition text-[10px] tracking-widest uppercase">Cancel</button>
-                    <button type="submit" class="w-2/3 bg-orange-500 border-2 border-orange-500 text-white py-4 rounded-xl font-black shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] hover:bg-orange-600 transition active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[10px]">Add Stock</button>
-                </div>
-            </form>
+    <div
+      id="updateStockModal"
+      class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] items-center justify-center p-4"
+    >
+      <div
+        class="bg-white w-full max-w-md rounded-[2rem] p-8 border-2 border-slate-200 bento-card"
+      >
+        <div class="flex justify-between items-center mb-8">
+          <div>
+            <h3
+              class="text-2xl font-black text-slate-900 tracking-tight uppercase"
+            >
+              Update Stock
+            </h3>
+            <p
+              id="modalIngName"
+              class="text-orange-600 font-black uppercase tracking-widest text-[9px] mt-1"
+            ></p>
+          </div>
+          <button
+            type="button"
+            onclick="closeStockModal()"
+            class="w-10 h-10 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center font-bold border-2 border-transparent self-start"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
+
+        <form id="updateStockForm" method="POST" action="" class="space-y-5">
+          {% csrf_token %}
+          <input type="hidden" name="ingredient_id" id="modalIngId" />
+
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+              >Quantity (Boxes/Items Added)</label
+            >
+            <input
+              type="number"
+              name="items_to_add"
+              id="modalQty"
+              required
+              class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold placeholder-slate-400"
+              placeholder="e.g. 5"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+              >Total Price for this Batch ($)</label
+            >
+            <div class="relative">
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 font-black"
+                >$</span
+              >
+              <input
+                type="number"
+                name="batch_price"
+                step="0.01"
+                placeholder="Optional"
+                class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl pl-8 pr-4 py-3.5 focus:border-orange-500 outline-none transition font-black placeholder-slate-400"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+              >Size per Box/Item (g, ml, pc)</label
+            >
+            <input
+              type="number"
+              name="unit_size"
+              id="modalUnitSize"
+              class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold"
+              step="0.01"
+            />
+          </div>
+
+          <div class="flex gap-3 pt-4">
+            <button
+              type="button"
+              onclick="closeStockModal()"
+              class="w-1/3 bg-white border-2 border-slate-200 text-slate-600 py-4 rounded-xl font-black hover:bg-slate-50 transition text-[10px] tracking-widest uppercase"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="w-2/3 bg-orange-500 border-2 border-orange-500 text-white py-4 rounded-xl font-black shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] hover:bg-orange-600 transition active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[10px]"
+            >
+              Add Stock
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
-    <div id="deleteModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2rem] border-2 border-slate-200 bento-card w-full max-w-sm overflow-hidden p-8 text-center">
-            
-            <div class="w-20 h-20 bg-red-50 border-2 border-red-200 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6 transform rotate-3">
-                <i class="bi bi-trash-fill text-3xl"></i>
-            </div>
-            
-            <h3 class="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">Remove Item?</h3>
-            <p class="text-slate-500 font-semibold text-sm mb-8">
-                Deleting <span id="deleteIngName" class="font-black text-red-500"></span> cannot be undone.
-            </p>
-
-            <div class="flex flex-col gap-3">
-                <form id="deleteForm" method="POST" action="">
-                    {% csrf_token %}
-                    <button type="submit" class="w-full py-4 bg-red-500 border-2 border-red-500 text-white font-black rounded-xl uppercase tracking-widest text-[10px] transition hover:bg-red-600 shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none">
-                        Confirm Delete
-                    </button>
-                </form>
-                
-                <button onclick="closeDeleteModal()" class="w-full py-4 text-slate-600 font-black hover:bg-slate-100 rounded-xl transition uppercase tracking-widest text-[10px] border-2 border-transparent">
-                    Cancel
-                </button>
-            </div>
+    <div
+      id="deductStockModal"
+      class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] items-center justify-center p-4"
+    >
+      <div
+        class="bg-white w-full max-w-md rounded-[2rem] p-8 border-2 border-slate-200 bento-card"
+      >
+        <div class="flex justify-between items-center mb-8">
+          <div>
+            <h3
+              class="text-2xl font-black text-slate-900 tracking-tight uppercase"
+            >
+              Deduct Stock
+            </h3>
+            <p
+              id="deductModalIngName"
+              class="text-red-600 font-black uppercase tracking-widest text-[9px] mt-1"
+            ></p>
+          </div>
+          <button
+            type="button"
+            onclick="closeDeductModal()"
+            class="w-10 h-10 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center font-bold border-2 border-transparent self-start"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
+
+        <form id="deductStockForm" method="POST" action="" class="space-y-5">
+          {% csrf_token %}
+          <input type="hidden" id="deductModalIngId" />
+
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+              >Quantity to Deduct (Boxes/Items)</label
+            >
+            <input
+              type="number"
+              name="items_to_deduct"
+              id="deductModalQty"
+              required
+              class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-red-500 outline-none transition font-bold placeholder-slate-400"
+              placeholder="e.g. 1"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+              >Reason for Deduction</label
+            >
+            <select
+              name="reason"
+              class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-red-500 outline-none font-bold"
+            >
+              <option value="Expired">Expired</option>
+              <option value="Damaged/Spilled">Damaged / Spilled</option>
+              <option value="Manual Correction">Manual Correction</option>
+            </select>
+          </div>
+
+          <div class="flex gap-3 pt-4">
+            <button
+              type="button"
+              onclick="closeDeductModal()"
+              class="w-1/3 bg-white border-2 border-slate-200 text-slate-600 py-4 rounded-xl font-black hover:bg-slate-50 transition text-[10px] tracking-widest uppercase"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="w-2/3 bg-red-500 border-2 border-red-500 text-white py-4 rounded-xl font-black shadow-[4px_4px_0px_0px_rgba(239,68,68,0.2)] hover:bg-red-600 transition active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[10px]"
+            >
+              Confirm Deduction
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div
+      id="deleteModal"
+      class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white rounded-[2rem] border-2 border-slate-200 bento-card w-full max-w-sm overflow-hidden p-8 text-center"
+      >
+        <div
+          class="w-20 h-20 bg-red-50 border-2 border-red-200 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6 transform rotate-3"
+        >
+          <i class="bi bi-trash-fill text-3xl"></i>
+        </div>
+
+        <h3
+          class="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight"
+        >
+          Remove Item?
+        </h3>
+        <p class="text-slate-500 font-semibold text-sm mb-8">
+          Deleting
+          <span id="deleteIngName" class="font-black text-red-500"></span>
+          cannot be undone.
+        </p>
+
+        <div class="flex flex-col gap-3">
+          <form id="deleteForm" method="POST" action="">
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="w-full py-4 bg-red-500 border-2 border-red-500 text-white font-black rounded-xl uppercase tracking-widest text-[10px] transition hover:bg-red-600 shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none"
+            >
+              Confirm Delete
+            </button>
+          </form>
+
+          <button
+            onclick="closeDeleteModal()"
+            class="w-full py-4 text-slate-600 font-black hover:bg-slate-100 rounded-xl transition uppercase tracking-widest text-[10px] border-2 border-transparent"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
 
     <script>
-        // 1. BROADCAST CHANNEL SETUP
-        const stockChannel = new BroadcastChannel('stock_updates');
+      // 1. BROADCAST CHANNEL SETUP
+      const stockChannel = new BroadcastChannel("stock_updates");
 
-        // Listen for the "shout" from the Manager page
-        stockChannel.onmessage = (event) => {
-            if (event.data === 'refresh_data') {
-                console.log("Sync signal received. Updating table...");
-                refreshInventoryTable(); 
-                if (typeof refreshStockHistory === 'function') {
-                    refreshStockHistory();
-                }
-            }
-        };
-
-        function escapeHtml(str) {
-            return String(str || '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+      // Listen for the "shout" from the Manager page
+      stockChannel.onmessage = (event) => {
+        if (event.data === "refresh_data") {
+          console.log("Sync signal received. Updating table...");
+          refreshInventoryTable();
+          if (typeof refreshStockHistory === "function") {
+            refreshStockHistory();
+          }
         }
+      };
 
-        function jsEscape(str) {
-            return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' ');
-        }
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
 
-        function buildInventoryRow(ing) {
-            const isPackaging = ing.packaging_type !== 'NONE';
-            const unitLabel = isPackaging ? 'pcs' : escapeHtml(ing.unit || '');
-            const percent = Math.round(Number(ing.stock_percent || 0));
-            const stockValue = Number(ing.stock_value || 0).toFixed(2);
-            const stockQty = Number(ing.stock_quantity || 0).toFixed(0);
-            const statusText = ing.is_low_stock ? 'LOW STOCK' : 'HEALTHY';
-            const statusClass = ing.is_low_stock ? 'text-red-500' : 'text-emerald-500';
-            const badgeClass = ing.is_low_stock ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200';
-            const barClass = ing.is_low_stock ? 'bg-red-500' : 'bg-emerald-500';
+      function jsEscape(str) {
+        return String(str || "")
+          .replace(/\\/g, "\\\\")
+          .replace(/'/g, "\\'")
+          .replace(/\r?\n/g, " ");
+      }
 
-            return `
+      function buildInventoryRow(ing) {
+        const isPackaging = ing.packaging_type !== "NONE";
+        const unitLabel = isPackaging ? "pcs" : escapeHtml(ing.unit || "");
+        const percent = Math.round(Number(ing.stock_percent || 0));
+        const stockValue = Number(ing.stock_value || 0).toFixed(2);
+        const stockQty = Number(ing.stock_quantity || 0).toFixed(0);
+        const statusText = ing.is_low_stock ? "LOW STOCK" : "HEALTHY";
+        const statusClass = ing.is_low_stock
+          ? "text-red-500"
+          : "text-emerald-500";
+        const badgeClass = ing.is_low_stock
+          ? "bg-red-50 text-red-600 border-red-200"
+          : "bg-emerald-50 text-emerald-600 border-emerald-200";
+        const barClass = ing.is_low_stock ? "bg-red-500" : "bg-emerald-500";
+
+        return `
                 <tr class="hover:bg-slate-50 transition group inventory-row bg-white" data-is-packaging="${isPackaging}">
                     <td class="p-5">
                         <p onclick="openRenameModal('${ing.id}', '${jsEscape(ing.name)}')" 
@@ -691,40 +1301,41 @@
                     </td>
                 </tr>
             `;
+      }
+
+      function renderInventoryRows(ingredients) {
+        const rows = document.getElementById("inventoryRows");
+        if (!rows) return;
+        rows.innerHTML = ingredients.map(buildInventoryRow).join("");
+        filterInventory(currentFilter);
+      }
+
+      async function refreshInventoryTable() {
+        try {
+          const response = await fetch("/api/inventory/list/");
+          const data = await response.json();
+
+          if (data.ingredients && Array.isArray(data.ingredients)) {
+            renderInventoryRows(data.ingredients);
+          }
+        } catch (error) {
+          console.error("Silent refresh failed:", error);
         }
+      }
 
-        function renderInventoryRows(ingredients) {
-            const rows = document.getElementById('inventoryRows');
-            if (!rows) return;
-            rows.innerHTML = ingredients.map(buildInventoryRow).join('');
-            filterInventory(currentFilter);
-        }
+      async function refreshStockHistory() {
+        const historyContainer = document.getElementById("stock-history");
+        if (!historyContainer) return;
 
-        async function refreshInventoryTable() {
-            try {
-                const response = await fetch('/api/inventory/list/');
-                const data = await response.json();
-                
-                if (data.ingredients && Array.isArray(data.ingredients)) {
-                    renderInventoryRows(data.ingredients);
-                }
-            } catch (error) {
-                console.error("Silent refresh failed:", error);
-            }
-        }
+        try {
+          const response = await fetch("/api/inventory/logs/");
+          const data = await response.json();
 
-        async function refreshStockHistory() {
-            const historyContainer = document.getElementById('stock-history');
-            if (!historyContainer) return;
-
-            try {
-                const response = await fetch('/api/inventory/logs/');
-                const data = await response.json();
-
-                if (data.logs) {
-                    historyContainer.innerHTML = data.logs.map(entry => {
-                        if (entry.is_group) {
-                            return `
+          if (data.logs) {
+            historyContainer.innerHTML = data.logs
+              .map((entry) => {
+                if (entry.is_group) {
+                  return `
                                 <div class="py-4 group">
                                     <div class="bg-slate-50 rounded-2xl p-3 border border-slate-100">
                                         <div class="flex justify-between items-center mb-2">
@@ -732,18 +1343,22 @@
                                             <p class="text-[9px] font-bold text-slate-400 uppercase">${entry.created_at}</p>
                                         </div>
                                         <div class="space-y-1">
-                                            ${entry.items.map(item => `
+                                            ${entry.items
+                                              .map(
+                                                (item) => `
                                                 <div class="flex justify-between items-center">
                                                     <p class="text-[11px] font-bold text-slate-700 truncate max-w-[120px]">${item.name}</p>
                                                     <p class="text-[11px] font-black text-red-50">${item.amount}${item.unit}</p>
                                                 </div>
-                                            `).join('')}
+                                            `,
+                                              )
+                                              .join("")}
                                         </div>
                                     </div>
                                 </div>`;
-                        } else {
-                            const isUsage = entry.amount < 0;
-                            return `
+                } else {
+                  const isUsage = entry.amount < 0;
+                  return `
                                 <div class="py-4 group">
                                     <div class="flex justify-between items-start mb-1">
                                         <div class="max-w-[140px]">
@@ -751,292 +1366,361 @@
                                             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${entry.created_at}</p>
                                         </div>
                                         <div class="text-right">
-                                            <span class="${isUsage ? 'text-red-500' : 'text-emerald-500'} font-black text-sm">
-                                                ${entry.amount > 0 ? '+' : ''}${entry.amount}<span class="text-[10px] opacity-70 ml-0.5">${entry.unit}</span>
+                                            <span class="${isUsage ? "text-red-500" : "text-emerald-500"} font-black text-sm">
+                                                ${entry.amount > 0 ? "+" : ""}${entry.amount}<span class="text-[10px] opacity-70 ml-0.5">${entry.unit}</span>
                                             </span>
                                         </div>
                                     </div>
                                 </div>`;
-                        }
-                    }).join('');
                 }
-            } catch (error) { console.error("History refresh failed:", error); }
+              })
+              .join("");
+          }
+        } catch (error) {
+          console.error("History refresh failed:", error);
         }
+      }
 
-        // 3. GLOBAL STATE & SIDEBAR LOGIC
-        let currentFilter = 'all';
+      // 3. GLOBAL STATE & SIDEBAR LOGIC
+      let currentFilter = "all";
 
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar) sidebar.classList.toggle('-translate-x-full');
-        }
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        if (sidebar) sidebar.classList.toggle("-translate-x-full");
+      }
 
-        // 4. SEARCH & FILTER LOGIC
-        function filterInventory(filter) {
-            currentFilter = filter;
-            localStorage.setItem('activeInventoryFilter', filter);
-            
-            const searchTerm = document.getElementById('inventorySearch').value.toLowerCase();
-            const rows = document.querySelectorAll('.inventory-row');
-            const noResults = document.getElementById('no-results');
-            
-            const tabs = {
-                all: document.getElementById('filter-all'),
-                ingredients: document.getElementById('filter-ingredients'),
-                packaging: document.getElementById('filter-packaging')
-            };
+      // 4. SEARCH & FILTER LOGIC
+      function filterInventory(filter) {
+        currentFilter = filter;
+        localStorage.setItem("activeInventoryFilter", filter);
 
-            Object.values(tabs).forEach(tab => {
-                if (tab) {
-                    tab.className = 'text-[11px] font-black uppercase tracking-widest text-slate-400 transition-all';
-                }
-            });
+        const searchTerm = document
+          .getElementById("inventorySearch")
+          .value.toLowerCase();
+        const rows = document.querySelectorAll(".inventory-row");
+        const noResults = document.getElementById("no-results");
 
-            if (tabs[filter]) {
-                tabs[filter].className = 'text-[11px] font-black uppercase tracking-widest text-orange-600 border-b-2 border-orange-500 pb-4 -mb-[18px] transition-all';
-            }
-
-            let visibleCount = 0;
-            rows.forEach(row => {
-                const itemName = row.querySelector('p.font-black').innerText.toLowerCase();
-                const isPkg = row.getAttribute('data-is-packaging') === 'true';
-                
-                let categoryMatch = (filter === 'all') || 
-                                    (filter === 'ingredients' && !isPkg) || 
-                                    (filter === 'packaging' && isPkg);
-
-                const searchMatch = itemName.includes(searchTerm);
-
-                if (categoryMatch && searchMatch) {
-                    row.style.display = 'table-row';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            if (noResults) {
-                noResults.classList.toggle('hidden', visibleCount > 0);
-            }
-        }
-
-        // 5. ON PAGE LOAD & API INTERCEPTORS
-        window.onload = function() {
-            const savedFilter = localStorage.getItem('activeInventoryFilter');
-            filterInventory(savedFilter || 'all');
-
-            document.querySelectorAll('form').forEach(form => {
-                // This now catches the Packaging modal form and the Update Stock form
-                if (form.id === 'updateStockForm' || form.action.includes('inventory/add') || form.id === 'deleteForm' || form.id === 'renameForm') {
-                    form.onsubmit = async function(e) {
-                        e.preventDefault();
-                        
-                        const formData = new FormData(this);
-                        const actionUrl = this.getAttribute('action');
-                        
-                        try {
-                            const response = await fetch(actionUrl, {
-                                method: 'POST',
-                                body: formData,
-                                headers: {
-                                    'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
-                                    'X-Requested-With': 'XMLHttpRequest'
-                                }
-                            });
-                            
-                            const result = await response.json();
-                            
-                            if (result.status === 'success') {
-                                if (this.id === 'ingredientForm') {
-                                    this.reset();
-                                    this.querySelector('input[name="quantity_items"]').value = 1;
-                                    calculateTotal();
-                                } else {
-                                    this.reset();
-                                }
-
-                                // Close all possible modals
-                                closeStockModal();
-                                closeDeleteModal();
-                                closeRenameModal();
-                                if (document.getElementById('ingredient-modal')) document.getElementById('ingredient-modal').classList.add('hidden');
-                                if (document.getElementById('packaging-modal')) document.getElementById('packaging-modal').classList.add('hidden');
-                                
-                                // 1. Update the table data silently
-                                await refreshInventoryTable();
-                                
-                                // 2. BROADCAST to Manager page
-                                stockChannel.postMessage('refresh_data'); 
-                                
-                                // Optional: If you want logs to update, you'd need a refreshLogs() function here
-                            } else {
-                                alert("Error: " + result.message);
-                            }
-                        } catch (error) {
-                            console.error('Sync Error:', error);
-                        }
-                    };
-                }
-            });
+        const tabs = {
+          all: document.getElementById("filter-all"),
+          ingredients: document.getElementById("filter-ingredients"),
+          packaging: document.getElementById("filter-packaging"),
         };
 
-        // 6. MODAL MANAGEMENT
-        function toggleModal() {
-            const modal = document.getElementById('ingredient-modal');
-            if (!modal) return;
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) {
-                const ingredientForm = document.getElementById('ingredientForm');
-                if (ingredientForm) {
-                    ingredientForm.reset();
+        Object.values(tabs).forEach((tab) => {
+          if (tab) {
+            tab.className =
+              "text-[11px] font-black uppercase tracking-widest text-slate-400 transition-all";
+          }
+        });
+
+        if (tabs[filter]) {
+          tabs[filter].className =
+            "text-[11px] font-black uppercase tracking-widest text-orange-600 border-b-2 border-orange-500 pb-4 -mb-[18px] transition-all";
+        }
+
+        let visibleCount = 0;
+        rows.forEach((row) => {
+          const itemName = row
+            .querySelector("p.font-black")
+            .innerText.toLowerCase();
+          const isPkg = row.getAttribute("data-is-packaging") === "true";
+
+          let categoryMatch =
+            filter === "all" ||
+            (filter === "ingredients" && !isPkg) ||
+            (filter === "packaging" && isPkg);
+
+          const searchMatch = itemName.includes(searchTerm);
+
+          if (categoryMatch && searchMatch) {
+            row.style.display = "table-row";
+            visibleCount++;
+          } else {
+            row.style.display = "none";
+          }
+        });
+
+        if (noResults) {
+          noResults.classList.toggle("hidden", visibleCount > 0);
+        }
+      }
+
+      // 5. ON PAGE LOAD & API INTERCEPTORS
+      window.onload = function () {
+        const savedFilter = localStorage.getItem("activeInventoryFilter");
+        filterInventory(savedFilter || "all");
+
+        document.querySelectorAll("form").forEach((form) => {
+          // This now catches the Packaging modal form and the Update Stock form
+          if (
+            form.id === "updateStockForm" ||
+            form.id === "deductStockForm" ||
+            form.action.includes("inventory/add") ||
+            form.id === "deleteForm" ||
+            form.id === "renameForm"
+          ) {
+            form.onsubmit = async function (e) {
+              e.preventDefault();
+
+              const formData = new FormData(this);
+              const actionUrl = this.getAttribute("action");
+
+              try {
+                const response = await fetch(actionUrl, {
+                  method: "POST",
+                  body: formData,
+                  headers: {
+                    "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+                    "X-Requested-With": "XMLHttpRequest",
+                  },
+                });
+
+                const result = await response.json();
+
+                if (result.status === "success") {
+                  if (this.id === "ingredientForm") {
+                    this.reset();
+                    this.querySelector('input[name="quantity_items"]').value =
+                      1;
+                    calculateTotal();
+                  } else {
+                    this.reset();
+                  }
+
+                  // Close all possible modals
+                  closeStockModal();
+                  closeDeductModal();
+                  closeDeleteModal();
+                  closeRenameModal();
+                  if (document.getElementById("ingredient-modal"))
+                    document
+                      .getElementById("ingredient-modal")
+                      .classList.add("hidden");
+                  if (document.getElementById("packaging-modal"))
+                    document
+                      .getElementById("packaging-modal")
+                      .classList.add("hidden");
+
+                  // 1. Update the table data silently
+                  await refreshInventoryTable();
+
+                  // 2. BROADCAST to Manager page
+                  stockChannel.postMessage("refresh_data");
+
+                  // Optional: If you want logs to update, you'd need a refreshLogs() function here
+                } else {
+                  alert("Error: " + result.message);
                 }
-                document.getElementById('calc-qty').value = 1;
-                document.getElementById('calc-stock').value = "";
-                calculateTotal();
-            }
-        }
+              } catch (error) {
+                console.error("Sync Error:", error);
+              }
+            };
+          }
+        });
+      };
 
-        function togglePackagingModal() {
-            const modal = document.getElementById('packaging-modal');
-            if (!modal) return;
-            if (modal.classList.contains('hidden')) {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+      // 6. MODAL MANAGEMENT
+      function toggleModal() {
+        const modal = document.getElementById("ingredient-modal");
+        if (!modal) return;
+        modal.classList.toggle("hidden");
+        if (!modal.classList.contains("hidden")) {
+          const ingredientForm = document.getElementById("ingredientForm");
+          if (ingredientForm) {
+            ingredientForm.reset();
+          }
+          document.getElementById("calc-qty").value = 1;
+          document.getElementById("calc-stock").value = "";
+          calculateTotal();
+        }
+      }
+
+      function togglePackagingModal() {
+        const modal = document.getElementById("packaging-modal");
+        if (!modal) return;
+        if (modal.classList.contains("hidden")) {
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+        } else {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+        }
+      }
+
+      function openUpdateModal(id, name, unitSize, lastPurchasePrice) {
+        const modal = document.getElementById("updateStockModal");
+        if (!modal) return;
+
+        // 1. Set the basic hidden ID and display name
+        document.getElementById("modalIngId").value = id;
+        document.getElementById("modalIngName").innerText = name;
+
+        // 2. Pre-fill the "Size per Box/Item" (The quantity inside one unit)
+        const sizeInput = document.getElementById("modalUnitSize");
+        if (sizeInput) sizeInput.value = unitSize;
+
+        // 3. Setup Auto-Calculating Price logic
+        const qtyInput = document.getElementById("modalQty");
+        const priceInput = document.querySelector('input[name="batch_price"]');
+
+        if (qtyInput && priceInput) {
+          qtyInput.value = ""; // Clear for new entry
+          priceInput.value = "";
+
+          // Convert to float to ensure toFixed works even if passed as string
+          const lastPrice = parseFloat(lastPurchasePrice) || 0;
+          priceInput.placeholder = `Usual: $${lastPrice.toFixed(2)}`;
+
+          // Calculate total as you type quantity
+          qtyInput.oninput = function () {
+            const qty = parseFloat(qtyInput.value) || 0;
+            if (qty > 0) {
+              priceInput.value = (qty * lastPrice).toFixed(2);
             } else {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
+              priceInput.value = "";
             }
+          };
         }
 
-        function openUpdateModal(id, name, unitSize, lastPurchasePrice) {
-            const modal = document.getElementById('updateStockModal');
-            if (!modal) return;
-
-            // 1. Set the basic hidden ID and display name
-            document.getElementById('modalIngId').value = id;
-            document.getElementById('modalIngName').innerText = name;
-            
-            // 2. Pre-fill the "Size per Box/Item" (The quantity inside one unit)
-            const sizeInput = document.getElementById('modalUnitSize');
-            if (sizeInput) sizeInput.value = unitSize;
-            
-            // 3. Setup Auto-Calculating Price logic
-            const qtyInput = document.getElementById('modalQty');
-            const priceInput = document.querySelector('input[name="batch_price"]');
-            
-            if (qtyInput && priceInput) {
-                qtyInput.value = ""; // Clear for new entry
-                priceInput.value = ""; 
-                
-                // Convert to float to ensure toFixed works even if passed as string
-                const lastPrice = parseFloat(lastPurchasePrice) || 0;
-                priceInput.placeholder = `Usual: $${lastPrice.toFixed(2)}`;
-
-                // Calculate total as you type quantity
-                qtyInput.oninput = function() {
-                    const qty = parseFloat(qtyInput.value) || 0;
-                    if (qty > 0) {
-                        priceInput.value = (qty * lastPrice).toFixed(2);
-                    } else {
-                        priceInput.value = "";
-                    }
-                };
-            }
-            
-            // 4. Set form destination to the API view
-            const form = document.getElementById('updateStockForm');
-            if (form) {
-                /** * IMPORTANT: This path must match the one in urls.py linked to api_update_stock.
-                * Using the /inventory/update/ prefix ensures consistency across both pages.
-                */
-                form.action = `/inventory/update/${id}/`; 
-            }
-            
-            // 5. Show the modal
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+        // 4. Set form destination to the API view
+        const form = document.getElementById("updateStockForm");
+        if (form) {
+          /** * IMPORTANT: This path must match the one in urls.py linked to api_update_stock.
+           * Using the /inventory/update/ prefix ensures consistency across both pages.
+           */
+          form.action = `/inventory/update/${id}/`;
         }
 
-        function closeStockModal() {
-            const modal = document.getElementById('updateStockModal');
-            if (modal) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
+        // 5. Show the modal
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+
+      function closeStockModal() {
+        const modal = document.getElementById("updateStockModal");
+        if (modal) {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+        }
+      }
+
+      function openDeductModal(id, name, unitSize) {
+        const modal = document.getElementById("deductStockModal");
+        if (!modal) return;
+        document.getElementById("deductModalIngId").value = id;
+        document.getElementById("deductModalIngName").innerText = name;
+
+        const form = document.getElementById("deductStockForm");
+        if (form) form.action = `/inventory/deduct/${id}/`;
+
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+
+      function closeDeductModal() {
+        const modal = document.getElementById("deductStockModal");
+        if (modal) {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+        }
+      }
+
+      function openDeleteModal(id, name) {
+        const modal = document.getElementById("deleteModal");
+        if (!modal) return;
+        document.getElementById("deleteIngName").innerText = name;
+        document.getElementById("deleteForm").action =
+          `/inventory/delete/${id}/`;
+        modal.classList.remove("hidden");
+      }
+
+      function closeDeleteModal() {
+        const modal = document.getElementById("deleteModal");
+        if (modal) modal.classList.add("hidden");
+      }
+
+      function openPackagingModal(type) {
+        const modal = document.getElementById("packaging-modal");
+        const typeSelect = document.getElementById("pkg-type-select");
+        const nameInput = document.getElementById("pkg-name");
+
+        if (typeSelect) typeSelect.value = type;
+
+        let itemName = "";
+        switch (type) {
+          case "HOT_CUP":
+            itemName = "Paper Cup";
+            break;
+          case "COLD_CUP":
+            itemName = "Plastic Cup";
+            break;
+          case "HOT_STRAW":
+            itemName = "Hot Straw";
+            break;
+          case "COLD_STRAW":
+            itemName = "Cold Straw";
+            break;
+          case "CARRIER":
+            itemName = "Cup Carrier";
+            break;
+          case "HOT_LID":
+            itemName = "Hot Lid";
+            break;
+          case "COLD_LID":
+            itemName = "Cold Lid";
+            break;
+          default:
+            itemName = type
+              .split("_")
+              .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+              .join(" ");
         }
 
-        function openDeleteModal(id, name) {
-            const modal = document.getElementById('deleteModal');
-            if (!modal) return;
-            document.getElementById('deleteIngName').innerText = name;
-            document.getElementById('deleteForm').action = `/inventory/delete/${id}/`;
-            modal.classList.remove('hidden');
-        }
+        if (nameInput) nameInput.value = itemName;
 
-        function closeDeleteModal() {
-            const modal = document.getElementById('deleteModal');
-            if (modal) modal.classList.add('hidden');
-        }
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
 
-        function openPackagingModal(type) {
-            const modal = document.getElementById('packaging-modal');
-            const typeSelect = document.getElementById('pkg-type-select');
-            const nameInput = document.getElementById('pkg-name');
-            
-            if (typeSelect) typeSelect.value = type;
-            
-            let itemName = "";
-            switch(type) {
-                case 'HOT_CUP': itemName = "Paper Cup"; break;
-                case 'COLD_CUP': itemName = "Plastic Cup"; break;
-                case 'HOT_STRAW': itemName = "Hot Straw"; break;
-                case 'COLD_STRAW': itemName = "Cold Straw"; break;
-                case 'CARRIER': itemName = "Cup Carrier"; break;
-                case 'HOT_LID': itemName = "Hot Lid"; break;
-                case 'COLD_LID': itemName = "Cold Lid"; break;
-                default:
-                    itemName = type.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ');
-            }
+      function openRenameModal(id, name) {
+        const modal = document.getElementById("rename-modal");
+        const input = document.getElementById("renameInput");
+        const form = document.getElementById("renameForm");
+        if (!modal || !input || !form) return;
 
-            if (nameInput) nameInput.value = itemName;
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
+        input.value = name;
+        form.action = `/inventory/rename/${id}/`;
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
 
-        function openRenameModal(id, name) {
-            const modal = document.getElementById('rename-modal');
-            const input = document.getElementById('renameInput');
-            const form = document.getElementById('renameForm');
-            if (!modal || !input || !form) return;
-            
-            input.value = name;
-            form.action = `/inventory/rename/${id}/`;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+      function closeRenameModal() {
+        const modal = document.getElementById("rename-modal");
+        if (modal) {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
         }
+      }
 
-        function closeRenameModal() {
-            const modal = document.getElementById('rename-modal');
-            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
-        }
+      function calculateTotal() {
+        const qty = parseFloat(document.getElementById("calc-qty").value) || 0;
+        const stockPerItem =
+          parseFloat(document.getElementById("calc-stock").value) || 0;
+        const unit = document.getElementById("calc-unit").value;
+        const total = qty * stockPerItem;
+        const display = document.getElementById("total-display");
+        if (display) display.innerText = `${total}${unit} (${qty})`;
+      }
 
-        function calculateTotal() {
-            const qty = parseFloat(document.getElementById('calc-qty').value) || 0;
-            const stockPerItem = parseFloat(document.getElementById('calc-stock').value) || 0;
-            const unit = document.getElementById('calc-unit').value;
-            const total = qty * stockPerItem;
-            const display = document.getElementById('total-display');
-            if (display) display.innerText = `${total}${unit} (${qty})`;
-        }
-
-        window.onclick = function(event) {
-            if (event.target.id === 'updateStockModal') closeStockModal();
-            if (event.target.id === 'deleteModal') closeDeleteModal();
-            if (event.target.id === 'ingredient-modal') toggleModal();
-            if (event.target.id === 'packaging-modal') togglePackagingModal();
-            if (event.target.id === 'rename-modal') closeRenameModal();
-        }
+      window.onclick = function (event) {
+        if (event.target.id === "updateStockModal") closeStockModal();
+        if (event.target.id === "deductStockModal") closeDeductModal();
+        if (event.target.id === "deleteModal") closeDeleteModal();
+        if (event.target.id === "ingredient-modal") toggleModal();
+        if (event.target.id === "packaging-modal") togglePackagingModal();
+        if (event.target.id === "rename-modal") closeRenameModal();
+      };
     </script>
-</body>
+  </body>
+</html>
 </html>

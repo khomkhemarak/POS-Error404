@@ -27,6 +27,7 @@ urlpatterns = [
     
     # Unified Stock Update (Points to the API view for silent refreshing)
     path('inventory/update/<int:pk>/', views.api_update_stock, name='update_stock'),
+    path('inventory/deduct/<int:pk>/', views.api_deduct_stock, name='deduct_stock'),
     
     path('inventory/rename/<int:pk>/', views.rename_ingredient, name='rename_ingredient'),
     path('inventory/delete/<int:pk>/', views.delete_ingredient, name='delete_ingredient'),
