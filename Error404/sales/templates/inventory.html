@@ -37,6 +37,224 @@
         box-shadow: 6px 6px 0px 0px rgba(239, 68, 68, 0.3);
         transform: translate(-2px, -2px);
       }
+
+      /* ===== MOBILE CARD VIEW ===== */
+      .mobile-card-list { display: none; }
+      .mobile-telemetry { display: none; }
+
+      @media (max-width: 767px) {
+        /* Hide desktop table wrapper */
+        .desktop-table-wrapper { display: none !important; }
+        /* Show mobile cards */
+        .mobile-card-list { display: block !important; }
+        .mobile-telemetry { display: flex !important; }
+
+        /* Compact header */
+        .inv-header-title { font-size: 1.5rem !important; }
+        .inv-header-sub { font-size: 8px !important; }
+        .inv-add-btn {
+          width: 100% !important;
+          padding: 12px 16px !important;
+          border-radius: 14px !important;
+          font-size: 9px !important;
+        }
+
+        /* Compact supply bar - segmented control feel */
+        .supply-bar {
+          gap: 8px !important;
+          padding-bottom: 8px !important;
+          margin-bottom: 12px !important;
+        }
+        .supply-bar button {
+          padding: 8px 12px !important;
+          border-radius: 12px !important;
+          font-size: 9px !important;
+          border-width: 1.5px !important;
+          box-shadow: 2px 2px 0px 0px rgba(203, 213, 225, 0.5) !important;
+        }
+        .supply-bar button i { font-size: 11px !important; }
+
+        /* Filter tabs compact */
+        .filter-tabs {
+          gap: 16px !important;
+          padding-bottom: 10px !important;
+          margin-bottom: 12px !important;
+        }
+
+        /* Full-width search */
+        .search-wrapper {
+          max-width: 100% !important;
+          margin-bottom: 12px !important;
+        }
+        .search-wrapper input {
+          padding: 12px 12px 12px 44px !important;
+          border-radius: 14px !important;
+          font-size: 13px !important;
+        }
+        .search-wrapper i { left: 14px !important; font-size: 15px !important; }
+
+        /* Mobile inventory card */
+        .mobile-inv-card {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background: #fff;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 16px;
+          padding: 14px;
+          margin-bottom: 10px;
+          box-shadow: 3px 3px 0px 0px rgba(203, 213, 225, 0.5);
+          transition: all 0.15s ease;
+        }
+        .mobile-inv-card:active {
+          transform: translate(1px, 1px);
+          box-shadow: 1px 1px 0px 0px rgba(203, 213, 225, 0.5);
+        }
+        .mobile-inv-card-icon {
+          width: 46px;
+          height: 46px;
+          min-width: 46px;
+          background: #f8fafc;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          color: #94a3b8;
+        }
+        .mobile-inv-card-body {
+          flex: 1;
+          min-width: 0;
+        }
+        .mobile-inv-card-name {
+          font-weight: 900;
+          font-size: 13px;
+          color: #1e293b;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-bottom: 4px;
+          letter-spacing: -0.02em;
+        }
+        .mobile-inv-card-meta {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .mobile-inv-card-meta span {
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+        .mobile-inv-card-meta .stock-val {
+          color: #10b981;
+        }
+        .mobile-inv-card-meta .stock-val.low {
+          color: #ef4444;
+        }
+        .mobile-inv-card-meta .qty-val {
+          color: #10b981;
+        }
+        .mobile-inv-card-meta .qty-val.low {
+          color: #ef4444;
+        }
+        .mobile-inv-card-meta .meta-label {
+          color: #94a3b8;
+          font-size: 9px;
+          font-weight: 700;
+        }
+        .mobile-inv-card-actions {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+        }
+        .mobile-inv-card-actions .mob-del-btn {
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 10px;
+          border: 1.5px solid transparent;
+          color: #ef4444;
+          background: #fef2f2;
+          font-size: 15px;
+          transition: all 0.15s ease;
+          cursor: pointer;
+        }
+        .mobile-inv-card-actions .mob-del-btn:hover {
+          border-color: #fca5a5;
+          background: #fee2e2;
+        }
+        .mobile-inv-card-actions .mob-upd-btn {
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 10px;
+          border: 1.5px solid #e2e8f0;
+          color: #64748b;
+          background: #fff;
+          font-size: 14px;
+          transition: all 0.15s ease;
+          cursor: pointer;
+        }
+        .mobile-inv-card-actions .mob-upd-btn:hover {
+          border-color: #fdba74;
+          color: #ea580c;
+          background: #fff7ed;
+        }
+
+        /* Telemetry summary */
+        .mobile-telemetry {
+          gap: 12px;
+          margin-bottom: 14px;
+          padding: 12px 14px;
+          background: #fff;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 14px;
+          box-shadow: 3px 3px 0px 0px rgba(203, 213, 225, 0.5);
+        }
+        .mobile-telemetry .tele-item {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .mobile-telemetry .tele-label {
+          font-size: 9px;
+          font-weight: 700;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+        .mobile-telemetry .tele-value {
+          font-size: 14px;
+          font-weight: 900;
+          color: #10b981;
+        }
+        .mobile-telemetry .tele-value.warn {
+          color: #ef4444;
+        }
+        .mobile-telemetry .tele-sep {
+          width: 1.5px;
+          height: 24px;
+          background: #e2e8f0;
+          border-radius: 2px;
+        }
+
+        /* No results mobile */
+        .mobile-no-results {
+          text-align: center;
+          padding: 48px 20px;
+        }
+        .mobile-no-results i { font-size: 28px; color: #cbd5e1; }
+        .mobile-no-results p { margin-top: 8px; }
+      }
     </style>
   </head>
   <body
@@ -140,26 +358,26 @@
       >
         <div>
           <h1
-            class="text-3xl md:text-4xl font-black tracking-tight text-slate-900 uppercase"
+            class="inv-header-title text-3xl md:text-4xl font-black tracking-tight text-slate-900 uppercase"
           >
             Inventory
           </h1>
           <p
-            class="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1"
+            class="inv-header-sub text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1"
           >
             Manage raw ingredients and stock levels
           </p>
         </div>
         <button
           onclick="toggleModal()"
-          class="w-full md:w-auto bg-orange-500 border-2 border-orange-500 text-white px-6 py-4 rounded-2xl font-black bento-card bento-card-interactive transition flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest"
+          class="inv-add-btn w-full md:w-auto bg-orange-500 border-2 border-orange-500 text-white px-6 py-4 rounded-2xl font-black bento-card bento-card-interactive transition flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest"
         >
           <i class="bi bi-plus-lg text-lg"></i> Add Ingredient
         </button>
       </header>
 
       <div
-        class="flex gap-4 mb-6 overflow-x-auto pb-4 pt-2 px-1 custom-scrollbar"
+        class="supply-bar flex gap-4 mb-6 overflow-x-auto pb-4 pt-2 px-1 custom-scrollbar"
       >
         <button
           onclick="openPackagingModal('HOT_CUP')"
@@ -227,7 +445,7 @@
       </div>
 
       <div
-        class="flex items-center gap-8 mb-6 border-b-2 border-slate-200 pb-4 overflow-x-auto whitespace-nowrap"
+        class="filter-tabs flex items-center gap-8 mb-6 border-b-2 border-slate-200 pb-4 overflow-x-auto whitespace-nowrap"
       >
         <button
           type="button"
@@ -255,7 +473,7 @@
         </button>
       </div>
 
-      <div class="relative mb-6 group max-w-md">
+      <div class="search-wrapper relative mb-6 group max-w-md">
         <i
           class="bi bi-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors text-lg"
         ></i>
@@ -269,7 +487,7 @@
       </div>
 
       <div
-        class="bg-white rounded-[2rem] border-2 border-slate-200 bento-card overflow-hidden mb-10"
+        class="desktop-table-wrapper bg-white rounded-[2rem] border-2 border-slate-200 bento-card overflow-hidden mb-10"
       >
         <div class="overflow-x-auto custom-scrollbar">
           <table class="w-full text-left border-collapse min-w-[900px]">
@@ -480,6 +698,59 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- ===== MOBILE TELEMETRY SUMMARY ===== -->
+      <div class="mobile-telemetry" style="display:none;">
+        <div class="tele-item">
+          <span class="tele-label">Total Items</span>
+          <span class="tele-value">{{ ingredients|length }}</span>
+        </div>
+        <div class="tele-sep"></div>
+        <div class="tele-item">
+          <span class="tele-label">Low Stock</span>
+          <span class="tele-value warn" id="mobile-low-stock-count">{{ low_stock_count|default:"0" }}</span>
+        </div>
+      </div>
+
+      <!-- ===== MOBILE CARD LIST ===== -->
+      <div class="mobile-card-list" id="mobileCardList" style="display:none;">
+        {% for ing in ingredients %}
+        <div class="mobile-inv-card inventory-row-mobile"
+             data-is-packaging="{% if ing.packaging_type != 'NONE' %}true{% else %}false{% endif %}"
+             data-name="{{ ing.name|lower }}">
+          <div class="mobile-inv-card-icon">
+            <i class="bi {% if ing.packaging_type != 'NONE' %}bi-box-seam{% else %}bi-cup-hot{% endif %}"></i>
+          </div>
+          <div class="mobile-inv-card-body">
+            <div class="mobile-inv-card-name"
+                 onclick="openRenameModal('{{ ing.id }}', '{{ ing.name|escapejs }}')">
+              {{ ing.name }}
+            </div>
+            <div class="mobile-inv-card-meta">
+              <span class="meta-label">Stock</span>
+              <span class="stock-val {% if ing.is_low_stock %}low{% endif %}">{{ ing.stock_percent|floatformat:0 }}%</span>
+              <span class="meta-label">Qty</span>
+              <span class="qty-val {% if ing.is_low_stock %}low{% endif %}">{{ ing.stock_quantity|floatformat:0 }} {% if ing.packaging_type != 'NONE' %}pcs{% else %}{{ ing.unit }}{% endif %}</span>
+            </div>
+          </div>
+          <div class="mobile-inv-card-actions">
+            <button type="button" class="mob-upd-btn"
+                    onclick="openUpdateModal('{{ ing.id }}', '{{ ing.name|escapejs }}', '{{ ing.initial_stock_per_item }}', '{{ ing.last_purchase_price }}')">
+              <i class="bi bi-arrow-repeat"></i>
+            </button>
+            <button type="button" class="mob-del-btn"
+                    onclick="openDeleteModal('{{ ing.id }}', '{{ ing.name|escapejs }}')">
+              <i class="bi bi-trash3-fill"></i>
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+        <div class="mobile-no-results" id="mobile-no-results" style="display:none;">
+          <i class="bi bi-search"></i>
+          <p class="text-slate-800 font-black text-sm tracking-tight">No results found</p>
+          <p class="text-slate-500 text-[9px] uppercase tracking-widest font-bold">Try different keywords or filters</p>
         </div>
       </div>
 
@@ -1303,10 +1574,59 @@
             `;
       }
 
+      function buildMobileCard(ing) {
+        const isPackaging = ing.packaging_type !== "NONE";
+        const unitLabel = isPackaging ? "pcs" : escapeHtml(ing.unit || "");
+        const percent = Math.round(Number(ing.stock_percent || 0));
+        const stockQty = Number(ing.stock_quantity || 0).toFixed(0);
+        const lowClass = ing.is_low_stock ? "low" : "";
+        const iconClass = isPackaging ? "bi-box-seam" : "bi-cup-hot";
+
+        return `
+          <div class="mobile-inv-card inventory-row-mobile"
+               data-is-packaging="${isPackaging}"
+               data-name="${escapeHtml(ing.name).toLowerCase()}">
+            <div class="mobile-inv-card-icon">
+              <i class="bi ${iconClass}"></i>
+            </div>
+            <div class="mobile-inv-card-body">
+              <div class="mobile-inv-card-name"
+                   onclick="openRenameModal('${ing.id}', '${jsEscape(ing.name)}')">
+                ${escapeHtml(ing.name)}
+              </div>
+              <div class="mobile-inv-card-meta">
+                <span class="meta-label">Stock</span>
+                <span class="stock-val ${lowClass}">${percent}%</span>
+                <span class="meta-label">Qty</span>
+                <span class="qty-val ${lowClass}">${stockQty} ${unitLabel}</span>
+              </div>
+            </div>
+            <div class="mobile-inv-card-actions">
+              <button type="button" class="mob-upd-btn"
+                      onclick="openUpdateModal('${ing.id}', '${jsEscape(ing.name)}', '${Number(ing.initial_stock_per_item || 0).toFixed(2)}', '${Number(ing.last_purchase_price || 0).toFixed(2)}')">
+                <i class="bi bi-arrow-repeat"></i>
+              </button>
+              <button type="button" class="mob-del-btn"
+                      onclick="openDeleteModal('${ing.id}', '${jsEscape(ing.name)}')">
+                <i class="bi bi-trash3-fill"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
       function renderInventoryRows(ingredients) {
         const rows = document.getElementById("inventoryRows");
-        if (!rows) return;
-        rows.innerHTML = ingredients.map(buildInventoryRow).join("");
+        if (rows) rows.innerHTML = ingredients.map(buildInventoryRow).join("");
+
+        // Also rebuild mobile cards
+        const mobileList = document.getElementById("mobileCardList");
+        if (mobileList) {
+          const noResultsEl = document.getElementById("mobile-no-results");
+          const noResultsHtml = noResultsEl ? noResultsEl.outerHTML : '';
+          mobileList.innerHTML = ingredients.map(buildMobileCard).join("") + noResultsHtml;
+        }
+
         filterInventory(currentFilter);
       }
 
@@ -1442,6 +1762,29 @@
 
         if (noResults) {
           noResults.classList.toggle("hidden", visibleCount > 0);
+        }
+
+        // Also filter mobile cards
+        const mobileCards = document.querySelectorAll(".inventory-row-mobile");
+        const mobileNoResults = document.getElementById("mobile-no-results");
+        let mobileVisibleCount = 0;
+        mobileCards.forEach((card) => {
+          const name = (card.getAttribute("data-name") || "").toLowerCase();
+          const isPkg = card.getAttribute("data-is-packaging") === "true";
+          let categoryMatch =
+            filter === "all" ||
+            (filter === "ingredients" && !isPkg) ||
+            (filter === "packaging" && isPkg);
+          const searchMatch = name.includes(searchTerm);
+          if (categoryMatch && searchMatch) {
+            card.style.display = "flex";
+            mobileVisibleCount++;
+          } else {
+            card.style.display = "none";
+          }
+        });
+        if (mobileNoResults) {
+          mobileNoResults.style.display = mobileVisibleCount > 0 ? "none" : "block";
         }
       }
 
@@ -1722,5 +2065,4 @@
       };
     </script>
   </body>
-</html>
 </html>

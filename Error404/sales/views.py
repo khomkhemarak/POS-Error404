@@ -390,10 +390,13 @@ def inventory_list(request):
             page_obj = paginator.page(paginator.num_pages)
         displayed_logs = page_obj
 
+    low_stock_count = sum(1 for ing in ingredients if ing.is_low_stock)
+
     return render(request, 'inventory.html', {
         'ingredients': ingredients,
         'grouped_logs': displayed_logs,
         'page_obj': page_obj,
+        'low_stock_count': low_stock_count,
     })
 
 def api_inventory_list(request):
