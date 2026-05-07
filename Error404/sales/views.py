@@ -1216,8 +1216,12 @@ def api_dashboard_stats(request):
         start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
         date_func = ExtractDay
         label_fmt = lambda x: f"{current_month_name} {x}"
-    elif range_type in ['month', '30days']:
-        start_date = now.replace(day=1, hour=0, minute=0, second=0) 
+    elif range_type == 'month':
+        start_date = now.replace(day=1, hour=0, minute=0, second=0)
+        date_func = ExtractDay
+        label_fmt = lambda x: f"{current_month_name} {x}"
+    elif range_type == '30days':
+        start_date = (now - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0)
         date_func = ExtractDay
         label_fmt = lambda x: f"{current_month_name} {x}"
     elif range_type == 'year':
