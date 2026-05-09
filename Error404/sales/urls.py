@@ -43,4 +43,8 @@ urlpatterns = [
     path('manager/', views.manager_view, name='manager_display'),
     path('orders/history/', views.order_history_view, name='order_history'),
     path('api/orders/history/', views.api_order_history, name='api_order_history'),
+
+    # --- Invoice & Document Exports ---
+    path('invoice/<int:order_id>/', views.generate_invoice, name='generate_invoice'),
+    path('export-recipes/', views.export_recipes_pdf, name='export_recipes_pdf'),
 ]

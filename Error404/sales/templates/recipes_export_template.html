@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: sans-serif; font-size: 12px; color: #333; }
+        h1 { color: #ea580c; border-bottom: 2px solid #ea580c; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f8fafc; font-weight: bold; }
+        .product-header { background-color: #fff7ed; font-weight: bold; color: #9a3412; }
+    </style>
+</head>
+<body>
+    <h1>Error404 | Recipe Export</h1>
+    <p>Generated on: {{ now|date:"d M Y, H:i" }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Size</th>
+                <th>Ingredient</th>
+                <th>Quantity</th>
+                <th>Est. Unit Cost</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% regroup recipes by product.name as product_list %}
+            {% for prod in product_list %}
+                <tr class="product-header">
+                    <td colspan="5">{{ prod.grouper }}</td>
+                </tr>
+                {% for recipe in prod.list %}
+                <tr>
+                    <td></td>
+                    <td>{{ recipe.size }}</td>
+                    <td>{{ recipe.ingredient.name }}</td>
+                    <td>{{ recipe.quantity }} {{ recipe.ingredient.unit }}</td>
+                    <td>${{ recipe.line_cost|floatformat:4 }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

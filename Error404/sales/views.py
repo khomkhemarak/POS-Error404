@@ -57,7 +57,7 @@ def owner_view(request):
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
     
     # Define today's completed orders
-    orders = Order.objects.filter(is_completed=True, created_at__gte=start_date)
+    orders = Order.objects.filter(created_at__gte=start_date)
     order_count = orders.count()
 
     # --- 2. income (Pulling from Order total_amount - Fixed) ---
@@ -139,37 +139,43 @@ def add_product(request):
             category=category_obj.name
         )
 
-        # Helper to safely get costs/profits for a new product (might not have recipe yet)
-        try:
-            prod_cost = float(product.get_product_cost())
-        except:
-            prod_cost = 0.0
-            
-        try:
-            prod_profit = float(product.get_profit())
-        except:
-            # Fallback if recipe doesn't exist yet: (Price / 1.1) - 0
-            prod_profit = float(price) / 1.1
+        # Check if this is an AJAX request from owner page
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        if is_ajax:
+            # Return JSON for owner page AJAX requests
+            try:
+                prod_cost = float(product.get_product_cost())
+            except:
+                prod_cost = 0.0
+                
+            try:
+                prod_profit = float(product.get_profit())
+            except:
+                prod_profit = float(price) / 1.1
 
-        return JsonResponse({
-            'status': 'success',
-            'message': f'Product "{name}" added successfully!',
-            'product': {
-                'id': product.id,
-                'name': product.name,
-                'price_small': str(product.price_small),
-                'price_medium': str(product.price_medium),
-                'price_large': str(product.price_large),
-                'category_id': category_id,
-                'category': product.category,
-                'cost': prod_cost,
-                'profit': prod_profit,
-                'image_url': product.image.url if product.image else None,
-                'can_be_hot': product.can_be_hot,
-                'can_be_iced': product.can_be_iced,
-                'can_be_frappe': product.can_be_frappe,
-            }
-        })
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Product "{name}" added successfully!',
+                'product': {
+                    'id': product.id,
+                    'name': product.name,
+                    'price_small': str(product.price_small),
+                    'price_medium': str(product.price_medium),
+                    'price_large': str(product.price_large),
+                    'category_id': category_id,
+                    'category': product.category,
+                    'cost': prod_cost,
+                    'profit': prod_profit,
+                    'image_url': product.image.url if product.image else None,
+                    'can_be_hot': product.can_be_hot,
+                    'can_be_iced': product.can_be_iced,
+                    'can_be_frappe': product.can_be_frappe,
+                }
+            })
+        else:
+            # Redirect to manager for regular form submissions
+            return redirect('manager_display')
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
@@ -180,12 +186,19 @@ def delete_product(request, product_id):
         name = product.name
         product.delete()
         
-        # Return JSON so JavaScript can tell Manager.html to remove the row
-        return JsonResponse({
-            'status': 'success',
-            'message': f'"{name}" has been removed.',
-            'product_id': prod_id
-        })
+        # Check if this is an AJAX request from owner page
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        if is_ajax:
+            # Return JSON for owner page AJAX requests
+            return JsonResponse({
+                'status': 'success',
+                'message': f'"{name}" has been removed.',
+                'product_id': prod_id
+            })
+        else:
+            # Redirect to manager for regular form submissions
+            return redirect('manager_display')
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
@@ -217,25 +230,32 @@ def edit_product(request, product_id):
             
         product.save()
 
-        # Return JSON instead of redirecting
-        return JsonResponse({
-            'status': 'success',
-            'message': f'Updated "{product.name}"',
-            'product': {
-                'id': product.id,
-                'name': product.name,
-                'price_small': str(product.price_small),
-                'price_medium': str(product.price_medium),
-                'price_large': str(product.price_large),
-                'category_id': category_id,
-                'category': product.category,
-                'profit': f"{product.get_profit():.2f}" if hasattr(product, 'get_profit') else "0.00",
-                'image_url': product.image.url if product.image else None,
-                'can_be_hot': product.can_be_hot,
-                'can_be_iced': product.can_be_iced,
-                'can_be_frappe': product.can_be_frappe,
-            }
-        })
+        # Check if this is an AJAX request from owner page
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        if is_ajax:
+            # Return JSON for owner page AJAX requests
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Updated "{product.name}"',
+                'product': {
+                    'id': product.id,
+                    'name': product.name,
+                    'price_small': str(product.price_small),
+                    'price_medium': str(product.price_medium),
+                    'price_large': str(product.price_large),
+                    'category_id': category_id,
+                    'category': product.category,
+                    'profit': f"{product.get_profit():.2f}" if hasattr(product, 'get_profit') else "0.00",
+                    'image_url': product.image.url if product.image else None,
+                    'can_be_hot': product.can_be_hot,
+                    'can_be_iced': product.can_be_iced,
+                    'can_be_frappe': product.can_be_frappe,
+                }
+            })
+        else:
+            # Redirect to manager for regular form submissions
+            return redirect('manager_display')
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
@@ -275,7 +295,7 @@ def generate_daily_report(request):
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Re-use logic from owner_view/api_dashboard_stats for 'today'
-    orders = Order.objects.filter(is_completed=True, created_at__gte=start_date)
+    orders = Order.objects.filter(created_at__gte=start_date)
     order_count = orders.count()
 
     total_income = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
@@ -860,8 +880,7 @@ def customer_lookup(request):
             'status': 'success',
             'id': customer.id,
             'name': customer.name,
-            'points': customer.points,
-            'discount': float(customer.discount_rate)
+            'points': customer.points
         })
     except Customer.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Customer not found'}, status=404)
@@ -900,22 +919,40 @@ def process_payment(request):
         total_price = data.get('total')
         customer_id = data.get('customer_id') 
         service_type = data.get('service_type', 'Dine-in')
+        redeem_free_drink = data.get('redeem_free_drink', False)
+        payment_method = data.get('payment_method', 'Cash')
+        cash_received = data.get('cash_received', 0)
+        cash_change = data.get('cash_change', 0)
 
         with transaction.atomic():
-            # Set is_completed=True so it shows up in the Dashboard totals immediately
             new_order = Order.objects.create(
                 total_amount=total_price, 
-                is_completed=True,
-                service_type=service_type
+                is_completed=False, # Now appears in Kitchen Queue
+                service_type=service_type,
+                payment_method=payment_method,
+                customer_id=customer_id,
+                cash_received=Decimal(str(cash_received)),
+                cash_change=Decimal(str(cash_change)),
+                cashier_name=request.user.get_full_name() or request.user.username if request.user.is_authenticated else "Staff"
             )
 
-            # ... (Loyalty logic remains the same) ...
+            customer = None
+            if customer_id:
+                customer = Customer.objects.select_for_update().get(id=customer_id)
+                if redeem_free_drink:
+                    customer.points = max(0, customer.points - 50)
+                    customer.save()
+
+            free_drink_applied = False
+            total_earned_points = 0
+            point_map = {'Small': 3, 'Medium': 5, 'Large': 7}
 
             for item in cart_items:
                 product = Product.objects.get(id=item.get('id'))
                 target_size = item.get('size', 'Medium') 
                 product_type = item.get('type', 'Hot')     
                 qty = int(item.get('qty', 1))
+                extra_shots = int(item.get('shots', 0))
                 
                 # --- A. DEDUCT BEVERAGE INGREDIENTS ---
                 recipe_items = Recipe.objects.filter(product=product, size=target_size)
@@ -945,6 +982,10 @@ def process_payment(request):
                         if "sugar" in ingredient.name.lower() or "syrup" in ingredient.name.lower():
                             usage = usage * multiplier
                             
+                        # Extra Shot Stock Deduction (Coffee Bean only)
+                        if extra_shots > 0 and "bean" in ingredient.name.lower():
+                            usage += Decimal('18') * Decimal(str(extra_shots)) * qty
+
                         ingredient.stock_quantity = max(Decimal('0.00'), ingredient.stock_quantity - usage)
                         if ingredient.initial_stock_per_item > 0:
                             ingredient.items_count = math.ceil(ingredient.stock_quantity / ingredient.initial_stock_per_item)
@@ -1008,6 +1049,17 @@ def process_payment(request):
                         )
 
                 # --- D. CREATE ORDER ITEM WITH SNAPSHOTS ---
+                price_at_sale = product.get_final_price(target_size, product_type)
+                if extra_shots > 0:
+                    price_at_sale += Decimal('0.50') * Decimal(str(extra_shots))
+
+                # Loyalty Logic: Apply free drink and calculate points
+                if redeem_free_drink and not free_drink_applied and target_size == 'Medium':
+                    price_at_sale = Decimal('0.00')
+                    free_drink_applied = True
+                else:
+                    total_earned_points += point_map.get(target_size, 0) * qty
+
                 OrderItem.objects.create(
                     order=new_order, 
                     product=product, 
@@ -1016,15 +1068,56 @@ def process_payment(request):
                     sugar=item.get('sugar', '100%'),
                     product_type=product_type,
                     # LOCK THE DATA: This makes your owner_view reports "Fixed"
-                    price_at_sale=product.get_final_price(target_size, product_type),
+                    price_at_sale=price_at_sale,
                     cost_at_sale=product.get_product_cost(target_size, product_type)
                 )
+
+            if customer:
+                customer.points += total_earned_points
+                customer.save()
 
         return JsonResponse({'status': 'success', 'order_id': new_order.id})
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     
+def generate_invoice(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    html_string = render_to_string('invoice_pdf.html', {
+        'order': order,
+        'store_address': 'Street 404, Error City, Phnom Penh',
+        'wifi_password': 'Error404_Coffee_Free',
+        'now': timezone.localtime(timezone.now()),
+    })
+    
+    # Allow fetching as HTML for the "Soft Invoice" preview in POS
+    if request.GET.get('format') == 'html':
+        return HttpResponse(html_string)
+
+    response = HttpResponse(content_type="application/pdf")
+    response['Content-Disposition'] = f'inline; filename="invoice_{order.id}.pdf"'
+    
+    if HAS_WEASYPRINT:
+        weasyprint.HTML(string=html_string).write_pdf(response)
+        return response
+    else:
+        return HttpResponse("PDF generation library (weasyprint) is not installed.", status=500)
+
+def export_recipes_pdf(request):
+    recipes = Recipe.objects.select_related('product', 'ingredient').all().order_by('product__name', 'size')
+    # Calculate costs for display
+    for r in recipes:
+        r.line_cost = (r.ingredient.unit_cost or Decimal('0.00')) * r.quantity
+        
+    html_string = render_to_string('recipes_export_template.html', {'recipes': recipes, 'now': timezone.localtime(timezone.now())})
+    response = HttpResponse(content_type="application/pdf")
+    response['Content-Disposition'] = 'attachment; filename="recipe_export.pdf"'
+    
+    if HAS_WEASYPRINT:
+        weasyprint.HTML(string=html_string).write_pdf(response)
+        return response
+    return HttpResponse("PDF generation library (weasyprint) is not installed.", status=500)
+
 def process_order_stock(order_item, new_order):
     # order_item contains: product, sugar_multiplier, qty
     recipe_ingredients = Recipe.objects.filter(product=order_item.product)
@@ -1103,7 +1196,7 @@ def manager_view(request):
 
     # --- 2. Summary Stats (Today) ---
     today = timezone.localtime(timezone.now()).replace(hour=0, minute=0, second=0, microsecond=0)
-    todays_orders = Order.objects.filter(is_completed=True, created_at__gte=today)
+    todays_orders = Order.objects.filter(created_at__gte=today)
     
     total_income = todays_orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
     total_profit = Decimal('0.00')
@@ -1158,6 +1251,7 @@ def manager_view(request):
 
     context = {
         'products': products,
+        'categories': Category.objects.all(),
         'total_income': total_income,
         'total_drinks_expense': total_expense,
         'total_inventory_value': total_inventory_value,
@@ -1235,7 +1329,7 @@ def api_dashboard_stats(request):
         label_fmt = lambda x: f"{x}:00"
 
     # --- 2. FINANCIAL CALCULATIONS ---
-    orders = Order.objects.filter(is_completed=True, created_at__gte=start_date)
+    orders = Order.objects.filter(created_at__gte=start_date)
     total_rev = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
     
     # --- NEW: Annual Income Tax Logic for API ---

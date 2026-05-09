@@ -271,8 +271,9 @@
             <div
               class="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:gap-3"
             >
-              <a
-                href="{% url 'add_product' %}"
+              <button
+                type="button"
+                onclick="openAddModal()"
                 class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 md:gap-2 bg-orange-500 hover:bg-orange-600 text-white font-[800] px-3 md:px-8 py-3.5 md:py-4 rounded-2xl md:rounded-3xl transition-all shadow-sm md:shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[9px] md:text-[10px] border-2 border-orange-500 min-w-0"
               >
                 <i class="bi bi-plus-lg text-sm md:text-lg"></i>
@@ -280,6 +281,13 @@
                   >Add Drink</span
                 >
                 <span class="truncate min-[360px]:hidden">Add</span>
+              </button>
+              <a
+                href="/export-recipes/"
+                class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 md:gap-2 bg-slate-800 hover:bg-slate-900 text-white font-[800] px-3 md:px-8 py-3.5 md:py-4 rounded-2xl md:rounded-3xl transition-all shadow-sm md:shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[9px] md:text-[10px] border-2 border-slate-800 min-w-0"
+              >
+                <i class="bi bi-journal-text text-sm md:text-lg"></i>
+                <span class="truncate">Export Recipes</span>
               </a>
               <a
                 href="{% url 'generate_daily_report' %}"
@@ -886,32 +894,21 @@
                       class="flex items-center justify-center gap-1 md:gap-2"
                     >
                       <button
-                        onclick="openEditModal('{{ product.id }}')"
+                        onclick="openEditModal('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price_small }}', '{{ product.price_medium }}', '{{ product.price_large }}', '{{ product.category|escapejs }}', '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')"
                         class="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center border-2 border-blue-100 hover:border-blue-600 shadow-sm"
                         title="Edit product"
                       >
                         <i class="bi bi-pencil-square text-xs md:text-base"></i>
                       </button>
 
-                      <form
-                        action="{% url 'delete_product' product.id %}"
-                        method="POST"
-                        onsubmit="
-                          return confirm(
-                            'Are you sure you want to delete this product?',
-                          );
-                        "
-                        class="inline"
+                      <button
+                        type="button"
+                        onclick="openDeleteModal('{{ product.id }}', '{{ product.name|escapejs }}')"
+                        class="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border-2 border-rose-100 hover:border-rose-600 shadow-sm"
+                        title="Delete product"
                       >
-                        {% csrf_token %}
-                        <button
-                          type="submit"
-                          class="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border-2 border-rose-100 hover:border-rose-600 shadow-sm"
-                          title="Delete product"
-                        >
-                          <i class="bi bi-trash3 text-xs md:text-base"></i>
-                        </button>
-                      </form>
+                        <i class="bi bi-trash3 text-xs md:text-base"></i>
+                      </button>
                     </div>
                   </td>
 
@@ -932,6 +929,203 @@
         </div>
       </div>
     </main>
+
+    <div id="productModal" class="hidden fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
+      <div class="bg-white w-full max-w-[28rem] rounded-[2.5rem] p-6 md:p-7 border-[3px] border-slate-900 shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] relative animate-in fade-in zoom-in duration-300 transition-all mx-auto max-h-[95vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h2 id="productModalTitle" class="text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Create product</h2>
+            <div class="h-1.5 w-12 bg-orange-500 mt-2 rounded-full"></div>
+          </div>
+          <button onclick="toggleproductModal()" class="w-11 h-11 bg-slate-50 rounded-2xl text-slate-900 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center border-2 border-slate-200 hover:border-red-600 shadow-sm">
+            <i class="bi bi-x-lg text-xl"></i>
+          </button>
+        </div>
+
+        <form id="productForm" action="{% url 'add_product' %}" method="POST" enctype="multipart/form-data" class="space-y-5">
+          {% csrf_token %}
+          <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all shadow-sm">
+            <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">product Identity</label>
+            <input type="text" name="name" placeholder="e.g. Amber Latte" required class="w-full bg-transparent text-slate-900 text-lg outline-none placeholder-slate-300 font-[800]">
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+              <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Small Price</label>
+              <div class="flex items-center">
+                <span class="text-slate-900 font-black mr-1 text-xs">$</span>
+                <input type="number" step="0.01" name="price_small" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
+              </div>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+              <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Medium Price</label>
+              <div class="flex items-center">
+                <span class="text-slate-900 font-black mr-1 text-xs">$</span>
+                <input type="number" step="0.01" name="price_medium" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
+              </div>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+              <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Large Price</label>
+              <div class="flex items-center">
+                <span class="text-slate-900 font-black mr-1 text-xs">$</span>
+                <input type="number" step="0.01" name="price_large" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+            <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">Category</label>
+            <div class="relative">
+              <select name="category" required class="w-full bg-transparent text-slate-900 outline-none cursor-pointer appearance-none font-[800] text-base">
+                <option value="" disabled selected>Select Category...</option>
+                {% for category in categories %}
+                  {% if category.name != 'Matcha' %}
+                  <option value="{{ category.id }}">{{ category.name }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <i class="bi bi-chevron-down absolute right-0 top-0 text-slate-900 pointer-events-none"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-[900] uppercase text-slate-500 mb-3 ml-1 tracking-widest text-center">Available Variations</label>
+            <div class="grid grid-cols-3 gap-3">
+              <label class="cursor-pointer group">
+                <input type="checkbox" name="can_be_hot" class="hidden peer" checked>
+                <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all shadow-sm">
+                  <i class="bi bi-thermometer-sun text-2xl mb-1"></i>
+                  <span class="text-[9px] font-[900] uppercase tracking-wider">Hot</span>
+                </div>
+              </label>
+              <label class="cursor-pointer group">
+                <input type="checkbox" name="can_be_iced" class="hidden peer">
+                <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all shadow-sm">
+                  <i class="bi bi-snow text-2xl mb-1"></i>
+                  <span class="text-[9px] font-[900] uppercase tracking-wider">Iced</span>
+                </div>
+              </label>
+              <label class="cursor-pointer group">
+                <input type="checkbox" name="can_be_frappe" class="hidden peer">
+                <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all shadow-sm">
+                  <i class="bi bi-stars text-2xl mb-1"></i>
+                  <span class="text-[9px] font-[900] uppercase tracking-wider">Frappe</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="border-2 border-dashed border-slate-300 rounded-[1.5rem] p-5 bg-slate-50/50 hover:bg-slate-50 hover:border-orange-400 transition-all group">
+            <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-2 tracking-widest">Visual Display</label>
+            <div class="flex items-center gap-4">
+              <div class="bg-slate-200 h-12 w-12 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-orange-500 transition-colors">
+                <i class="bi bi-image text-2xl"></i>
+              </div>
+              <input type="file" name="image" accept="image/*" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:uppercase file:font-[900] file:bg-slate-900 file:text-white cursor-pointer hover:file:bg-orange-600 transition-all">
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button id="productModalSubmitBtn" type="submit" class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-[900] transition-all text-sm tracking-[0.15em] uppercase hover:bg-slate-800 shadow-[0px_8px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none">
+              Confirm & Save product
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="editModal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[999] flex items-center justify-center p-4">
+      <div class="bg-white rounded-[2.5rem] w-full max-w-lg border-[3px] border-slate-900 shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div class="p-7 bg-slate-50 border-b-[3px] border-slate-900 flex justify-between items-center">
+          <div>
+            <h3 id="editModalTitle" class="text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Edit Drink Detail</h3>
+          </div>
+          <button onclick="closeEditModal()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border-2 border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 transition-all">
+            <i class="bi bi-x-lg text-lg"></i>
+          </button>
+        </div>
+
+        <form id="editproductForm" method="POST" enctype="multipart/form-data" class="space-y-5 p-7">
+          {% csrf_token %}
+          <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all shadow-sm">
+            <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">product Identity</label>
+            <input type="text" name="name" placeholder="e.g. Amber Latte" required class="w-full bg-transparent text-slate-900 text-lg outline-none placeholder-slate-300 font-[800]">
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+              <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Small Price</label>
+              <div class="flex items-center">
+                <span class="text-slate-900 font-black mr-1 text-xs">$</span>
+                <input type="number" step="0.01" name="price_small" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
+              </div>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+              <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Medium Price</label>
+              <div class="flex items-center">
+                <span class="text-slate-900 font-black mr-1 text-xs">$</span>
+                <input type="number" step="0.01" name="price_medium" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
+              </div>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+              <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Large Price</label>
+              <div class="flex items-center">
+                <span class="text-slate-900 font-black mr-1 text-xs">$</span>
+                <input type="number" step="0.01" name="price_large" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+            <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">Category</label>
+            <div class="relative">
+              <select name="category" required class="w-full bg-transparent text-slate-900 outline-none cursor-pointer appearance-none font-[800] text-base">
+                <option value="" disabled>Select Category...</option>
+                {% for category in categories %}
+                  {% if category.name != 'Matcha' %}
+                  <option value="{{ category.id }}">{{ category.name }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <i class="bi bi-chevron-down absolute right-0 top-0 text-slate-900 pointer-events-none"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-[900] uppercase text-slate-500 mb-3 ml-1 tracking-widest text-center">Available Variations</label>
+            <div class="grid grid-cols-3 gap-3">
+              <label class="cursor-pointer group">
+                <input type="checkbox" name="can_be_hot" class="hidden peer">
+                <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all shadow-sm">
+                  <i class="bi bi-thermometer-sun text-2xl mb-1"></i>
+                  <span class="text-[9px] font-[900] uppercase tracking-wider">Hot</span>
+                </div>
+              </label>
+              <label class="cursor-pointer group">
+                <input type="checkbox" name="can_be_iced" class="hidden peer">
+                <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all shadow-sm">
+                  <i class="bi bi-snow text-2xl mb-1"></i>
+                  <span class="text-[9px] font-[900] uppercase tracking-wider">Iced</span>
+                </div>
+              </label>
+              <label class="cursor-pointer group">
+                <input type="checkbox" name="can_be_frappe" class="hidden peer">
+                <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all shadow-sm">
+                  <i class="bi bi-stars text-2xl mb-1"></i>
+                  <span class="text-[9px] font-[900] uppercase tracking-wider">Frappe</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button id="editModalSubmitBtn" type="submit" class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-[900] transition-all text-sm tracking-[0.15em] uppercase hover:bg-slate-800 shadow-[0px_8px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none">
+              Update Drink
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <div
       id="updateStockModal"
@@ -1049,11 +1243,12 @@
           Delete Drink?
         </h2>
         <p class="text-slate-500 font-medium text-sm mb-8 leading-relaxed">
-          You are about to permanently remove <br /><span
+          Are you sure to delete<br />
+          <span
             id="deleteItemName"
             class="font-[800] text-red-500 bg-red-50 px-2 py-0.5 rounded-md"
           ></span
-          >.
+          >?
         </p>
 
         <div class="flex flex-col gap-3">
@@ -1412,6 +1607,63 @@
       });
 
       // 5. MODAL & UI LOGIC
+      function toggleproductModal() {
+          const modal = document.getElementById('productModal');
+          if (!modal) return;
+          modal.classList.toggle('hidden');
+          modal.classList.toggle('flex');
+      }
+
+      function openAddModal() {
+          const form = document.getElementById('productForm');
+          if (!form) return;
+          form.reset();
+          document.getElementById('productModalTitle').innerText = 'Create Drink';
+          document.getElementById('productModalSubmitBtn').innerText = 'Confirm & Save product';
+          form.action = "{% url 'add_product' %}";
+          toggleproductModal();
+      }
+
+      function openEditModal(id, name, pSmall, pMedium, pLarge, categoryName, canH, canI, canF) {
+          const modal = document.getElementById('editModal');
+          const form = document.getElementById('editproductForm');
+          if (!modal || !form) return;
+
+          document.getElementById('editModalTitle').innerText = 'Edit Drink';
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+
+          form.querySelector('input[name="name"]').value = name;
+          form.querySelector('input[name="price_small"]').value = pSmall;
+          form.querySelector('input[name="price_medium"]').value = pMedium;
+          form.querySelector('input[name="price_large"]').value = pLarge;
+
+          const categorySelect = form.querySelector('select[name="category"]');
+          if (categorySelect) {
+              let selectedValue = '';
+              for (const option of categorySelect.options) {
+                  if (option.text.trim() === categoryName?.trim()) {
+                      selectedValue = option.value;
+                      break;
+                  }
+              }
+              if (selectedValue) categorySelect.value = selectedValue;
+          }
+
+          form.querySelector('input[name="can_be_hot"]').checked = (canH === 'True');
+          form.querySelector('input[name="can_be_iced"]').checked = (canI === 'True');
+          form.querySelector('input[name="can_be_frappe"]').checked = (canF === 'True');
+
+          form.action = `/edit-product/${id}/`;
+      }
+
+      function closeEditModal() {
+          const modal = document.getElementById('editModal');
+          if (!modal) return;
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+      }
+
       function openDeleteModal(productId, productName) {
           document.getElementById('deleteItemName').innerText = productName;
           document.getElementById('deleteForm').action = `/delete-product/${productId}/`;

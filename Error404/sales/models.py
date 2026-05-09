@@ -165,8 +165,12 @@ class Order(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_completed = models.BooleanField(default=False)
     service_type = models.CharField(max_length=20, default='Dine-in')
+    payment_method = models.CharField(max_length=20, default='Cash')
     customer = models.ForeignKey('Customer', on_delete=models.SET_NULL, null=True, blank=True)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=10.0) # 10%
+    cash_received = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cash_change = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cashier_name = models.CharField(max_length=100, blank=True, null=True)
 
     @property
     def tax_amount(self):
@@ -178,6 +182,10 @@ class Order(models.Model):
     @property
     def subtotal(self):
         """Total minus the tax"""
+        return self.total_amount - self.tax_amount
+
+    @property
+    def subtotal_amount(self):
         return self.total_amount - self.tax_amount
 
 class OrderItem(models.Model):
@@ -202,6 +210,10 @@ class OrderItem(models.Model):
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     is_completed = models.BooleanField(default=False)
+
+    @property
+    def total_price(self):
+        return self.price_at_sale * self.quantity
 
 class Ingredient(models.Model):
     PACKAGING_CHOICES = (
@@ -338,7 +350,6 @@ class Customer(models.Model):
     phone = models.CharField(max_length=15, unique=True)
     email = models.EmailField(null=True, blank=True)
     points = models.IntegerField(default=0)
-    discount_rate = models.DecimalField(max_digits=4, decimal_places=2, default=10.00) # 10% discount
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

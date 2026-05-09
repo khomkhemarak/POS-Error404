@@ -143,7 +143,7 @@
             </div>
 
             <div class="p-5 bg-white rounded-b-xl border-t border-slate-100">
-                <form action="{% url 'complete_order' order.id %}" method="POST">
+                <form onsubmit="markOrderReady(event, '{{ order.id }}', this)" method="POST">
                     {% csrf_token %}
                     <button type="submit" class="w-full bg-emerald-500 text-white py-4 text-sm flex items-center justify-center gap-2 flat-button hover:bg-emerald-600">
                         MARK AS READY <i class="bi bi-check-circle-fill text-lg"></i>
@@ -214,6 +214,37 @@
                 
                 btnHistory.className = "flex-1 py-4 text-sm bg-orange-500 text-white flat-button";
                 btnPending.className = "flex-1 py-4 font-bold text-sm bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 rounded-xl transition-colors uppercase shadow-none transform-none";
+            }
+        }
+
+        async function markOrderReady(event, orderId, formElement) {
+            event.preventDefault();
+            const csrftoken = formElement.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            // Find the card container to hide it optimistically
+            const card = formElement.closest('.flat-card');
+            if (card) {
+                card.style.opacity = '0.3';
+                card.style.pointerEvents = 'none';
+            }
+
+            try {
+                const response = await fetch(`/api/kitchen/complete/${orderId}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                
+                if (response.ok) {
+                    if (card) card.remove();
+                    const counter = document.getElementById('queue-count');
+                    if (counter) counter.innerText = Math.max(0, parseInt(counter.innerText) - 1);
+                } else {
+                    alert("Error: Could not mark order as ready.");
+                    if (card) { card.style.opacity = '1'; card.style.pointerEvents = 'auto'; }
+                }
+            } catch (err) {
+                console.error("Network error:", err);
+                if (card) { card.style.opacity = '1'; card.style.pointerEvents = 'auto'; }
             }
         }
 

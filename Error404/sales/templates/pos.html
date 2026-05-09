@@ -57,7 +57,24 @@
             50% { border-color: #f97316; }
         }
 
-        .keyboard-visible {transform: translateY(0) !important;}
+        .keyboard-visible { transform: translateY(0) !important; visibility: visible !important; opacity: 1 !important; }
+
+        .loyalty-centered {
+            position: fixed !important;
+            top: 15% !important; /* Move slightly higher to give more room for keyboard */
+            left: 50% !important;
+            transform: translate(-50%, -50%) scale(1.05) !important;
+            z-index: 230 !important; /* Ensure it's above the keyboard wrapper */
+            width: 90% !important;
+            max-width: 400px !important;
+            background: white !important;
+            margin: 0 !important;
+            padding: 2rem !important;
+            border-radius: 3rem !important;
+            border: 4px solid #0f172a !important;
+            box-shadow: 10px 10px 0px 0px rgba(0,0,0,0.1) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
         #keyboard-grid button:active {
             background-color: #f97316; /* Orange-500 */
@@ -72,33 +89,32 @@
     <!-- Notification Container -->
     <div id="notification-container" class="fixed top-5 right-5 z-[200] space-y-3 pointer-events-none"></div>
 
+    <div id="loyalty-backdrop" onclick="closeLoyaltySearch()" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-xl z-[205] transition-all duration-300"></div>
+
     <div class="flex h-screen w-full">
         
         <div class="w-3/4 flex flex-col p-6 space-y-6">
             
             <div class="flex justify-between items-center">
-                <h1 class="text-3xl font-[800] text-orange-600 tracking-tighter flex items-center gap-3">
+                <h1 class="text-3xl font-bold text-orange-600 tracking-tighter flex items-center gap-3">
                     <span class="type">Error404</span>
-                    {% comment %} <span class="bg-orange-50 border border-orange-100 text-orange-500 px-2 py-1 rounded-md text-[10px] font-[800] tracking-widest uppercase">
-                        POS Terminal
-                    </span> {% endcomment %}
                 </h1>
                 <div class="relative w-1/3">
                     <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" placeholder="Search menu..." class="w-full bg-white border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 focus:border-orange-500 focus:bg-orange-50/30 text-slate-900 font-bold transition-all outline-none placeholder-slate-400">
+                    <input type="text" id="menu-search" onfocus="openGlobalKeyboard('menu-search', 'abc')" oninput="searchMenu()" placeholder="Search menu..." class="w-full bg-white border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 focus:border-orange-500 focus:bg-orange-50/30 text-slate-900 font-bold transition-all outline-none placeholder-slate-400">
                 </div>
             </div>
 
             <div class="flex space-x-3 no-scrollbar overflow-x-auto pb-2">
                 <button onclick="filterCategory('All')" 
-                        class="cat-btn px-6 py-3 bg-orange-50 border-2 border-orange-200 text-orange-600 rounded-2xl font-[800] whitespace-nowrap transition-all shadow-sm">
+                        class="cat-btn px-6 py-3 bg-orange-50 border-2 border-orange-200 text-orange-600 rounded-2xl font-bold whitespace-nowrap transition-all shadow-sm">
                     All Items
                 </button>
 
                 {% for category in categories %}
                 {% if category.name != 'Matcha' %}
                 <button onclick="filterCategory('{{ category.name }}')" 
-                        class="cat-btn px-6 py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-500 rounded-2xl font-[800] transition-all whitespace-nowrap">
+                        class="cat-btn px-6 py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-500 rounded-2xl font-semibold transition-all whitespace-nowrap">
                     {{ category.name }}
                 </button>
                 {% endif %}
@@ -119,7 +135,8 @@
                         '{{ product.frappe_upcharge }}', 
                         {{ product.can_be_hot|yesno:'true,false' }}, 
                         {{ product.can_be_iced|yesno:'true,false' }}, 
-                        {{ product.can_be_frappe|yesno:'true,false' }}
+                        {{ product.can_be_frappe|yesno:'true,false' }},
+                        '{{ product.category|escapejs }}'
                     )"                            
                     class="product-button group w-full bg-white p-5 rounded-[2rem] border-2 border-slate-200 hover:border-orange-400 transition-all text-left flex flex-col justify-between h-52 relative overflow-hidden shadow-sm hover:shadow-md">
                         
@@ -129,28 +146,26 @@
                         
                         <div class="relative z-10">
                             <div class="flex justify-between items-start">
-                                <span class="product-category text-[9px] font-[800] uppercase tracking-widest text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+                                <span class="product-category text-[9px] font-bold uppercase tracking-widest text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
                                     {{ product.category }}
                                 </span>
-                                
                                 <div class="flex gap-1.5 bg-white p-1.5 rounded-full border border-slate-100 shadow-sm opacity-80 group-hover:opacity-100 transition">
                                     {% if product.can_be_hot %}<i class="bi bi-thermometer-sun text-[10px] text-orange-500"></i>{% endif %}
                                     {% if product.can_be_iced %}<i class="bi bi-snow text-[10px] text-blue-500"></i>{% endif %}
                                     {% if product.can_be_frappe %}<i class="bi bi-stars text-[10px] text-purple-500"></i>{% endif %}
                                 </div>
                             </div>
-                            <h3 class="product-name text-lg font-[800] mt-3 text-slate-900 group-hover:text-orange-600 transition-colors leading-tight">
+                            <h3 class="product-name text-lg font-bold mt-3 text-slate-900 group-hover:text-orange-600 transition-colors leading-tight">
                                 {{ product.name }}
                             </h3>
                         </div>
-
                         <div class="relative z-10 flex justify-between items-end">
                             <div class="flex flex-col">
-                                <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mb-0.5">Price</span>
-                                <span class="product-price text-2xl font-[800] text-slate-900">${{ product.price_small }}</span>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Price</span>
+                                <span class="product-price text-2xl font-bold text-slate-900">${{ product.price_small }}</span>
                             </div>
                             <div class="w-10 h-10 bg-slate-50 border-2 border-slate-200 rounded-xl group-hover:bg-orange-500 group-hover:border-orange-500 group-hover:text-white text-slate-400 flex items-center justify-center transition-all">
-                                <i class="bi bi-plus-lg font-bold"></i>
+                                <i class="bi bi-plus-lg"></i>
                             </div>
                         </div>
                     </button>
@@ -163,25 +178,35 @@
         <div class="w-1/4 bg-white border-l-2 border-slate-200 flex flex-col shadow-[-10px_0_30px_rgba(0,0,0,0.02)] z-20">
             
             <div class="p-6 border-b-2 border-slate-100 flex justify-between items-center bg-white">
-                <h2 class="text-xl font-[800] uppercase tracking-tight text-slate-900">Current Order</h2>
+                <h2 class="text-xl font-bold uppercase tracking-tight text-slate-900">Current Order</h2>
                 <button onclick="clearCart()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border-2 border-slate-100 text-slate-400 hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-all">
                     <i class="bi bi-trash3-fill"></i>
                 </button>
             </div>
 
-            <div class="p-5 bg-slate-50 m-5 rounded-[2rem] border-2 border-slate-100">
-                <label class="block text-[10px] font-[800] uppercase text-slate-500 mb-3 tracking-widest">Customer Loyalty</label>
+            <div id="loyalty-placeholder" class="m-5 rounded-[2rem]">
+                <div id="loyalty-container" class="p-5 bg-slate-50 rounded-[2rem] border-2 border-slate-100 transition-all duration-300 overflow-hidden">
+                <label id="loyalty-label" class="block text-[10px] font-bold uppercase text-slate-500 mb-3 tracking-widest">Customer Loyalty</label>
                 <div class="flex gap-2">
-                    <input type="text" id="customer-phone" placeholder="Phone Number..." 
+                    <input type="text" id="customer-phone" 
+                        onfocus="openLoyaltySearch()" oninput="formatInput(this, 'num')"
+                        placeholder="Phone Number..." 
                         class="flex-grow bg-white border-2 border-slate-200 rounded-xl p-3 text-sm font-bold focus:border-orange-500 outline-none text-slate-900 placeholder-slate-400 transition-colors">
                     <button onclick="searchCustomer()" class="bg-slate-900 hover:bg-orange-600 text-white px-4 rounded-xl transition-colors font-bold">
                         <i class="bi bi-search"></i>
                     </button>
                 </div>
-                <div id="customer-display" class="mt-4 flex items-center justify-between hidden p-3 bg-emerald-50 rounded-xl border-2 border-emerald-100 animate-fadeIn">
-                    <span class="text-xs font-[800] text-emerald-700"><i class="bi bi-person-check-fill mr-1"></i> <span id="customer-name-label"></span></span>
-                    <button onclick="removeCustomer()" class="text-slate-400 hover:text-red-500 text-[10px] font-[800] uppercase tracking-widest"><i class="bi bi-x-circle-fill"></i></button>
+                <div id="customer-display" class="mt-4 hidden space-y-3 p-3 bg-emerald-50 rounded-xl border-2 border-emerald-100 animate-fadeIn">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-700"><i class="bi bi-person-check-fill mr-1"></i> <span id="customer-name-label"></span></span>
+                        <span class="text-[10px] font-black text-emerald-600 bg-white px-2 py-0.5 rounded-full border border-emerald-200">Points: <span id="customer-points-label">0</span></span>
+                        <button onclick="removeCustomer()" class="text-slate-400 hover:text-red-500 text-[10px] font-bold uppercase tracking-widest"><i class="bi bi-x-circle-fill"></i></button>
+                    </div>
+                    <button id="point-exchange-btn" onclick="togglePointExchange()" class="hidden w-full py-2 bg-emerald-600 text-white rounded-lg font-black text-[10px] uppercase tracking-widest transition-all hover:bg-emerald-700 active:scale-95 shadow-sm">
+                        <i class="bi bi-gift-fill mr-1"></i> Point Exchange (50 pts)
+                    </button>
                 </div>
+            </div>
             </div>
 
             <div id="cart-list" class="flex-grow overflow-y-auto px-5 pb-4 space-y-3 no-scrollbar">
@@ -195,25 +220,25 @@
 
             <div class="p-6 bg-slate-50 border-t-2 border-slate-200 space-y-4">
                 <div class="space-y-2">
-                    <div class="flex justify-between text-slate-500 text-[10px] font-[800] uppercase tracking-widest">
+                    <div class="flex justify-between text-slate-500 text-[10px] font-bold uppercase tracking-widest">
                         <span>Subtotal</span>
                         <span id="subtotal" class="text-slate-700">$0.00</span>
                     </div>
-                    <div id="loyalty-discount-row" class="flex justify-between text-emerald-600 text-[10px] font-[800] uppercase tracking-widest hidden">
-                        <span>Loyalty (-10%)</span>
+                    <div id="loyalty-discount-row" class="flex justify-between text-emerald-600 text-[10px] font-bold uppercase tracking-widest hidden">
+                        <span>Discount</span>
                         <span id="discount-amount">-$0.00</span>
                     </div>
-                    <div class="flex justify-between text-slate-500 text-[10px] font-[800] uppercase tracking-widest">
+                    <div class="flex justify-between text-slate-500 text-[10px] font-bold uppercase tracking-widest">
                         <span>Tax (Incl. 10%)</span>
-                        <span id="tax" class="text-slate-400">$0.00</span>
+                        <span id="tax">$0.00</span>
                     </div>
                     <div class="flex justify-between items-end border-t-2 border-slate-200 pt-3 mt-2">
-                        <span class="text-slate-500 text-xs font-[800] uppercase tracking-widest mb-1">Total</span>
-                        <span id="total-price" class="text-4xl font-[800] text-slate-900 tracking-tight">$0.00</span>
+                        <span class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Total</span>
+                        <span id="total-price" class="text-4xl font-bold text-slate-900 tracking-tight">$0.00</span>
                     </div>
                 </div>
 
-                <button onclick="sendOrder()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-[800] text-lg transition-all active:translate-y-1 btn-flat hover:bg-orange-600 uppercase tracking-widest active:shadow-none">
+                <button onclick="openPaymentModal()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold text-lg transition-all active:translate-y-1 btn-flat hover:bg-orange-600 uppercase tracking-widest active:shadow-none">
                     Place Order
                 </button>
             </div>
@@ -222,13 +247,12 @@
 
     <div id="option-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
         <div class="bg-white w-full max-w-md rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.1)] relative">
-            
-            <div class="flex justify-between items-start mb-6">
+            <div class="flex justify-between items-center mb-6">
                 <div>
                     <h2 id="modal-product-name" class="text-2xl font-[800] mb-1 text-slate-900 tracking-tight leading-none">Customize</h2>
                     <div class="h-1.5 w-12 bg-orange-500 mt-2 rounded-full"></div>
                 </div>
-                <button onclick="closeModal()" class="w-10 h-10 bg-slate-50 rounded-xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center border-2 border-slate-200">
+                <button onclick="closeModal()" class="w-11 h-11 bg-slate-50 rounded-2xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center border-2 border-slate-200">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
@@ -254,6 +278,15 @@
                     <button id="type-Frappe" onclick="selectType('Frappe')" class="type-btn bg-white text-slate-500 border-2 border-slate-200 py-4 rounded-[1.5rem] transition-all font-[800] text-xs flex flex-col items-center gap-2">
                         <i class="bi bi-stars text-2xl"></i> Frappe
                     </button>
+                </div>
+            </div>
+
+            <div id="extra-shot-section" class="mb-6 hidden">
+                <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Extra Shot (+$0.50/shot)</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <button id="shot-0" onclick="selectShots(0)" class="shot-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">None</button>
+                    <button id="shot-1" onclick="selectShots(1)" class="shot-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">+1 Shot</button>
+                    <button id="shot-2" onclick="selectShots(2)" class="shot-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">+2 Shots</button>
                 </div>
             </div>
 
@@ -330,10 +363,8 @@
         </div>
     </div>
 
-    <div id="register-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex flex-col items-center justify-between p-6">
-    
-        <div class="flex-1 flex items-center justify-center w-full">
-            <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.1)]">
+    <div id="register-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.1)]">
                 <h2 class="text-2xl font-[900] mb-6 text-slate-900 tracking-tight uppercase">New Regular</h2>
                 
                 <div class="space-y-4">
@@ -358,22 +389,119 @@
                     <button onclick="toggleRegisterModal()" class="flex-1 py-4 text-slate-400 font-[800] text-[10px] uppercase tracking-widest">Cancel</button>
                     <button onclick="submitRegistration()" class="flex-[2] bg-slate-900 text-white py-4 rounded-2xl font-[800] hover:bg-orange-600 active:translate-y-1 transition-all text-[10px] uppercase tracking-widest">Register</button>
                 </div>
-            </div>
         </div>
+    </div>
 
-        <div id="keyboard-wrapper" class="w-full max-w-4xl transform transition-transform duration-300 translate-y-full">
-            <div class="bg-slate-900 p-4 rounded-t-[3rem] border-t-4 border-slate-800 shadow-[0_-20px_50px_rgba(0,0,0,0.3)]">
-                <div id="keyboard-grid" class="grid grid-cols-10 gap-2">
+    <!-- Global Generic Keyboard Wrapper -->
+    <div id="keyboard-wrapper" class="fixed bottom-0 left-0 right-0 z-[220] transform transition-transform duration-300 translate-y-full pointer-events-none">
+        <div class="max-w-4xl mx-auto bg-slate-900 p-4 rounded-t-[3rem] border-t-4 border-slate-800 shadow-[0_-20px_50px_rgba(0,0,0,0.3)] pointer-events-auto">
+            <div class="flex justify-end mb-2 px-4">
+                <button onclick="closeGlobalKeyboard()" class="text-slate-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                    <i class="bi bi-keyboard-fill"></i> Hide Keyboard <i class="bi bi-chevron-down"></i>
+                </button>
+            </div>
+            <div id="keyboard-grid" class="grid grid-cols-10 gap-2"></div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[150] flex items-center justify-center p-4">
+        <div id="payment-modal-content" class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(15,23,42,0.1)] relative transition-transform duration-300">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-2xl font-[900] text-slate-900 uppercase tracking-tight">Payment Method</h2>
+                    <div class="h-1.5 w-12 bg-orange-500 mt-2 rounded-full"></div>
+                </div>
+                <button onclick="closePaymentModal()" class="w-11 h-11 bg-slate-50 rounded-2xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center border-2 border-slate-200">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="mb-8">
+                <div class="flex justify-between items-end mb-6 bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100">
+                    <span class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest mb-1">Total Pay</span>
+                    <span id="modal-total-price" class="text-4xl font-[900] text-slate-900 tracking-tight">$0.00</span>
+                </div>
+
+                <div id="payment-methods-wrapper">
+                    <p class="text-slate-400 text-[10px] font-[800] uppercase tracking-widest mb-3 ml-2">Select Payment Method</p>
+                    <div class="grid grid-cols-3 gap-3 mb-6">
+                        <button id="modal-payment-cash" onclick="selectPayment('Cash')" class="payment-btn bg-white text-slate-500 py-4 rounded-2xl transition-all font-[800] text-xs border-2 border-slate-200 hover:border-orange-500 hover:bg-orange-50 flex flex-col items-center gap-2">
+                            <i class="bi bi-cash-stack text-xl"></i> Cash
+                        </button>
+                        <button id="modal-payment-card" onclick="selectPayment('Card')" class="payment-btn bg-white text-slate-500 py-4 rounded-2xl transition-all font-[800] text-xs border-2 border-slate-200 hover:border-orange-500 hover:bg-orange-50 flex flex-col items-center gap-2">
+                            <i class="bi bi-credit-card text-xl"></i> Card
+                        </button>
+                        <button id="modal-payment-epayment" onclick="selectPayment('E-Payment')" class="payment-btn bg-white text-slate-500 py-4 rounded-2xl transition-all font-[800] text-xs border-2 border-slate-200 hover:border-orange-500 hover:bg-orange-50 flex flex-col items-center gap-2">
+                            <i class="bi bi-qr-code-scan text-xl"></i> E-Pay(KHQR)
+                        </button>
                     </div>
+                </div>
+
+                <div id="modal-cash-input-group" class="hidden bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Received</span>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                            <input type="number" id="modal-cash-received-input" step="0.01" oninput="calculateChange()" class="w-32 bg-white border-2 border-slate-200 rounded-xl py-2 pl-7 pr-3 text-right font-black text-slate-900 outline-none focus:border-orange-500 transition-all">
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center border-t-2 border-slate-200 pt-4">
+                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Change</span>
+                        <span id="modal-cash-change-display" class="text-xl font-black text-orange-600">$0.00</span>
+                    </div>
+
+                    <!-- Numeric Keypad for Cash Received -->
+                    <div id="payment-num-pad" class="grid grid-cols-3 gap-2 mt-6 pt-6 border-t-2 border-slate-100"></div>
+                </div>
+            </div>
+
+            <button id="confirm-payment-btn" onclick="executePayment()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-[800] text-sm transition-all active:translate-y-1 btn-flat hover:bg-orange-600 uppercase tracking-widest active:shadow-none flex items-center justify-center gap-2">
+                <i class="bi bi-check2-circle text-xl"></i> Confirm & Finish
+            </button>
+        </div>
+    </div>
+
+    <!-- Order Success Modal -->
+    <div id="success-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-white w-full max-w-4xl rounded-[2.5rem] border-[3px] border-slate-900 shadow-[15px_15px_0px_0px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col md:flex-row h-[90vh] md:h-auto">
+            <!-- Left: Status & Actions -->
+            <div class="w-full md:w-1/3 p-6 md:p-10 text-center flex flex-col justify-center border-b-2 md:border-b-0 md:border-r-2 border-slate-100">
+                <div class="w-20 h-20 bg-emerald-50 border-2 border-emerald-100 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                    <i class="bi bi-check-lg text-4xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-1 uppercase tracking-tight">Order Success</h2>
+                <p id="success-order-display" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">Invoice ID: #000</p>
+                
+                <div class="space-y-3 mb-6">
+                    <a id="view-invoice-link" target="_blank" class="w-full bg-white border-2 border-slate-900 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-[4px_4px_0px_0px_rgba(15,23,42,0.1)] active:translate-y-1 active:shadow-none flex items-center justify-center">
+                        <i class="bi bi-file-earmark-pdf mr-2"></i> Open PDF
+                    </a>
+                    <button id="print-invoice-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-[4px_4px_0px_0px_rgba(15,23,42,0.2)] active:translate-y-1 active:shadow-none">
+                        <i class="bi bi-printer mr-2"></i> Print Receipt
+                    </button>
+                </div>
+                <button onclick="closeSuccessModal()" class="w-full py-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-slate-900 transition-colors">Finish & Close</button>
+            </div>
+
+            <!-- Right: Soft Invoice Preview (Same Tab) -->
+            <div class="w-full md:w-2/3 bg-slate-50 p-4 md:p-8 overflow-hidden flex flex-col">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <i class="bi bi-eye-fill"></i> Soft Invoice Preview
+                </p>
+                <div id="soft-invoice-container" class="bg-white border-2 border-slate-200 rounded-2xl overflow-y-auto flex-grow shadow-inner p-2 custom-scrollbar">
+                    <!-- HTML Invoice will be injected here -->
+                    <div class="flex items-center justify-center h-full text-slate-300 italic text-sm">Loading preview...</div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- GLOBAL STATE VARIABLES ---
         let cart = []; 
         let currentItem = null; 
-        let selectedCustomerId = null; 
+        let selectedCustomerId = null;
+        let isRedemptionActive = false;
         let currentPriceSmall = 0;
         let currentPriceMedium = 0;
         let currentPriceLarge = 0;
@@ -382,6 +510,7 @@
         let currentService = 'Dine-in'; 
         let editIndex = null; 
         let activeInputId = 'reg-name';
+        let selectedPayment = 'E-Payment'; // Default payment method
         const stockChannel = new BroadcastChannel('stock_updates');
 
         stockChannel.onmessage = (event) => {
@@ -464,7 +593,7 @@
             }
 
             const btn = card.querySelector('button');
-            const newOnClick = `addToCart('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price_small}', '${product.price_medium}', '${product.price_large}', '${product.ice_upcharge || 0.25}', '${product.frappe_upcharge || 0.50}', ${product.can_be_hot}, ${product.can_be_iced}, ${product.can_be_frappe})`; 
+            const newOnClick = `addToCart('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price_small}', '${product.price_medium}', '${product.price_large}', '${product.ice_upcharge || 0.25}', '${product.frappe_upcharge || 0.50}', ${product.can_be_hot}, ${product.can_be_iced}, ${product.can_be_frappe}, '${product.category.replace(/'/g, "\\'")}')`; 
             btn.setAttribute('onclick', newOnClick);
 
             card.classList.add('scale-105', 'border-orange-500');
@@ -485,7 +614,7 @@
                 : '';
 
             div.innerHTML = `
-                <button onclick="addToCart('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price_small}', '${product.price_medium}', '${product.price_large}', '${product.ice_upcharge || 0.25}', '${product.frappe_upcharge || 0.50}', ${product.can_be_hot}, ${product.can_be_iced}, ${product.can_be_frappe})"                            
+                <button onclick="addToCart('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price_small}', '${product.price_medium}', '${product.price_large}', '${product.ice_upcharge || 0.25}', '${product.frappe_upcharge || 0.50}', ${product.can_be_hot}, ${product.can_be_iced}, ${product.can_be_frappe}, '${product.category.replace(/'/g, "\\'")}')"                            
                 class="product-button group w-full bg-white p-5 rounded-[2rem] border-2 border-slate-200 hover:border-orange-400 transition-all text-left flex flex-col justify-between h-52 relative overflow-hidden shadow-sm hover:shadow-md">
                     ${displayImage}
                     <div class="relative z-10">
@@ -513,18 +642,7 @@
 
             grid.prepend(div);
             
-            // Apply current filter logic
-            const activeCategoryBtn = document.querySelector('.cat-btn.bg-orange-50');
-            if (activeCategoryBtn) {
-                const onclick = activeCategoryBtn.getAttribute('onclick');
-                const match = onclick.match(/filterCategory\('"['"]\)/);
-                if (match) {
-                    const currentFilter = match[1];
-                    if (currentFilter !== 'All' && product.category !== currentFilter) {
-                        div.classList.add('hidden');
-                    }
-                }
-            }
+            searchMenu();
         }
 
         function filterCategory(category) {
@@ -538,9 +656,29 @@
             activeBtn.classList.remove('bg-white', 'border-slate-200', 'text-slate-500');
             activeBtn.classList.add('bg-orange-50', 'border-orange-200', 'text-orange-600');
 
+            searchMenu();
+        }
+
+        function searchMenu() {
+            const query = document.getElementById('menu-search').value.toLowerCase();
+            const activeCategoryBtn = document.querySelector('.cat-btn.bg-orange-50');
+            let category = 'All';
+
+            if (activeCategoryBtn) {
+                const onclickAttr = activeCategoryBtn.getAttribute('onclick');
+                const match = onclickAttr.match(/filterCategory\(['"](.*?)['"]\)/);
+                if (match) category = match[1];
+            }
+
             const items = document.querySelectorAll('.product-item');
             items.forEach(item => {
-                if (category === 'All' || item.getAttribute('data-category') === category) {
+                const name = item.querySelector('.product-name').innerText.toLowerCase();
+                const itemCategory = item.getAttribute('data-category');
+                
+                const matchesSearch = name.includes(query);
+                const matchesCategory = (category === 'All' || itemCategory === category);
+
+                if (matchesSearch && matchesCategory) {
                     item.classList.remove('hidden');
                 } else {
                     item.classList.add('hidden');
@@ -559,7 +697,10 @@
                 if (data.status === 'success') {
                     selectedCustomerId = data.id;
                     document.getElementById('customer-name-label').innerText = data.name;
+                    document.getElementById('customer-points-label').innerText = data.points;
                     document.getElementById('customer-display').classList.remove('hidden');
+                    updateLoyaltyButtons(data.points);
+                    closeLoyaltySearch();
                     renderCart(); 
                 } else {
                     if(confirm("Customer not found. Register them now?")) {
@@ -570,8 +711,36 @@
             } catch (error) { console.error("Search failed", error); }
         }
 
+        function updateLoyaltyButtons(points) {
+            const btn = document.getElementById('point-exchange-btn');
+            const hasMedium = cart.some(item => item.size === 'Medium');
+            
+            if (points >= 50 && hasMedium) {
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+                isRedemptionActive = false;
+            }
+            
+            if (isRedemptionActive) {
+                btn.classList.replace('bg-emerald-600', 'bg-orange-500');
+                btn.innerHTML = '<i class="bi bi-check-circle-fill mr-1"></i> Free Drink Applied';
+            } else {
+                btn.classList.replace('bg-orange-500', 'bg-emerald-600');
+                btn.innerHTML = '<i class="bi bi-gift-fill mr-1"></i> Point Exchange (50 pts)';
+            }
+        }
+
+        function togglePointExchange() {
+            isRedemptionActive = !isRedemptionActive;
+            const points = parseInt(document.getElementById('customer-points-label').innerText);
+            updateLoyaltyButtons(points);
+            renderCart();
+        }
+
         function removeCustomer() {
             selectedCustomerId = null;
+            isRedemptionActive = false;
             document.getElementById('customer-phone').value = '';
             document.getElementById('customer-display').classList.add('hidden');
             renderCart();
@@ -590,12 +759,17 @@
             }
         }
 
-       function setActiveInput(id, mode) {
+        function setActiveInput(id, mode) {
             activeInputId = id;
             
-            // Highlight the container UI
-            document.getElementById('container-name').className = id === 'reg-name' ? 'bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm transition-all' : 'bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all';
-            document.getElementById('container-phone').className = id === 'reg-phone' ? 'bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm transition-all' : 'bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all';
+            // Highlight the container UI if it exists (for Register Modal)
+            const nameContainer = document.getElementById('container-name');
+            const phoneContainer = document.getElementById('container-phone');
+            
+            if (nameContainer && phoneContainer) {
+                nameContainer.className = id === 'reg-name' ? 'bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm transition-all' : 'bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all';
+                phoneContainer.className = id === 'reg-phone' ? 'bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm transition-all' : 'bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all';
+            }
             
             renderKeyboard(mode);
         }
@@ -630,6 +804,7 @@
                     } else {
                         input.value += key;
                     }
+                    input.dispatchEvent(new Event('input')); // Trigger real-time search or formatting
                 };
                 grid.appendChild(btn);
             });
@@ -654,25 +829,60 @@
         }
 
         // Initial keyboard load
-        document.addEventListener('DOMContentLoaded', () => renderKeyboard('abc'));
+        document.addEventListener('DOMContentLoaded', () => {
+            renderKeyboard('abc');
+            selectPayment('E-Payment'); // Set default payment method
+        });
 
-        // Modify your existing toggle function to reset inputs
+        function openGlobalKeyboard(inputId, mode) {
+            const wrapper = document.getElementById('keyboard-wrapper');
+            setActiveInput(inputId, mode);
+            wrapper.classList.add('keyboard-visible');
+        }
+
+        function closeGlobalKeyboard() {
+            const wrapper = document.getElementById('keyboard-wrapper');
+            wrapper.classList.remove('keyboard-visible');
+        }
+
+        function openLoyaltySearch() {
+            const container = document.getElementById('loyalty-container');
+            const backdrop = document.getElementById('loyalty-backdrop');
+            const label = document.getElementById('loyalty-label');
+            
+            document.body.appendChild(container); // Move to body to escape sidebar stacking context
+            backdrop.classList.remove('hidden');
+            container.classList.add('loyalty-centered');
+            if (label) label.innerText = "Phone Number";
+            openGlobalKeyboard('customer-phone', 'num');
+        }
+
+        function closeLoyaltySearch() {
+            const container = document.getElementById('loyalty-container');
+            const backdrop = document.getElementById('loyalty-backdrop');
+            const label = document.getElementById('loyalty-label');
+            const placeholder = document.getElementById('loyalty-placeholder');
+            
+            if (container.classList.contains('loyalty-centered')) {
+                if (placeholder) placeholder.appendChild(container); // Move back to sidebar
+                backdrop.classList.add('hidden');
+                container.classList.remove('loyalty-centered');
+                if (label) label.innerText = "Customer Loyalty";
+                closeGlobalKeyboard();
+            }
+        }
+
         function toggleRegisterModal() {
             const modal = document.getElementById('register-modal');
-            const wrapper = document.getElementById('keyboard-wrapper');
             
             if (modal.classList.contains('hidden')) {
-                // Opening
                 modal.classList.remove('hidden');
                 document.getElementById('reg-name').value = '';
                 document.getElementById('reg-phone').value = '';
-                setActiveInput('reg-name', 'abc');
-                // Small delay to trigger animation
-                setTimeout(() => wrapper.classList.add('keyboard-visible'), 10);
+                openGlobalKeyboard('reg-name', 'abc');
             } else {
-                // Closing
-                wrapper.classList.remove('keyboard-visible');
-                setTimeout(() => modal.classList.add('hidden'), 300);
+                modal.classList.add('hidden');
+                closeGlobalKeyboard();
             }
         }
 
@@ -700,12 +910,19 @@
             }
         }
 
-        async function addToCart(id, name, pSmall, pMedium, pLarge, iceUp, frappeUp, canH, canI, canF) {
+        async function addToCart(id, name, pSmall, pMedium, pLarge, iceUp, frappeUp, canH, canI, canF, category) {
             editIndex = null; // Reset edit mode
             const modal = document.getElementById('option-modal');
             if (modal) modal.classList.remove('hidden');
 
             document.getElementById('modal-product-name').innerText = name;
+
+            const shotSection = document.getElementById('extra-shot-section');
+            if (category === 'Coffee') {
+                shotSection.classList.remove('hidden');
+            } else {
+                shotSection.classList.add('hidden');
+            }
 
             currentPriceSmall = parseFloat(pSmall);
             currentPriceMedium = parseFloat(pMedium);
@@ -714,7 +931,8 @@
             currentFrappeUpcharge = parseFloat(frappeUp);
 
             currentItem = { 
-                id: id, name: name, size: 'Medium', sugar: '100%', type: 'Hot',
+                id: id, name: name, size: 'Medium', sugar: '100%', type: 'Hot', shots: 0,
+                category: category,
                 totalCalculatedPrice: 0,
                 canH: canH,
                 canI: canI,
@@ -735,6 +953,7 @@
 
             selectSize('Medium'); 
             selectSugar('100%');
+            selectShots(0);
             calculateDynamicPrice(); 
         }
 
@@ -747,6 +966,13 @@
 
             document.getElementById('modal-product-name').innerText = item.name;
 
+            const shotSection = document.getElementById('extra-shot-section');
+            if (item.category === 'Coffee') {
+                shotSection.classList.remove('hidden');
+            } else {
+                shotSection.classList.add('hidden');
+            }
+
             // Load pricing metadata stored in the cart item
             currentPriceSmall = item.pSmall;
             currentPriceMedium = item.pMedium;
@@ -755,7 +981,8 @@
             currentFrappeUpcharge = item.frappeUp;
 
             currentItem = { 
-                id: item.id, name: item.name, size: item.size, sugar: item.sugar, type: item.type,
+                id: item.id, name: item.name, size: item.size, sugar: item.sugar, type: item.type, shots: item.shots || 0,
+                category: item.category,
                 totalCalculatedPrice: item.price,
                 canH: item.canH, canI: item.canI, canF: item.canF
             };
@@ -771,6 +998,7 @@
             selectType(item.type);
             selectSize(item.size);
             selectSugar(item.sugar);
+            selectShots(item.shots || 0);
             
             document.getElementById('modal-qty').value = item.qty;
             calculateDynamicPrice();
@@ -824,6 +1052,77 @@
                     extraBtn.classList.add('bg-orange-50', 'text-orange-600', 'border-orange-500');
                 }
             }
+        }
+
+        function selectShots(shots) {
+            currentItem.shots = shots;
+            document.querySelectorAll('.shot-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-50', 'text-orange-600', 'border-orange-500');
+                btn.classList.add('bg-white', 'text-slate-500', 'border-slate-200');
+            });
+            const activeBtn = document.getElementById(`shot-${shots}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
+                activeBtn.classList.add('bg-orange-50', 'text-orange-600', 'border-orange-500');
+            }
+            calculateDynamicPrice();
+        }
+
+        function selectPayment(method) {
+            selectedPayment = method;
+            const cashGroup = document.getElementById('modal-cash-input-group');
+            const modalContent = document.getElementById('payment-modal-content');
+
+            if (method === 'Cash') {
+                cashGroup.classList.remove('hidden');
+                document.getElementById('modal-cash-received-input').focus();
+                renderPaymentKeypad();
+                if (modalContent) modalContent.classList.add('scale-[0.8]');
+            } else {
+                cashGroup.classList.add('hidden');
+                if (modalContent) modalContent.classList.remove('scale-[0.8]');
+            }
+
+            document.querySelectorAll('#payment-modal .payment-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-50', 'text-orange-600', 'border-orange-500');
+                btn.classList.add('bg-white', 'text-slate-500', 'border-slate-200');
+            });
+            const activeBtn = document.getElementById(`modal-payment-${method.toLowerCase().split(' ')[0].replace('-', '')}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
+                activeBtn.classList.add('bg-orange-50', 'text-orange-600', 'border-orange-500');
+            }
+        }
+
+        function renderPaymentKeypad() {
+            const keypad = document.getElementById('payment-num-pad');
+            if (!keypad) return;
+            keypad.innerHTML = '';
+            const keys = ['1','2','3','4','5','6','7','8','9','0','.','CLR'];
+            keys.forEach(key => {
+                const btn = document.createElement('button');
+                btn.innerText = key;
+                btn.className = "py-3 rounded-2xl border-2 border-slate-200 bg-white font-black text-slate-700 hover:border-orange-500 hover:bg-orange-50 transition-all active:scale-95 shadow-sm";
+                btn.onclick = () => {
+                    const input = document.getElementById('modal-cash-received-input');
+                    if (key === 'CLR') {
+                        input.value = '';
+                    } else if (key === '.') {
+                        if (!input.value.includes('.')) input.value += '.';
+                    } else {
+                        input.value += key;
+                    }
+                    calculateChange();
+                };
+                keypad.appendChild(btn);
+            });
+        }
+
+        function calculateChange() {
+            const received = parseFloat(document.getElementById('modal-cash-received-input').value) || 0;
+            const total = parseFloat(document.getElementById('modal-total-price').innerText.replace('$', ''));
+            const change = Math.max(0, received - total);
+            document.getElementById('modal-cash-change-display').innerText = `$${change.toFixed(2)}`;
         }
 
         // --- EXTRA SUGAR UI LOGIC ---
@@ -894,9 +1193,9 @@
 
             const uniqueKey = `${currentItem.id}-${currentItem.size}-${currentItem.sugar}-${currentItem.type}`;
             const itemData = {
-                uniqueKey: uniqueKey, id: currentItem.id, name: currentItem.name,
+                uniqueKey: uniqueKey, id: currentItem.id, name: currentItem.name, category: currentItem.category,
                 size: currentItem.size, type: currentItem.type, sugar: currentItem.sugar,
-                sugar_multiplier: sugarMultiplier, price: currentItem.totalCalculatedPrice, qty: qty,
+                sugar_multiplier: sugarMultiplier, price: currentItem.totalCalculatedPrice, qty: qty, shots: currentItem.shots,
                 // Save metadata for future editing re-population
                 pSmall: currentPriceSmall, pMedium: currentPriceMedium, pLarge: currentPriceLarge,
                 iceUp: currentIceUpcharge, frappeUp: currentFrappeUpcharge,
@@ -919,6 +1218,13 @@
 
         function renderCart() {
             const list = document.getElementById('cart-list');
+            
+            // Auto-refresh loyalty button state based on cart contents
+            if (selectedCustomerId) {
+                const pts = parseInt(document.getElementById('customer-points-label').innerText);
+                updateLoyaltyButtons(pts);
+            }
+
             if (cart.length === 0) {
                 list.innerHTML = `
                     <div class="text-center flex flex-col items-center justify-center h-full text-slate-400 mt-10">
@@ -931,53 +1237,85 @@
                 return;
             }
 
-            list.innerHTML = cart.map((item, index) => `
-                <div onclick="editCartItem(${index})" class="bg-white p-4 rounded-2xl border-2 border-slate-100 flex justify-between items-center hover:border-orange-200 transition-colors shadow-sm cursor-pointer group/cart">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <p class="font-[800] text-sm text-slate-900 leading-none group-hover/cart:text-orange-600">${item.name}</p>
-                            <span class="text-[8px] px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 font-[800] uppercase tracking-widest">${item.type}</span>
+            let freeApplied = false;
+            list.innerHTML = cart.map((item, index) => {
+                let displayPrice = item.price * item.qty;
+                let isFree = false;
+                
+                if (isRedemptionActive && !freeApplied && item.size === 'Medium') {
+                    displayPrice = 0;
+                    freeApplied = true;
+                    isFree = true;
+                }
+
+                return `
+                    <div onclick="editCartItem(${index})" class="bg-white p-4 rounded-2xl border-2 ${isFree ? 'border-orange-400 bg-orange-50/30' : 'border-slate-100'} flex justify-between items-center hover:border-orange-200 transition-colors shadow-sm cursor-pointer group/cart">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="font-[800] text-sm text-slate-900 leading-none group-hover/cart:text-orange-600">${item.name}</p>
+                                <span class="text-[8px] px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 font-[800] uppercase tracking-widest">${item.type}</span>
+                                ${isFree ? '<span class="text-[7px] px-1 bg-orange-500 text-white rounded font-black uppercase">Free</span>' : ''}
+                            </div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">${item.size} | ${item.sugar} Sugar ${item.shots > 0 ? '| +' + item.shots + ' Shot(s)' : ''}</p>
                         </div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">${item.size} | ${item.sugar} Sugar</p>
+                        <div class="text-right">
+                            <p class="font-[800] text-orange-600">$${displayPrice.toFixed(2)}</p>
+                            <p class="text-[10px] text-slate-400 font-bold">${item.qty} units</p>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <p class="font-[800] text-orange-600">$${(item.price * item.qty).toFixed(2)}</p>
-                        <p class="text-[10px] text-slate-400 font-bold">${item.qty} units</p>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             const subtotal = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
             updateTotals(subtotal);
         }
 
         function updateTotals(subtotal) {
-            let discount = 0;
-            if (selectedCustomerId) {
-                discount = subtotal * 0.10; 
-                document.getElementById('loyalty-discount-row').classList.remove('hidden');
-            } else {
-                document.getElementById('loyalty-discount-row').classList.add('hidden');
-            }
+            let redemptionDiscount = 0;
 
-            const total = subtotal - discount;
+            if (isRedemptionActive) {
+                const firstMedium = cart.find(i => i.size === 'Medium');
+                if (firstMedium) redemptionDiscount = firstMedium.price;
+                document.getElementById('loyalty-discount-row').classList.remove('hidden');
+                document.getElementById('loyalty-discount-row').querySelector('span:first-child').innerText = 'Point Redemption';
+            } else { document.getElementById('loyalty-discount-row').classList.add('hidden'); }
+
+            const total = subtotal - redemptionDiscount;
             const taxRate = 0.10;
             const tax = total - (total / (1 + taxRate));
 
             document.getElementById('subtotal').innerText = `$${subtotal.toFixed(2)}`;
-            document.getElementById('discount-amount').innerText = `-$${discount.toFixed(2)}`;
+            document.getElementById('discount-amount').innerText = `-$${redemptionDiscount.toFixed(2)}`;
             document.getElementById('tax').innerText = `$${tax.toFixed(2)}`;
             document.getElementById('total-price').innerText = `$${total.toFixed(2)}`;
         }
 
-        async function sendOrder() {
-            if (cart.length === 0) return alert("Your cart is empty!");
+        function openPaymentModal() {
+            if (cart.length === 0) return showNotification("Your cart is empty!", "info");
             
-            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
             const totalDisplay = document.getElementById('total-price').innerText;
-            const totalNumeric = parseFloat(totalDisplay.replace('$', ''));
+            document.getElementById('modal-total-price').innerText = totalDisplay;
+            
+            // Reset modal state
+            document.getElementById('modal-cash-received-input').value = '';
+            document.getElementById('modal-cash-change-display').innerText = '$0.00';
+            
+            document.getElementById('payment-modal').classList.remove('hidden');
+            selectPayment('E-Payment'); // Default to e-payment
+        }
 
-            const payBtn = event.currentTarget;
+        function closePaymentModal() {
+            document.getElementById('payment-modal').classList.add('hidden');
+        }
+
+        async function executePayment() {
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const totalNumeric = parseFloat(document.getElementById('modal-total-price').innerText.replace('$', ''));
+            
+            const cashReceived = parseFloat(document.getElementById('modal-cash-received-input').value) || 0;
+            const cashChange = parseFloat(document.getElementById('modal-cash-change-display').innerText.replace('$', '')) || 0;
+
+            const payBtn = document.getElementById('confirm-payment-btn');
             const originalText = payBtn.innerHTML;
             payBtn.disabled = true;
             payBtn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i>Processing...';
@@ -987,26 +1325,69 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
                     body: JSON.stringify({
-                        items: cart, total: totalNumeric, customer_id: selectedCustomerId, service_type: currentService 
+                        items: cart, total: totalNumeric, customer_id: selectedCustomerId, service_type: currentService, payment_method: selectedPayment,
+                        cash_received: cashReceived, cash_change: cashChange, redeem_free_drink: isRedemptionActive
                     })
                 });
 
                 const result = await response.json();
                 if (result.status === 'success') {
-                    alert(`Order #${result.order_id} Success!\nPackaging and Ingredients have been updated.`);
+                    closePaymentModal();
+                    // Show the post-payment options modal
+                    showSuccessModal(result.order_id);
                     
                     // BROADCAST: Notify Owner and Inventory pages to refresh
                     stockChannel.postMessage('refresh_data');
-
-                    clearCart(); removeCustomer();
                 } else { alert("Transaction Failed: " + result.message); }
             } catch (error) {
-                console.error("Fetch Error:", error);
-                alert("Connection Error: Please check if the local server is running.");
+                console.error("Order Processing Error:", error);
+                showNotification("Error processing order. Check console.", "error");
             } finally {
                 payBtn.disabled = false;
                 payBtn.innerHTML = originalText;
             }
+        }
+
+        function showSuccessModal(orderId) {
+            document.getElementById('success-order-display').innerText = `Invoice ID: #${orderId}`;
+            const previewContainer = document.getElementById('soft-invoice-container');
+            previewContainer.innerHTML = '<div class="flex items-center justify-center h-full text-slate-300 italic text-sm"><i class="bi bi-arrow-repeat animate-spin mr-2"></i>Generating soft invoice...</div>';
+
+            // Set up the PDF link for the "Open PDF" button
+            document.getElementById('view-invoice-link').href = `/invoice/${orderId}/`;
+            
+            // Fetch the HTML "Soft Invoice" and display it in the same tab/modal
+            fetch(`/invoice/${orderId}/?format=html`)
+                .then(response => response.text())
+                .then(html => {
+                    previewContainer.innerHTML = html;
+                    
+                    // Setup the Print Button to print the preview content without opening a new tab
+                    document.getElementById('print-invoice-btn').onclick = () => {
+                        const printFrame = document.createElement('iframe');
+                        printFrame.style.position = 'fixed';
+                        printFrame.style.right = '0';
+                        printFrame.style.bottom = '0';
+                        printFrame.style.width = '0';
+                        printFrame.style.height = '0';
+                        printFrame.style.border = '0';
+                        document.body.appendChild(printFrame);
+                        
+                        printFrame.contentWindow.document.write(html);
+                        printFrame.contentWindow.document.close();
+                        printFrame.contentWindow.print();
+                        setTimeout(() => document.body.removeChild(printFrame), 1000);
+                    };
+                });
+
+            document.getElementById('success-modal').classList.remove('hidden');
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('success-modal').classList.add('hidden');
+            // Finalize order by clearing UI
+            clearCart(); 
+            removeCustomer();
         }
 
         function changeQty(amt) {
@@ -1027,6 +1408,8 @@
 
             if (currentItem.type === 'Iced') price += currentIceUpcharge;
             if (currentItem.type === 'Frappe') price += currentFrappeUpcharge;
+
+            if (currentItem.shots > 0) price += (0.50 * currentItem.shots);
 
             const qty = parseInt(document.getElementById('modal-qty').value) || 1;
             let finalTotal = price * qty;

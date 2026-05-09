@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Khmer OS Battambang', 'Segoe UI', sans-serif; font-size: 11px; color: #1e293b; padding: 20px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: #ea580c; margin-bottom: 5px; font-size: 24px; }
+        .header p { margin: 2px 0; color: #64748b; }
+        .divider { border-top: 2px dashed #e2e8f0; margin: 15px 0; }
+        .info-grid { width: 100%; margin-bottom: 15px; }
+        .info-grid td { padding: 3px 0; }
+        .label { font-weight: bold; color: #64748b; text-transform: uppercase; font-size: 9px; }
+        .value { text-align: right; font-weight: bold; }
+        .items-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .items-table th { background: #f8fafc; text-align: left; padding: 8px; font-size: 9px; text-transform: uppercase; color: #64748b; }
+        .items-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
+        .totals { margin-top: 20px; text-align: right; }
+        .totals div { margin-bottom: 5px; }
+        .grand-total { font-size: 18px; color: #0f172a; font-weight: 900; }
+        .footer { text-align: center; margin-top: 30px; color: #94a3b8; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Error404 Coffee</h1>
+        <p>អាស័យដ្ឋានហាង: {{ store_address }}</p>
+        <p>WiFi Password: {{ wifi_password }}</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <table class="info-grid">
+        <tr>
+            <td class="label">លេខវិក្កយបត្រ (Invoice ID):</td>
+            <td class="value">#{{ order.id }}</td>
+        </tr>
+        <tr>
+            <td class="label">កាលបរិច្ឆេទ (Date):</td>
+            <td class="value">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+        </tr>
+        <tr>
+            <td class="label">អ្នកគិតលុយ (Cashier):</td>
+            <td class="value">{{ order.cashier_name }}</td>
+        </tr>
+        <tr>
+            <td class="label">បង់ប្រាក់តាមរយៈ (Payment):</td>
+            <td class="value">{{ order.payment_method }}</td>
+        </tr>
+        {% if order.customer %}
+        <tr>
+            <td class="label">អតិថិជន (Loyalty):</td>
+            <td class="value">{{ order.customer.name }} (-{{ order.customer.discount_rate|floatformat:0 }}%)</td>
+        </tr>
+        {% endif %}
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>ភេសជ្ជៈ (Drink)</th>
+                <th>ចំនួន</th>
+                <th>តម្លៃរាយ</th>
+                <th>តម្លៃសរុប</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items.all %}
+            <tr>
+                <td>
+                    <div style="font-weight: bold;">{{ item.product.name }}</div>
+                    <div style="font-size: 9px; color: #64748b;">{{ item.size }} | {{ item.product_type }} | ស្ករ: {{ item.sugar }}</div>
+                </td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.price_at_sale|floatformat:2 }}</td>
+                <td>${{ item.total_price|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div><span class="label">សរុប (Subtotal):</span> <span class="value" style="margin-left: 20px;">${{ order.subtotal_amount|floatformat:2 }}</span></div>
+        <div><span class="label">ពន្ធអាករ (Tax 10%):</span> <span class="value" style="margin-left: 20px;">${{ order.tax_amount|floatformat:2 }}</span></div>
+        <div class="grand-total"><span class="label" style="color: #0f172a;">សរុបរួម (Total):</span> <span style="margin-left: 20px;">${{ order.total_amount|floatformat:2 }}</span></div>
+        
+        {% if order.payment_method == 'Cash' %}
+        <div style="margin-top: 10px;">
+            <div><span class="label">ទទួលប្រាក់ (Received):</span> <span class="value" style="margin-left: 20px;">${{ order.cash_received|floatformat:2 }}</span></div>
+            <div><span class="label">លុយអាប់ (Change):</span> <span class="value" style="margin-left: 20px;">${{ order.cash_change|floatformat:2 }}</span></div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        <p>សូមអរគុណ! សូមអញ្ជើញមកពិសាម្តងទៀត!</p>
+        <p>Thank you for choosing Error404 Coffee!</p>
+    </div>
+</body>
+</html>
