@@ -61,10 +61,6 @@
                 <i class="bi bi-grid-1x2"></i> Dashboard
             </a>
 
-            {% comment %} <a href="{% url 'order_history' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
-                <i class="bi bi-clock-history"></i> Order History
-            </a> {% endcomment %}
-
             <a href="{% url 'inventory_list' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
                 <i class="bi bi-box-seam"></i> Inventory
             </a>
@@ -85,9 +81,14 @@
                 </div>
                 <div class="overflow-hidden">
                     <p class="text-xs font-bold text-slate-900 truncate">Admin User</p>
-                    <p class="text-[10px] text-slate-400 truncate">ផឹកកាហ្វ​នៅមេ?</p>
                 </div>
             </div>
+            <a
+              href="{% url 'logout' %}"
+              class="flex items-center gap-3 p-2.5 md:p-3 text-slate-400 hover:text-red-500 transition-all text-sm font-bold uppercase tracking-tighter"
+            >
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
         </div>
     </aside>
     
@@ -213,7 +214,7 @@
 
                 <div class="bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col flex-1">
                     <h3 class="text-lg font-[800] mb-4 text-slate-900 tracking-tight uppercase flex justify-between items-center">
-                        VIP Loyalty <i class="bi bi-star-fill text-amber-400"></i>
+                        Customers Loyalty <i class="bi bi-star-fill text-amber-400"></i>
                     </h3>
                     <div class="divide-y-2 divide-slate-100 flex-grow">
                         {% for customer in top_customers|slice:":3" %}

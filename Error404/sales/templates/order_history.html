@@ -27,37 +27,83 @@
         <button onclick="toggleSidebar()" class="text-2xl text-slate-600"><i class="bi bi-list"></i></button>
     </div>
 
-    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 shrink-0 bg-white border-r border-slate-200 p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[150] md:sticky md:top-0 md:h-screen">
-        <div class="mb-10">
-            <h1 class="text-2xl font-800 tracking-tighter text-orange-600">Error404</h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management Suite</p>
-        </div>
-        
-        <nav class="space-y-1 flex-grow">
-            <a href="{% url 'manager_display' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
-                <i class="bi bi-grid-1x2"></i> Manager Analyst
-            </a>
-            <a href="{% url 'order_history' %}" class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100">
-                <i class="bi bi-clock-history"></i> Order History
-            </a>
-            <a href="{% url 'inventory_list' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
-                <i class="bi bi-box-seam"></i> Inventory
-            </a>
-            <a href="{% url 'kitchen_view' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
-                <i class="bi bi-cup-hot"></i> Kitchen
-            </a>
-        </nav>
-        <div class="pt-6 border-t border-slate-100">
-            <a href="{% url 'pos_home' %}" class="flex items-center gap-3 p-3 text-slate-400 hover:text-slate-900 transition-all text-sm font-bold uppercase tracking-tighter">
-                <i class="bi bi-arrow-left-right"></i> Switch to POS
-            </a>
-        </div>
+    <aside
+      id="sidebar"
+      class="fixed inset-y-0 left-0 w-60 md:w-64 shrink-0 bg-white border-r border-slate-200 p-5 md:p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[150] md:sticky md:top-0 md:h-screen"
+    >
+      <div class="mb-10">
+        <h1 class="text-2xl font-800 tracking-tighter text-orange-600">
+          Error404
+        </h1>
+        <p
+          class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+        >
+          Management Suite
+        </p>
+      </div>
+
+      <nav class="space-y-1 flex-grow">
+        <a
+          href="{% url dashboard_route %}"
+          class="flex items-center gap-3 p-2.5 md:p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100"
+        >
+          <i class="bi bi-grid-1x2-fill"></i> {{ dashboard_label }}
+        </a>
+
+        {% comment %} <a
+          href="{% url 'order_history' %}"
+          class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold"
+        >
+          <i class="bi bi-clock-history"></i> Order History
+        </a> {% endcomment %}
+
+        <a
+          href="{% url 'inventory_list' %}"
+          class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold"
+        >
+          <i class="bi bi-box-seam"></i> Inventory
+        </a>
+
+        <a
+          href="{% url 'recipe_builder' %}"
+          class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold"
+        >
+          <i class="bi bi-journal-text"></i> Recipe Builder
+        </a>
+
+        <a
+          href="{% url 'kitchen_view' %}"
+          class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold"
+        >
+          <i class="bi bi-cup-hot"></i> Kitchen
+        </a>
+      </nav>
+
+      <div class="pt-6 border-t border-slate-100">
+
+        <a
+          href="{% url 'logout' %}"
+          class="flex items-center gap-3 p-2.5 md:p-3 text-slate-400 hover:text-red-500 transition-all text-sm font-bold uppercase tracking-tighter"
+        >
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+      </div>
     </aside>
 
     <main class="flex-1 w-full p-4 md:p-8 lg:p-10 max-w-[1600px] mx-auto overflow-y-auto custom-scrollbar">
         <header class="mb-8">
-            <h1 class="text-3xl md:text-4xl font-[800] tracking-tight text-slate-900 uppercase">Order History</h1>
-            <p class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest mt-1">Live Transaction Log</p>
+            <div class="flex items-center gap-4 mb-4">
+                <a
+                    href="{% url dashboard_route %}"
+                    class="inline-flex items-center justify-center w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-all"
+                >
+                    <i class="bi bi-arrow-left text-lg"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-[800] tracking-tight text-slate-900 uppercase">Order History</h1>
+                    <p class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest mt-1">Live Transaction Log</p>
+                </div>
+            </div>
         </header>
 
         <div class="bento-card rounded-[2.5rem] overflow-hidden bg-white">
@@ -95,8 +141,10 @@
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
 
         async function fetchOrders() {
+            const searchInput = document.getElementById('orderSearch');
+            const query = searchInput ? searchInput.value : '';
             try {
-                const response = await fetch('/api/orders/history/');
+                const response = await fetch(`/api/orders/history/${query ? '?q=' + encodeURIComponent(query) : ''}`);
                 const data = await response.json();
                 renderOrders(data.orders);
             } catch (err) { console.error("Sync Error:", err); }
@@ -110,7 +158,7 @@
             }
             tableBody.innerHTML = orders.map(order => `
                 <tr class="hover:bg-slate-50/50 transition-colors">
-                    <td class="px-8 py-5 font-black text-slate-900">#${order.id}</td>
+                    <td class="px-8 py-5 font-black text-slate-900">#${order.order_number}</td>
                     <td class="px-8 py-5 text-xs font-bold text-slate-500 uppercase">${order.created_at}</td>
                     <td class="px-8 py-5">
                         <div class="flex flex-col gap-1">
@@ -127,13 +175,11 @@
         }
 
         fetchOrders();
-        setInterval(fetchOrders, 10000); // Live update every 10s
+        // Poll every 5 seconds for a more "real-time" feel
+        setInterval(fetchOrders, 5000); 
 
-        document.getElementById('orderSearch').addEventListener('keyup', function(e) {
-            const term = e.target.value.toLowerCase();
-            document.querySelectorAll('#orderTableBody tr').forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
-            });
+        document.getElementById('orderSearch').addEventListener('input', function(e) {
+            fetchOrders(); // Fetch immediately when the user types
         });
     </script>
 </body>

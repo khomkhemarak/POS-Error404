@@ -1,5 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -89,6 +87,86 @@
     <!-- Notification Container -->
     <div id="notification-container" class="fixed top-5 right-5 z-[200] space-y-3 pointer-events-none"></div>
 
+    <div id="drink-request-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[220] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-[2rem] p-6 border-2 border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.1)] relative">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <h2 class="text-2xl font-[800] text-slate-900">Request Drink</h2>
+                    <p class="text-sm text-slate-500">Report a wrong ingredient, quantity or recipe issue.</p>
+                </div>
+                <button onclick="closeRequestDrinkModal()" class="w-11 h-11 rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition flex items-center justify-center border-2 border-slate-200">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Order ID</label>
+                    <div class="flex gap-2">
+                        <input id="request-order-id" type="text" placeholder="Search Order ID..." class="flex-1 bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 px-4 text-slate-900 font-bold focus:border-orange-500 outline-none" />
+                        <button onclick="loadRequestOrderItems()" class="bg-slate-900 text-white rounded-2xl px-5 font-bold hover:bg-orange-600 transition">Search</button>
+                    </div>
+                    <p id="request-order-help" class="text-xs text-slate-400 mt-2">Enter the order number shown in the kitchen/receipt.</p>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Select Drink</label>
+                    <select id="request-product" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 px-4 text-slate-900 font-bold outline-none">
+                        <option value="">Choose order first</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Quantity</label>
+                        <input id="request-quantity" type="number" min="1" value="1" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 px-4 text-slate-900 font-bold outline-none" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Reason</label>
+                        <select id="request-reason" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 px-4 text-slate-900 font-bold outline-none">
+                            <option value="Wrong Ingredient">Wrong Ingredient</option>
+                            <option value="Wrong Quantity">Wrong Quantity</option>
+                            <option value="Incorrect Recipe">Incorrect Recipe</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Details</label>
+                    <textarea id="request-note" rows="3" placeholder="Add optional detail for the manager..." class="w-full bg-slate-50 border-2 border-slate-200 rounded-3xl py-3 px-4 text-slate-900 font-bold outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button onclick="closeRequestDrinkModal()" class="px-6 py-3 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition">Cancel</button>
+                    <button onclick="submitDrinkRequest()" class="px-6 py-3 rounded-2xl bg-orange-600 text-white font-bold hover:bg-orange-700 transition">Send Request</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refund Orders Modal -->
+    <div id="refund-orders-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[220] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-4xl rounded-[2rem] p-6 border-2 border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.1)] relative">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <h2 class="text-2xl font-[800] text-slate-900">Refund Orders</h2>
+                    <p class="text-sm text-slate-500">Process free refunds for accepted drink requests.</p>
+                </div>
+                <button onclick="closeRefundOrdersModal()" class="w-11 h-11 rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition flex items-center justify-center border-2 border-slate-200">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div id="refund-orders-content">
+                <div class="text-center py-8">
+                    <i class="bi bi-arrow-repeat text-4xl text-slate-400 mb-4"></i>
+                    <p class="text-slate-500">Loading accepted requests...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="loyalty-backdrop" onclick="closeLoyaltySearch()" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-xl z-[205] transition-all duration-300"></div>
 
     <div class="flex h-screen w-full">
@@ -99,9 +177,21 @@
                 <h1 class="text-3xl font-bold text-orange-600 tracking-tighter flex items-center gap-3">
                     <span class="type">Error404</span>
                 </h1>
-                <div class="relative w-1/3">
-                    <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="menu-search" onfocus="openGlobalKeyboard('menu-search', 'abc')" oninput="searchMenu()" placeholder="Search menu..." class="w-full bg-white border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 focus:border-orange-500 focus:bg-orange-50/30 text-slate-900 font-bold transition-all outline-none placeholder-slate-400">
+                <div class="flex items-center gap-4">
+                    <div class="relative w-1/3">
+                        <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="menu-search" onfocus="openGlobalKeyboard('menu-search', 'abc')" oninput="searchMenu()" placeholder="Search menu..." class="w-full bg-white border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 focus:border-orange-500 focus:bg-orange-50/30 text-slate-900 font-bold transition-all outline-none placeholder-slate-400">
+                    </div>
+                    <button onclick="openRequestDrinkModal()" class="flex items-center gap-2 px-4 py-3 bg-blue-50 border-2 border-blue-200 text-blue-600 rounded-2xl font-bold hover:bg-blue-100 transition-all">
+                        <i class="bi bi-exclamation-circle"></i> Request Drink
+                    </button>
+                    <button onclick="openRefundOrdersModal()" class="relative flex items-center gap-2 px-4 py-3 bg-green-50 border-2 border-green-200 text-green-600 rounded-2xl font-bold hover:bg-green-100 transition-all">
+                        <i class="bi bi-arrow-counterclockwise"></i> Refund Orders
+                        <span id="refund-badge" class="hidden absolute -top-2 -right-2 bg-green-500 text-white text-xs font-black rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                    </button>
+                    <a href="{% url 'logout' %}" class="flex items-center gap-2 px-4 py-3 bg-red-50 border-2 border-red-200 text-red-600 rounded-2xl font-bold hover:bg-red-100 transition-all">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
                 </div>
             </div>
 
@@ -246,89 +336,89 @@
     </div>
 
     <div id="option-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
-        <div class="bg-white w-full max-w-md rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.1)] relative">
-            <div class="flex justify-between items-center mb-6">
+        <div id="option-modal-body" class="bg-white w-full max-w-md rounded-[3rem] p-6 border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.1)] relative">
+            <div class="flex justify-between items-center mb-4">
                 <div>
-                    <h2 id="modal-product-name" class="text-2xl font-[800] mb-1 text-slate-900 tracking-tight leading-none">Customize</h2>
-                    <div class="h-1.5 w-12 bg-orange-500 mt-2 rounded-full"></div>
+                    <h2 id="modal-product-name" class="text-xl font-[800] mb-1 text-slate-900 tracking-tight leading-none">Customize</h2>
+                    <div class="h-1 w-10 bg-orange-500 mt-1 rounded-full"></div>
                 </div>
-                <button onclick="closeModal()" class="w-11 h-11 bg-slate-50 rounded-2xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center border-2 border-slate-200">
+                <button onclick="closeModal()" class="w-10 h-10 bg-slate-50 rounded-2xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center border-2 border-slate-200">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
             
-            <div class="mb-6">
-                <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Select Size</p>
-                <div class="grid grid-cols-3 gap-3">
-                    <button id="size-Small" onclick="selectSize('Small')" class="size-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">Small</button>
-                    <button id="size-Medium" onclick="selectSize('Medium')" class="size-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">Medium</button>
-                    <button id="size-Large" onclick="selectSize('Large')" class="size-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">Large</button>
-                </div>
-            </div>
-
-            <div class="mb-6">
-                <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">product Type</p>
-                <div class="grid grid-cols-3 gap-3">
-                    <button id="type-Hot" onclick="selectType('Hot')" class="type-btn bg-white text-slate-500 border-2 border-slate-200 py-4 rounded-[1.5rem] transition-all font-[800] text-xs flex flex-col items-center gap-2">
-                        <i class="bi bi-thermometer-sun text-2xl"></i> Hot
-                    </button>
-                    <button id="type-Iced" onclick="selectType('Iced')" class="type-btn bg-white text-slate-500 border-2 border-slate-200 py-4 rounded-[1.5rem] transition-all font-[800] text-xs flex flex-col items-center gap-2">
-                        <i class="bi bi-snow text-2xl"></i> Iced
-                    </button>
-                    <button id="type-Frappe" onclick="selectType('Frappe')" class="type-btn bg-white text-slate-500 border-2 border-slate-200 py-4 rounded-[1.5rem] transition-all font-[800] text-xs flex flex-col items-center gap-2">
-                        <i class="bi bi-stars text-2xl"></i> Frappe
-                    </button>
-                </div>
-            </div>
-
-            <div id="extra-shot-section" class="mb-6 hidden">
-                <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Extra Shot (+$0.50/shot)</p>
-                <div class="grid grid-cols-3 gap-3">
-                    <button id="shot-0" onclick="selectShots(0)" class="shot-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">None</button>
-                    <button id="shot-1" onclick="selectShots(1)" class="shot-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">+1 Shot</button>
-                    <button id="shot-2" onclick="selectShots(2)" class="shot-btn bg-white text-slate-500 py-3 rounded-2xl transition-all font-[800] text-sm border-2 border-slate-200">+2 Shots</button>
-                </div>
-            </div>
-
-            <div class="mb-6">
-                <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Sugar Level</p>
+            <div class="mb-4">
+                <p class="text-slate-400 mb-2 font-[800] uppercase text-[9px] tracking-widest">Select Size</p>
                 <div class="grid grid-cols-3 gap-2">
-                    <button id="sugar-0%" onclick="selectSugar('0%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">0%</button>
-                    <button id="sugar-25%" onclick="selectSugar('25%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">25%</button>
-                    <button id="sugar-50%" onclick="selectSugar('50%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">50%</button>
-                    <button id="sugar-75%" onclick="selectSugar('75%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">75%</button>
-                    <button id="sugar-100%" onclick="selectSugar('100%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">100%</button>
-                    <button id="sugar-extra" onclick="selectExtraSugar()" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-2 rounded-xl text-[10px] font-[800] transition-all">Extra</button>
+                    <button id="size-Small" onclick="selectSize('Small')" class="size-btn bg-white text-slate-500 py-2 rounded-xl transition-all font-[800] text-xs border-2 border-slate-200">Small</button>
+                    <button id="size-Medium" onclick="selectSize('Medium')" class="size-btn bg-white text-slate-500 py-2 rounded-xl transition-all font-[800] text-xs border-2 border-slate-200">Medium</button>
+                    <button id="size-Large" onclick="selectSize('Large')" class="size-btn bg-white text-slate-500 py-2 rounded-xl transition-all font-[800] text-xs border-2 border-slate-200">Large</button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="mb-4">
+                <p class="text-slate-400 mb-2 font-[800] uppercase text-[9px] tracking-widest">product Type</p>
+                <div class="grid grid-cols-3 gap-2">
+                    <button id="type-Hot" onclick="selectType('Hot')" class="type-btn bg-white text-slate-500 border-2 border-slate-200 py-3 rounded-xl transition-all font-[800] text-xs flex flex-col items-center gap-1">
+                        <i class="bi bi-thermometer-sun text-lg"></i> Hot
+                    </button>
+                    <button id="type-Iced" onclick="selectType('Iced')" class="type-btn bg-white text-slate-500 border-2 border-slate-200 py-3 rounded-xl transition-all font-[800] text-xs flex flex-col items-center gap-1">
+                        <i class="bi bi-snow text-lg"></i> Iced
+                    </button>
+                    <button id="type-Frappe" onclick="selectType('Frappe')" class="type-btn bg-white text-slate-500 border-2 border-slate-200 py-3 rounded-xl transition-all font-[800] text-xs flex flex-col items-center gap-1">
+                        <i class="bi bi-stars text-lg"></i> Frappe
+                    </button>
+                </div>
+            </div>
+
+            <div id="extra-shot-section" class="mb-4 hidden">
+                <p class="text-slate-400 mb-2 font-[800] uppercase text-[9px] tracking-widest">Extra Shot (+$0.50/shot)</p>
+                <div class="grid grid-cols-3 gap-2">
+                    <button id="shot-0" onclick="selectShots(0)" class="shot-btn bg-white text-slate-500 py-2 rounded-xl transition-all font-[800] text-xs border-2 border-slate-200">None</button>
+                    <button id="shot-1" onclick="selectShots(1)" class="shot-btn bg-white text-slate-500 py-2 rounded-xl transition-all font-[800] text-xs border-2 border-slate-200">+1 Shot</button>
+                    <button id="shot-2" onclick="selectShots(2)" class="shot-btn bg-white text-slate-500 py-2 rounded-xl transition-all font-[800] text-xs border-2 border-slate-200">+2 Shots</button>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <p class="text-slate-400 mb-2 font-[800] uppercase text-[9px] tracking-widest">Sugar Level</p>
+                <div class="grid grid-cols-3 gap-1">
+                    <button id="sugar-0%" onclick="selectSugar('0%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-1.5 rounded-lg text-[9px] font-[800] transition-all">0%</button>
+                    <button id="sugar-25%" onclick="selectSugar('25%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-1.5 rounded-lg text-[9px] font-[800] transition-all">25%</button>
+                    <button id="sugar-50%" onclick="selectSugar('50%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-1.5 rounded-lg text-[9px] font-[800] transition-all">50%</button>
+                    <button id="sugar-75%" onclick="selectSugar('75%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-1.5 rounded-lg text-[9px] font-[800] transition-all">75%</button>
+                    <button id="sugar-100%" onclick="selectSugar('100%')" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-1.5 rounded-lg text-[9px] font-[800] transition-all">100%</button>
+                    <button id="sugar-extra" onclick="selectExtraSugar()" class="sugar-btn bg-white text-slate-500 border-2 border-slate-200 py-1.5 rounded-lg text-[9px] font-[800] transition-all">Extra</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
                 <div>
-                    <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Quantity</p>
-                    <div class="flex items-center justify-between bg-slate-50 p-2 rounded-2xl border-2 border-slate-100">
-                        <button onclick="changeQty(-1)" class="w-10 h-10 rounded-xl bg-white border-2 border-slate-200 text-slate-500 hover:text-orange-600 hover:border-orange-200 transition-all flex items-center justify-center font-bold"> <i class="bi bi-dash"></i> </button>
-                        <input type="number" id="modal-qty" value="1" min="1" class="bg-transparent text-center text-xl font-[800] w-12 outline-none text-slate-900 pointer-events-none">
-                        <button onclick="changeQty(1)" class="w-10 h-10 rounded-xl bg-white border-2 border-slate-200 text-slate-500 hover:text-orange-600 hover:border-orange-200 transition-all flex items-center justify-center font-bold"> <i class="bi bi-plus"></i> </button>
+                    <p class="text-slate-400 mb-2 font-[800] uppercase text-[9px] tracking-widest">Quantity</p>
+                    <div class="flex items-center justify-between bg-slate-50 p-1.5 rounded-xl border-2 border-slate-100">
+                        <button onclick="changeQty(-1)" class="w-8 h-8 rounded-lg bg-white border-2 border-slate-200 text-slate-500 hover:text-orange-600 hover:border-orange-200 transition-all flex items-center justify-center font-bold text-sm"> <i class="bi bi-dash"></i> </button>
+                        <input type="number" id="modal-qty" value="1" min="1" class="bg-transparent text-center text-lg font-[800] w-10 outline-none text-slate-900 pointer-events-none">
+                        <button onclick="changeQty(1)" class="w-8 h-8 rounded-lg bg-white border-2 border-slate-200 text-slate-500 hover:text-orange-600 hover:border-orange-200 transition-all flex items-center justify-center font-bold text-sm"> <i class="bi bi-plus"></i> </button>
                     </div>
                 </div>
                 <div>
-                    <p class="text-slate-400 mb-3 font-[800] uppercase text-[10px] tracking-widest">Service</p>
-                    <div class="flex gap-2 h-[56px]">
+                    <p class="text-slate-400 mb-2 font-[800] uppercase text-[9px] tracking-widest">Service</p>
+                    <div class="flex gap-1.5 h-[38px]">
                         <button type="button" id="btn-dine-in" onclick="setServiceType('Dine-in')" 
-                            class="flex-1 rounded-2xl border-2 border-orange-500 bg-orange-50 text-orange-600 transition-all font-[800] text-[10px] uppercase tracking-widest">
+                            class="flex-1 rounded-lg border-2 border-orange-500 bg-orange-50 text-orange-600 transition-all font-[800] text-[9px] uppercase tracking-widest">
                             Dine-In
                         </button>
                         <button type="button" id="btn-takeout" onclick="setServiceType('Takeout')" 
-                            class="flex-1 rounded-2xl border-2 border-slate-200 bg-white text-slate-400 transition-all font-[800] text-[10px] uppercase tracking-widest">
+                            class="flex-1 rounded-lg border-2 border-slate-200 bg-white text-slate-400 transition-all font-[800] text-[9px] uppercase tracking-widest">
                             Takeout
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="pt-2">
-                <button onclick="confirmCustomization()" class="w-full bg-orange-500 text-white py-5 rounded-2xl font-[800] transition-all active:translate-y-1 btn-flat-orange tracking-widest text-xs flex items-center justify-center gap-2 uppercase active:shadow-none">
-                    <i class="bi bi-cart-plus-fill text-lg"></i>
+            <div class="pt-1">
+                <button onclick="confirmCustomization()" class="w-full bg-orange-500 text-white py-4 rounded-2xl font-[800] transition-all active:translate-y-1 btn-flat-orange tracking-widest text-sm flex items-center justify-center gap-2 uppercase active:shadow-none">
+                    <i class="bi bi-cart-plus-fill text-base"></i>
                     <span id="confirm-btn-text">Add to Cart — $0.00</span>
                 </button>
             </div>
@@ -360,6 +450,29 @@
                 <button onclick="closeExtraSugarModal()" class="flex-1 py-4 text-slate-400 font-[800] text-[10px] uppercase tracking-widest">Cancel</button>
                 <button onclick="confirmExtraSugar()" class="flex-[2] bg-slate-900 text-white py-4 rounded-2xl font-[800] hover:bg-orange-600 active:translate-y-1 transition-all text-[10px] uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(15,23,42,0.2)]">Apply Sweetness</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Stock Alert Modal -->
+    <div id="stock-alert-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-red-500 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.1)]">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-red-100 border-4 border-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="bi bi-exclamation-triangle-fill text-red-500 text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-[900] text-slate-900 tracking-tight uppercase">Insufficient Stock</h2>
+                <p class="text-slate-500 text-sm mt-2" id="stock-alert-message">Some ingredients are running low.</p>
+            </div>
+
+            <div class="bg-red-50 p-4 rounded-2xl border-2 border-red-200 mb-6">
+                <div id="insufficient-ingredients-list" class="space-y-2">
+                    <!-- Insufficient ingredients will be listed here -->
+                </div>
+            </div>
+
+            <button onclick="closeStockAlertModal()" class="w-full bg-red-500 text-white py-4 rounded-2xl font-[800] transition-all active:translate-y-1 tracking-widest text-sm uppercase active:shadow-none">
+                Back to Order
+            </button>
         </div>
     </div>
 
@@ -406,10 +519,10 @@
 
     <!-- Payment Modal -->
     <div id="payment-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[150] flex items-center justify-center p-4">
-        <div id="payment-modal-content" class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(15,23,42,0.1)] relative transition-transform duration-300">
+        <div id="payment-modal-content" class="bg-white w-full max-w-4xl rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(15,23,42,0.1)] relative transition-all duration-300">
             <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h2 class="text-2xl font-[900] text-slate-900 uppercase tracking-tight">Payment Method</h2>
+                    <h2 class="text-2xl font-[900] text-slate-900 uppercase tracking-tight">Payment Selections</h2>
                     <div class="h-1.5 w-12 bg-orange-500 mt-2 rounded-full"></div>
                 </div>
                 <button onclick="closePaymentModal()" class="w-11 h-11 bg-slate-50 rounded-2xl text-slate-500 hover:bg-slate-200 transition flex items-center justify-center border-2 border-slate-200">
@@ -417,62 +530,96 @@
                 </button>
             </div>
 
-            <div class="mb-8">
-                <div class="flex justify-between items-end mb-6 bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100">
-                    <span class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest mb-1">Total Pay</span>
-                    <span id="modal-total-price" class="text-4xl font-[900] text-slate-900 tracking-tight">$0.00</span>
-                </div>
-
-                <div id="payment-methods-wrapper">
-                    <p class="text-slate-400 text-[10px] font-[800] uppercase tracking-widest mb-3 ml-2">Select Payment Method</p>
-                    <div class="grid grid-cols-3 gap-3 mb-6">
-                        <button id="modal-payment-cash" onclick="selectPayment('Cash')" class="payment-btn bg-white text-slate-500 py-4 rounded-2xl transition-all font-[800] text-xs border-2 border-slate-200 hover:border-orange-500 hover:bg-orange-50 flex flex-col items-center gap-2">
-                            <i class="bi bi-cash-stack text-xl"></i> Cash
-                        </button>
-                        <button id="modal-payment-card" onclick="selectPayment('Card')" class="payment-btn bg-white text-slate-500 py-4 rounded-2xl transition-all font-[800] text-xs border-2 border-slate-200 hover:border-orange-500 hover:bg-orange-50 flex flex-col items-center gap-2">
-                            <i class="bi bi-credit-card text-xl"></i> Card
-                        </button>
-                        <button id="modal-payment-epayment" onclick="selectPayment('E-Payment')" class="payment-btn bg-white text-slate-500 py-4 rounded-2xl transition-all font-[800] text-xs border-2 border-slate-200 hover:border-orange-500 hover:bg-orange-50 flex flex-col items-center gap-2">
-                            <i class="bi bi-qr-code-scan text-xl"></i> E-Pay(KHQR)
-                        </button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <!-- Left Side (Transaction Details) -->
+                <div class="space-y-6">
+                    <div class="flex justify-between items-end bg-slate-50 p-6 rounded-[2.5rem] border-2 border-slate-100">
+                        <span class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest mb-1">Total Pay</span>
+                        <span id="modal-total-price" class="text-4xl font-[900] text-slate-900 tracking-tight">$0.00</span>
                     </div>
-                </div>
 
-                <div id="modal-cash-input-group" class="hidden bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Received</span>
-                        <div class="relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                            <input type="number" id="modal-cash-received-input" step="0.01" oninput="calculateChange()" class="w-32 bg-white border-2 border-slate-200 rounded-xl py-2 pl-7 pr-3 text-right font-black text-slate-900 outline-none focus:border-orange-500 transition-all">
+                    <div id="payment-methods-wrapper">
+                        <p class="text-slate-400 text-[10px] font-[800] uppercase tracking-widest mb-3 ml-2">Select Payment Method</p>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button id="modal-payment-cash" onclick="selectPayment('Cash')" class="payment-btn bg-white text-slate-500 py-4 rounded-2xl transition-all font-[800] text-xs border-2 border-slate-200 hover:border-orange-500 hover:bg-orange-50 flex flex-col items-center gap-2">
+                                <i class="bi bi-cash-stack text-xl"></i> Cash
+                            </button>
+                            <button id="modal-payment-card" onclick="selectPayment('Card')" class="payment-btn bg-white text-slate-500 py-4 rounded-2xl transition-all font-[500] text-xs border-2 border-slate-200 hover:border-orange-500 hover:bg-orange-50 flex flex-col items-center gap-2">
+                                <i class="bi bi-credit-card text-lg"></i> Card
+                            </button>
+                            <button id="modal-payment-epayment" onclick="selectPayment('E-Payment')" class="payment-btn bg-white text-slate-500 py-4 rounded-2xl transition-all font-[800] text-xs border-2 border-slate-200 hover:border-orange-500 hover:bg-orange-50 flex flex-col items-center gap-2">
+                                <i class="bi bi-qr-code-scan text-xl"></i> E-Pay
+                            </button>
                         </div>
                     </div>
-                    <div class="flex justify-between items-center border-t-2 border-slate-200 pt-4">
-                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Change</span>
-                        <span id="modal-cash-change-display" class="text-xl font-black text-orange-600">$0.00</span>
+
+                    <div id="modal-cash-details" class="hidden space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
+                        <div class="flex gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200 mb-4">
+                            <button type="button" onclick="setCashCurrency('USD')" id="btn-cash-usd" class="flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest bg-white text-slate-900 shadow-sm transition-all">USD ($)</button>
+                            <button type="button" onclick="setCashCurrency('KHR')" id="btn-cash-khr" class="flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-700 transition-all">KHR (៛)</button>
+                        </div>
                     </div>
 
-                    <!-- Numeric Keypad for Cash Received -->
-                    <div id="payment-num-pad" class="grid grid-cols-3 gap-2 mt-6 pt-6 border-t-2 border-slate-100"></div>
+                    <div id="modal-epay-details" class="hidden space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
+                        <div class="bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 flex flex-col items-center">
+                            <div class="mt-4 text-center">
+                                <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Payable Amount</p>
+                                <p id="modal-epay-total-riel" class="text-xl font-black text-slate-900">0 ៛</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="confirm-payment-btn" onclick="executePayment()" class="mt-6 w-full bg-slate-900 text-white py-6 rounded-2xl font-[800] text-sm transition-all active:translate-y-1 btn-flat hover:bg-orange-600 uppercase tracking-widest active:shadow-none flex items-center justify-center gap-3">
+                        <i class="bi bi-check2-circle text-2xl"></i> Confirm & Finish
+                    </button>
+                </div>
+
+                <!-- Right Side (Keyboard & Action) -->
+                <div class="flex flex-col h-full">
+                    <div id="modal-cash-input-display" class="bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 space-y-4 mb-6 hidden animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Received</span>
+                            <div class="relative">
+                                <span id="currency-symbol-display" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                                <input type="number" id="modal-cash-received-input" step="0.01" oninput="calculateChange()" class="w-32 bg-slate-50 border-2 border-slate-200 rounded-xl py-2 pl-7 pr-3 text-right font-black text-slate-900 outline-none focus:border-orange-500 transition-all">
+                            </div>
+                        </div>
+                        <div id="total-riel-row" class="hidden flex justify-between items-center px-1">
+                            <span class="text-[9px] font-black uppercase text-slate-400 tracking-widest">Target in Riel</span>
+                            <span id="modal-total-riel-display" class="text-xs font-black text-slate-600">0 ៛</span>
+                        </div>
+                        <div class="flex justify-between items-center border-t-2 border-slate-50 pt-4">
+                            <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Change</span>
+                            <div class="text-right">
+                                <span id="modal-cash-change-display" class="text-2xl font-black text-emerald-600 block">$0.00</span>
+                                <span id="modal-cash-change-khr-display" class="text-[11px] font-bold text-slate-400">0 ៛</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="modal-cash-input-group" class="hidden bg-slate-50 p-6 rounded-[2.5rem] border-2 border-slate-100 flex-grow flex flex-col justify-center transition-all duration-300">
+                        <p id="keyboard-label" class="text-center text-slate-400 text-[10px] font-[800] uppercase tracking-widest mb-6">Numeric Keyboard</p>
+                        <div id="payment-num-pad" class="grid grid-cols-3 gap-3"></div>
+                    </div>
+                    <div id="modal-epay-qr-display" class="hidden bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 flex-grow flex flex-col justify-center items-center transition-all duration-300">
+                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Scan KHQR to Pay</p>
+                        <div class="w-48 h-48 bg-slate-50 border-4 border-slate-900 rounded-3xl p-2 flex items-center justify-center overflow-hidden">
+                            <img src="/static/images/qr-code.png" alt="KHQR" class="w-full h-full object-contain">
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <button id="confirm-payment-btn" onclick="executePayment()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-[800] text-sm transition-all active:translate-y-1 btn-flat hover:bg-orange-600 uppercase tracking-widest active:shadow-none flex items-center justify-center gap-2">
-                <i class="bi bi-check2-circle text-xl"></i> Confirm & Finish
-            </button>
         </div>
     </div>
 
     <!-- Order Success Modal -->
-    <div id="success-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-2 sm:p-4">
-        <div class="bg-white w-full max-w-4xl rounded-[2.5rem] border-[3px] border-slate-900 shadow-[15px_15px_0px_0px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col md:flex-row h-[90vh] md:h-auto">
-            <!-- Left: Status & Actions -->
+    <div id="success-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-4xl rounded-[2.5rem] border-[3px] border-slate-900 shadow-[15px_15px_0px_0px_rgba(0,0,0,0.1)] flex flex-col md:flex-row overflow-hidden relative">
             <div class="w-full md:w-1/3 p-6 md:p-10 text-center flex flex-col justify-center border-b-2 md:border-b-0 md:border-r-2 border-slate-100">
                 <div class="w-20 h-20 bg-emerald-50 border-2 border-emerald-100 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
                     <i class="bi bi-check-lg text-4xl"></i>
                 </div>
                 <h2 class="text-2xl font-bold text-slate-900 mb-1 uppercase tracking-tight">Order Success</h2>
                 <p id="success-order-display" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">Invoice ID: #000</p>
-                
                 <div class="space-y-3 mb-6">
                     <a id="view-invoice-link" target="_blank" class="w-full bg-white border-2 border-slate-900 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-[4px_4px_0px_0px_rgba(15,23,42,0.1)] active:translate-y-1 active:shadow-none flex items-center justify-center">
                         <i class="bi bi-file-earmark-pdf mr-2"></i> Open PDF
@@ -483,14 +630,11 @@
                 </div>
                 <button onclick="closeSuccessModal()" class="w-full py-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-slate-900 transition-colors">Finish & Close</button>
             </div>
-
-            <!-- Right: Soft Invoice Preview (Same Tab) -->
             <div class="w-full md:w-2/3 bg-slate-50 p-4 md:p-8 overflow-hidden flex flex-col">
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                     <i class="bi bi-eye-fill"></i> Soft Invoice Preview
                 </p>
                 <div id="soft-invoice-container" class="bg-white border-2 border-slate-200 rounded-2xl overflow-y-auto flex-grow shadow-inner p-2 custom-scrollbar">
-                    <!-- HTML Invoice will be injected here -->
                     <div class="flex items-center justify-center h-full text-slate-300 italic text-sm">Loading preview...</div>
                 </div>
             </div>
@@ -510,8 +654,11 @@
         let currentService = 'Dine-in'; 
         let editIndex = null; 
         let activeInputId = 'reg-name';
-        let selectedPayment = 'E-Payment'; // Default payment method
+        let selectedPayment = 'E-Payment'; 
+        const EXCHANGE_RATE = 4100;
+        let cashCurrency = 'USD';
         const stockChannel = new BroadcastChannel('stock_updates');
+        const drinkRequestChannel = new BroadcastChannel('drink_requests');
 
         stockChannel.onmessage = (event) => {
             console.log("POS received broadcast:", event.data);
@@ -536,16 +683,54 @@
             }
         };
 
+        drinkRequestChannel.onmessage = (event) => {
+            console.log("POS received drink request broadcast:", event.data);
+            if (event.data === 'request_accepted') {
+                // Refresh refund orders if the modal is currently open
+                const refundModal = document.getElementById('refund-orders-modal');
+                if (refundModal && !refundModal.classList.contains('hidden')) {
+                    loadRefundOrders();
+                }
+                updateRefundBadge();
+                showNotification('New refund request available!', 'success');
+            }
+        };
+
+        async function updateRefundBadge() {
+            try {
+                const response = await fetch('/api/drink-requests/resolved/');
+                const data = await response.json();
+                const badge = document.getElementById('refund-badge');
+                const count = data.requests ? data.requests.length : 0;
+                
+                if (count > 0) {
+                    badge.innerText = count > 9 ? '9+' : count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Failed to update refund badge:', error);
+            }
+        }
+
         function showNotification(message, type = 'success') {
             const container = document.getElementById('notification-container');
             if (!container) return;
 
             const notification = document.createElement('div');
-            notification.className = `transform transition-all duration-500 translate-x-full opacity-0 flex items-center p-4 min-w-[300px] rounded-2xl border-2 shadow-lg pointer-events-auto ${
-                type === 'success' ? 'bg-emerald-50 border-emerald-400 text-emerald-800' : 'bg-orange-50 border-orange-400 text-orange-800'
-            }`;
+            let bgClass = 'bg-orange-50 border-orange-400 text-orange-800';
+            let icon = 'bi-info-circle-fill text-orange-500';
+
+            if (type === 'success') {
+                bgClass = 'bg-emerald-50 border-emerald-400 text-emerald-800';
+                icon = 'bi-check-circle-fill text-emerald-500';
+            } else if (type === 'error') {
+                bgClass = 'bg-red-50 border-red-400 text-red-800';
+                icon = 'bi-exclamation-octagon-fill text-red-500';
+            }
             
-            const icon = type === 'success' ? 'bi-check-circle-fill text-emerald-500' : 'bi-info-circle-fill text-orange-500';
+            notification.className = `transform transition-all duration-500 translate-x-full opacity-0 flex items-center p-4 min-w-[300px] rounded-2xl border-2 shadow-lg pointer-events-auto ${bgClass}`;
             
             notification.innerHTML = `
                 <i class="bi ${icon} text-xl mr-3"></i>
@@ -565,6 +750,257 @@
                 notification.classList.add('translate-x-full', 'opacity-0');
                 setTimeout(() => notification.remove(), 500);
             }, 4000);
+        }
+
+        function openRequestDrinkModal() {
+            document.getElementById('drink-request-modal').classList.remove('hidden');
+        }
+
+        function closeRequestDrinkModal() {
+            document.getElementById('drink-request-modal').classList.add('hidden');
+            document.getElementById('request-product').innerHTML = '<option value="">Choose order first</option>';
+            document.getElementById('request-order-id').value = '';
+            document.getElementById('request-quantity').value = 1;
+            document.getElementById('request-note').value = '';
+            document.getElementById('request-order-help').innerText = 'Enter the order number shown in the kitchen/receipt.';
+        }
+
+        async function loadRequestOrderItems() {
+            const orderInput = document.getElementById('request-order-id');
+            const orderNumber = orderInput.value.trim();
+            const resultSelect = document.getElementById('request-product');
+            resultSelect.innerHTML = '<option value="">Loading...</option>';
+
+            if (!orderNumber) {
+                showNotification('Please enter an order ID first.', 'info');
+                resultSelect.innerHTML = '<option value="">Choose order first</option>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/order-items/?order_number=${encodeURIComponent(orderNumber)}`);
+                const data = await response.json();
+
+                if (data.status !== 'success') {
+                    showNotification(data.message || 'Order not found.', 'info');
+                    resultSelect.innerHTML = '<option value="">Choose order first</option>';
+                    return;
+                }
+
+                if (!data.items.length) {
+                    showNotification('No drinks found for that order.', 'info');
+                    resultSelect.innerHTML = '<option value="">No drinks available</option>';
+                    return;
+                }
+
+                resultSelect.innerHTML = '<option value="">Select a drink</option>';
+                data.items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.product_id;
+                    option.text = `${item.product_name} (${item.size}) x${item.quantity}`;
+                    resultSelect.appendChild(option);
+                });
+                document.getElementById('request-order-help').innerText = `Order #${data.order_number} loaded.`;
+            } catch (error) {
+                console.error(error);
+                showNotification('Could not load order details. Try again.', 'error');
+                resultSelect.innerHTML = '<option value="">Choose order first</option>';
+            }
+        }
+
+        async function submitDrinkRequest() {
+            const orderNumber = document.getElementById('request-order-id').value.trim();
+            const productId = document.getElementById('request-product').value;
+            const quantity = parseInt(document.getElementById('request-quantity').value, 10) || 1;
+            const reason = document.getElementById('request-reason').value;
+            const note = document.getElementById('request-note').value.trim();
+
+            if (!orderNumber || !productId) {
+                showNotification('Please choose an order and drink first.', 'info');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/drink-requests/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        order_number: orderNumber,
+                        product_id: productId,
+                        quantity,
+                        reason,
+                        note,
+                    }),
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    closeRequestDrinkModal();
+                    showNotification('Request sent to manager.', 'success');
+                    drinkRequestChannel.postMessage('new_request');
+                } else {
+                    showNotification(data.message || 'Unable to send request.', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showNotification('Unable to send request. Check connection.', 'error');
+            }
+        }
+
+        // Refund Orders Modal Functions
+        function openRefundOrdersModal() {
+            document.getElementById('refund-orders-modal').classList.remove('hidden');
+            loadRefundOrders();
+            updateRefundBadge(); // Refresh badge when modal opens
+        }
+
+        function closeRefundOrdersModal() {
+            document.getElementById('refund-orders-modal').classList.add('hidden');
+        }
+
+        async function loadRefundOrders() {
+            const content = document.getElementById('refund-orders-content');
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="bi bi-arrow-repeat text-4xl text-slate-400 mb-4"></i>
+                    <p class="text-slate-500">Loading accepted requests...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/drink-requests/resolved/');
+                const data = await response.json();
+
+                if (data.status !== 'success' || !data.requests.length) {
+                    content.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="bi bi-check-circle text-4xl text-green-400 mb-4"></i>
+                            <p class="text-slate-500">No accepted requests available for refund.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                content.innerHTML = `
+                    <div class="space-y-4 max-h-96 overflow-y-auto">
+                        ${data.requests.map(request => `
+                            <div class="border-2 border-slate-200 rounded-2xl p-4 bg-slate-50">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h3 class="font-bold text-slate-900">Order #${request.order_number}</h3>
+                                        <p class="text-sm text-slate-600">${request.product_name} (${request.size}) x${request.quantity}</p>
+                                        <p class="text-xs text-slate-500 mt-1">Reason: ${request.reason}</p>
+                                        ${request.note ? `<p class="text-xs text-slate-500">Note: ${request.note}</p>` : ''}
+                                    </div>
+                                    <button type="button"
+                                        onclick="processRefund(this.dataset.requestId, this.dataset.productId, this.dataset.productName, this.dataset.size, this.dataset.quantity)"
+                                        data-request-id="${request.id}"
+                                        data-product-id="${request.product_id}"
+                                        data-product-name="${request.product_name.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}"
+                                        data-size="${request.size.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}"
+                                        data-quantity="${request.quantity}"
+                                        class="px-4 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition">
+                                        Process Refund
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error(error);
+                content.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="bi bi-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                        <p class="text-slate-500">Could not load refund requests. Try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function processRefund(requestId, productId, productName, size, quantity) {
+            console.log('Processing refund for request ID:', requestId, 'product ID:', productId);
+            quantity = Number(quantity);
+            if (Number.isNaN(quantity) || quantity <= 0) {
+                console.error('Invalid refund quantity:', quantity);
+                showNotification('Invalid refund quantity. Cannot process refund.', 'error');
+                return;
+            }
+
+            const url = `/api/drink-requests/${requestId}/mark-refunded/`;
+            console.log('Calling URL:', url);
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                console.log('Response status:', response.status);
+                console.log('Response data:', data);
+                if (data.status !== 'success') {
+                    showNotification(data.message || 'Failed to update request status.', 'error');
+                    if (response.status === 404) {
+                        loadRefundOrders();
+                        updateRefundBadge();
+                    }
+                    return;
+                }
+            } catch (error) {
+                console.error('Error marking request as refunded:', error);
+                showNotification('Connection error. Refund not processed.', 'error');
+                return;
+            }
+
+            loadRefundOrders();
+            updateRefundBadge();
+
+            // Create refund item directly in cart (bypass modal)
+            const uniqueKey = `refund-${requestId}-${size}-100%-Hot`;
+            const itemData = {
+                uniqueKey: uniqueKey,
+                id: Number(productId),
+                product_id: Number(productId),
+                name: `${productName} (FREE REFUND)`,
+                category: 'Refund',
+                size: size,
+                type: 'Hot',
+                sugar: '100%',
+                sugar_multiplier: 1.0,
+                price: 0.00,
+                qty: quantity,
+                shots: 0,
+                // Save metadata
+                pSmall: 0.00,
+                pMedium: 0.00,
+                pLarge: 0.00,
+                iceUp: 0.00,
+                frappeUp: 0.00,
+                canH: false,
+                canI: false,
+                canF: false,
+                // Refund flags
+                is_refund: true,
+                request_id: requestId
+            };
+
+            // Add to cart
+            const existing = cart.find(i => i.uniqueKey === uniqueKey);
+            if (existing) {
+                existing.qty += quantity;
+            } else {
+                cart.push(itemData);
+            }
+
+            renderCart();
+            closeRefundOrdersModal();
+            showNotification(`Refund Processed! Added ${quantity}x ${productName} (${size}) to cart.`, 'success');
+            updateRefundBadge(); // Refresh badge after processing refund
         }
 
         function updateproductCard(product) {
@@ -832,6 +1268,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderKeyboard('abc');
             selectPayment('E-Payment'); // Set default payment method
+            updateRefundBadge(); // Initialize refund badge
         });
 
         function openGlobalKeyboard(inputId, mode) {
@@ -890,7 +1327,10 @@
             const name = document.getElementById('reg-name').value;
             const phone = document.getElementById('reg-phone').value;
 
-            if(!name || !phone) return alert("Please fill in all fields.");
+            if(!name || !phone) {
+                showNotification("Please fill in all fields.", "info");
+                return;
+            }
 
             const response = await fetch('/api/register-customer/', {
                 method: 'POST',
@@ -906,13 +1346,14 @@
                 toggleRegisterModal();
                 renderCart();
             } else {
-                alert("Error: " + data.message);
+                showNotification("Error: " + data.message, "error");
             }
         }
 
         async function addToCart(id, name, pSmall, pMedium, pLarge, iceUp, frappeUp, canH, canI, canF, category) {
             editIndex = null; // Reset edit mode
             const modal = document.getElementById('option-modal');
+            const modalBody = document.getElementById('option-modal-body');
             if (modal) modal.classList.remove('hidden');
 
             document.getElementById('modal-product-name').innerText = name;
@@ -920,8 +1361,14 @@
             const shotSection = document.getElementById('extra-shot-section');
             if (category === 'Coffee') {
                 shotSection.classList.remove('hidden');
+                if (modalBody) {
+                    modalBody.style.maxHeight = '90vh';
+                }
             } else {
                 shotSection.classList.add('hidden');
+                if (modalBody) {
+                    modalBody.style.maxHeight = '';
+                }
             }
 
             currentPriceSmall = parseFloat(pSmall);
@@ -962,6 +1409,7 @@
             const item = cart[index];
             
             const modal = document.getElementById('option-modal');
+            const modalBody = document.getElementById('option-modal-body');
             if (modal) modal.classList.remove('hidden');
 
             document.getElementById('modal-product-name').innerText = item.name;
@@ -969,8 +1417,14 @@
             const shotSection = document.getElementById('extra-shot-section');
             if (item.category === 'Coffee') {
                 shotSection.classList.remove('hidden');
+                if (modalBody) {
+                    modalBody.style.maxHeight = '90vh';
+                }
             } else {
                 shotSection.classList.add('hidden');
+                if (modalBody) {
+                    modalBody.style.maxHeight = '';
+                }
             }
 
             // Load pricing metadata stored in the cart item
@@ -1070,28 +1524,67 @@
 
         function selectPayment(method) {
             selectedPayment = method;
-            const cashGroup = document.getElementById('modal-cash-input-group');
-            const modalContent = document.getElementById('payment-modal-content');
+            const cashCurrencyToggle = document.getElementById('modal-cash-details');
+            const epayDetails = document.getElementById('modal-epay-details');
+            const cashInputDisplay = document.getElementById('modal-cash-input-display');
+            const cashKeyboard = document.getElementById('modal-cash-input-group');
+            const epayQrDisplay = document.getElementById('modal-epay-qr-display');
+
+            // Hide all specialized sections first
+            cashCurrencyToggle?.classList.add('hidden');
+            epayDetails?.classList.add('hidden');
+            cashInputDisplay?.classList.add('hidden');
+            cashKeyboard?.classList.add('hidden');
+            epayQrDisplay?.classList.add('hidden');
 
             if (method === 'Cash') {
-                cashGroup.classList.remove('hidden');
-                document.getElementById('modal-cash-received-input').focus();
+                cashCurrencyToggle?.classList.remove('hidden');
+                cashInputDisplay?.classList.remove('hidden');
+                cashKeyboard?.classList.remove('hidden');
+                setCashCurrency(cashCurrency || 'USD');
                 renderPaymentKeypad();
-                if (modalContent) modalContent.classList.add('scale-[0.8]');
-            } else {
-                cashGroup.classList.add('hidden');
-                if (modalContent) modalContent.classList.remove('scale-[0.8]');
+            } else if (method === 'E-Payment') {
+                epayDetails?.classList.remove('hidden');
+                epayQrDisplay?.classList.remove('hidden');
+                const totalUSD = parseFloat(document.getElementById('modal-total-price').innerText.replace('$', '')) || 0;
+                const totalKHR = Math.round(totalUSD * EXCHANGE_RATE / 100) * 100;
+                const epayRielDisplay = document.getElementById('modal-epay-total-riel');
+                if (epayRielDisplay) epayRielDisplay.innerText = `${totalKHR.toLocaleString()} ៛`;
             }
 
             document.querySelectorAll('#payment-modal .payment-btn').forEach(btn => {
                 btn.classList.remove('bg-orange-50', 'text-orange-600', 'border-orange-500');
                 btn.classList.add('bg-white', 'text-slate-500', 'border-slate-200');
             });
-            const activeBtn = document.getElementById(`modal-payment-${method.toLowerCase().split(' ')[0].replace('-', '')}`);
+            const idMap = { 'Cash': 'modal-payment-cash', 'Card': 'modal-payment-card', 'E-Payment': 'modal-payment-epayment' };
+            const activeBtn = document.getElementById(idMap[method]);
             if (activeBtn) {
                 activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
                 activeBtn.classList.add('bg-orange-50', 'text-orange-600', 'border-orange-500');
             }
+        }
+
+        function setCashCurrency(currency) {
+            cashCurrency = currency;
+            const usdBtn = document.getElementById('btn-cash-usd');
+            const khrBtn = document.getElementById('btn-cash-khr');
+            const symbol = document.getElementById('currency-symbol-display');
+            const rielRow = document.getElementById('total-riel-row');
+            const input = document.getElementById('modal-cash-received-input');
+
+            if (currency === 'USD') {
+                usdBtn.className = "flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest bg-white text-slate-900 shadow-sm transition-all";
+                khrBtn.className = "flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-700 transition-all";
+                if (symbol) symbol.innerText = '$'; rielRow.classList.add('hidden'); input.step = "0.01";
+            } else {
+                khrBtn.className = "flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest bg-white text-slate-900 shadow-sm transition-all";
+                usdBtn.className = "flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest text-slate-500 hover:text-slate-700 transition-all";
+                if (symbol) symbol.innerText = '៛'; rielRow.classList.remove('hidden');
+                const totalUSD = parseFloat(document.getElementById('modal-total-price').innerText.replace('$', ''));
+                document.getElementById('modal-total-riel-display').innerText = `${Math.round(totalUSD * EXCHANGE_RATE).toLocaleString()} ៛`;
+                input.step = "100";
+            }
+            input.value = ''; calculateChange(); input.focus();
         }
 
         function renderPaymentKeypad() {
@@ -1105,13 +1598,9 @@
                 btn.className = "py-3 rounded-2xl border-2 border-slate-200 bg-white font-black text-slate-700 hover:border-orange-500 hover:bg-orange-50 transition-all active:scale-95 shadow-sm";
                 btn.onclick = () => {
                     const input = document.getElementById('modal-cash-received-input');
-                    if (key === 'CLR') {
-                        input.value = '';
-                    } else if (key === '.') {
-                        if (!input.value.includes('.')) input.value += '.';
-                    } else {
-                        input.value += key;
-                    }
+                    if (key === 'CLR') input.value = '';
+                    else if (key === '.') { if (!input.value.includes('.')) input.value += '.'; }
+                    else input.value += key;
                     calculateChange();
                 };
                 keypad.appendChild(btn);
@@ -1119,10 +1608,21 @@
         }
 
         function calculateChange() {
-            const received = parseFloat(document.getElementById('modal-cash-received-input').value) || 0;
-            const total = parseFloat(document.getElementById('modal-total-price').innerText.replace('$', ''));
-            const change = Math.max(0, received - total);
-            document.getElementById('modal-cash-change-display').innerText = `$${change.toFixed(2)}`;
+            const inputVal = parseFloat(document.getElementById('modal-cash-received-input').value) || 0;
+            const totalUSD = parseFloat(document.getElementById('modal-total-price').innerText.replace('$', ''));
+            
+            let receivedUSD = 0;
+            if (cashCurrency === 'USD') {
+                receivedUSD = inputVal;
+            } else {
+                receivedUSD = inputVal / EXCHANGE_RATE;
+            }
+
+            const changeUSD = Math.max(0, receivedUSD - totalUSD);
+            const changeKHR = Math.round(changeUSD * EXCHANGE_RATE / 100) * 100;
+
+            document.getElementById('modal-cash-change-display').innerText = `$${changeUSD.toFixed(2)}`;
+            document.getElementById('modal-cash-change-khr-display').innerText = `${changeKHR.toLocaleString()} ៛`;
         }
 
         // --- EXTRA SUGAR UI LOGIC ---
@@ -1180,8 +1680,7 @@
         }
 
         function confirmCustomization() {
-            const qtyInput = document.getElementById('modal-qty');
-            const qty = parseInt(qtyInput.value) || 1;
+            const qty = parseInt(document.getElementById('modal-qty').value) || 1;
             
             // Dynamic sugar multiplier calculation
             let sugarMultiplier = 1.0;
@@ -1191,29 +1690,100 @@
                 sugarMultiplier = parseInt(currentItem.sugar) / 100;
             }
 
-            const uniqueKey = `${currentItem.id}-${currentItem.size}-${currentItem.sugar}-${currentItem.type}`;
-            const itemData = {
-                uniqueKey: uniqueKey, id: currentItem.id, name: currentItem.name, category: currentItem.category,
-                size: currentItem.size, type: currentItem.type, sugar: currentItem.sugar,
-                sugar_multiplier: sugarMultiplier, price: currentItem.totalCalculatedPrice, qty: qty, shots: currentItem.shots,
-                // Save metadata for future editing re-population
-                pSmall: currentPriceSmall, pMedium: currentPriceMedium, pLarge: currentPriceLarge,
-                iceUp: currentIceUpcharge, frappeUp: currentFrappeUpcharge,
-                canH: currentItem.canH, canI: currentItem.canI, canF: currentItem.canF
-            };
+            // Check stock before adding to cart
+            checkStockAndAdd(qty, sugarMultiplier);
+        }
 
-            if (editIndex !== null) {
-                cart[editIndex] = itemData;
-            } else {
-                const existing = cart.find(i => i.uniqueKey === uniqueKey);
-                if (existing) {
-                    existing.qty += qty;
-                } else {
-                    cart.push(itemData);
+        async function checkStockAndAdd(qty, sugarMultiplier) {
+            try {
+                const response = await fetch('/api/check-product-stock/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        product_id: currentItem.id,
+                        size: currentItem.size,
+                        quantity: qty,
+                        sugar: currentItem.sugar,
+                        extra_shots: currentItem.shots || 0
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.sufficient) {
+                    // Show stock alert modal
+                    showStockAlert(data.insufficient_ingredients);
+                    return;
                 }
+
+                // Stock is sufficient, proceed to add to cart
+                const uniqueKey = `${currentItem.id}-${currentItem.size}-${currentItem.sugar}-${currentItem.type}`;
+                const itemData = {
+                    uniqueKey: uniqueKey, id: currentItem.id, name: currentItem.name, category: currentItem.category,
+                    size: currentItem.size, type: currentItem.type, sugar: currentItem.sugar,
+                    sugar_multiplier: sugarMultiplier, price: currentItem.totalCalculatedPrice, qty: qty, shots: currentItem.shots,
+                    // Save metadata for future editing re-population
+                    pSmall: currentPriceSmall, pMedium: currentPriceMedium, pLarge: currentPriceLarge,
+                    iceUp: currentIceUpcharge, frappeUp: currentFrappeUpcharge,
+                    canH: currentItem.canH, canI: currentItem.canI, canF: currentItem.canF
+                };
+
+                if (editIndex !== null) {
+                    cart[editIndex] = itemData;
+                } else {
+                    const existing = cart.find(i => i.uniqueKey === uniqueKey);
+                    if (existing) {
+                        existing.qty += qty;
+                    } else {
+                        cart.push(itemData);
+                    }
+                }
+                
+                closeModal(); renderCart();
+            } catch (error) {
+                console.error('Stock check failed:', error);
+                // If stock check fails, still allow adding to cart as fallback
+                showNotification('Stock check failed. Adding to cart anyway.', 'info');
+                confirmCustomization();
             }
+        }
+
+        function showStockAlert(insufficientIngredients) {
+            const modal = document.getElementById('stock-alert-modal');
+            const listContainer = document.getElementById('insufficient-ingredients-list');
             
-            closeModal(); renderCart();
+            // Clear previous content
+            listContainer.innerHTML = '';
+            
+            // Add insufficient ingredients
+            insufficientIngredients.forEach(ing => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex justify-between items-center';
+                itemDiv.innerHTML = `
+                    <span class="font-bold text-red-700">${ing.name}</span>
+                    <span class="text-sm text-red-600">Available: ${ing.available} ${ing.unit} (Need: ${ing.required} ${ing.unit})</span>
+                `;
+                listContainer.appendChild(itemDiv);
+            });
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeStockAlertModal() {
+            const modal = document.getElementById('stock-alert-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function removeCartItem(index) {
+            if (index >= 0 && index < cart.length) {
+                cart.splice(index, 1);
+                renderCart();
+            }
         }
 
         function renderCart() {
@@ -1241,26 +1811,33 @@
             list.innerHTML = cart.map((item, index) => {
                 let displayPrice = item.price * item.qty;
                 let isFree = false;
+                let isRefund = item.is_refund === true;
                 
                 if (isRedemptionActive && !freeApplied && item.size === 'Medium') {
                     displayPrice = 0;
                     freeApplied = true;
                     isFree = true;
+                } else if (isRefund) {
+                    displayPrice = 0;
+                    isFree = true;
                 }
 
                 return `
-                    <div onclick="editCartItem(${index})" class="bg-white p-4 rounded-2xl border-2 ${isFree ? 'border-orange-400 bg-orange-50/30' : 'border-slate-100'} flex justify-between items-center hover:border-orange-200 transition-colors shadow-sm cursor-pointer group/cart">
+                    <div onclick="editCartItem(${index})" class="bg-white p-4 rounded-2xl border-2 ${isFree ? 'border-green-400 bg-green-50/30' : 'border-slate-100'} flex justify-between items-center hover:border-orange-200 transition-colors shadow-sm cursor-pointer group/cart relative">
                         <div>
                             <div class="flex items-center gap-2 mb-1">
                                 <p class="font-[800] text-sm text-slate-900 leading-none group-hover/cart:text-orange-600">${item.name}</p>
                                 <span class="text-[8px] px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 font-[800] uppercase tracking-widest">${item.type}</span>
-                                ${isFree ? '<span class="text-[7px] px-1 bg-orange-500 text-white rounded font-black uppercase">Free</span>' : ''}
+                                ${isFree ? (isRefund ? '<span class="text-[7px] px-1 bg-green-500 text-white rounded font-black uppercase">Refund</span>' : '<span class="text-[7px] px-1 bg-orange-500 text-white rounded font-black uppercase">Free</span>') : ''}
                             </div>
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">${item.size} | ${item.sugar} Sugar ${item.shots > 0 ? '| +' + item.shots + ' Shot(s)' : ''}</p>
                         </div>
-                        <div class="text-right">
+                        <div class="text-right flex items-center gap-2">
                             <p class="font-[800] text-orange-600">$${displayPrice.toFixed(2)}</p>
                             <p class="text-[10px] text-slate-400 font-bold">${item.qty} units</p>
+                            <button onclick="event.stopPropagation(); removeCartItem(${index})" class="w-6 h-6 bg-red-50 border border-red-200 text-red-500 rounded-lg hover:bg-red-100 hover:border-red-300 transition flex items-center justify-center opacity-100">
+                                <i class="bi bi-x text-xs"></i>
+                            </button>
                         </div>
                     </div>
                 `;
@@ -1272,20 +1849,31 @@
 
         function updateTotals(subtotal) {
             let redemptionDiscount = 0;
+            let refundDiscount = 0;
 
+            // Calculate redemption discount
             if (isRedemptionActive) {
                 const firstMedium = cart.find(i => i.size === 'Medium');
                 if (firstMedium) redemptionDiscount = firstMedium.price;
                 document.getElementById('loyalty-discount-row').classList.remove('hidden');
                 document.getElementById('loyalty-discount-row').querySelector('span:first-child').innerText = 'Point Redemption';
-            } else { document.getElementById('loyalty-discount-row').classList.add('hidden'); }
+            } else { 
+                document.getElementById('loyalty-discount-row').classList.add('hidden'); 
+            }
 
-            const total = subtotal - redemptionDiscount;
+            // Calculate refund discount
+            cart.forEach(item => {
+                if (item.is_refund === true) {
+                    refundDiscount += item.price * item.qty;
+                }
+            });
+
+            const total = subtotal - redemptionDiscount - refundDiscount;
             const taxRate = 0.10;
             const tax = total - (total / (1 + taxRate));
 
             document.getElementById('subtotal').innerText = `$${subtotal.toFixed(2)}`;
-            document.getElementById('discount-amount').innerText = `-$${redemptionDiscount.toFixed(2)}`;
+            document.getElementById('discount-amount').innerText = `-$${(redemptionDiscount + refundDiscount).toFixed(2)}`;
             document.getElementById('tax').innerText = `$${tax.toFixed(2)}`;
             document.getElementById('total-price').innerText = `$${total.toFixed(2)}`;
         }
@@ -1296,12 +1884,15 @@
             const totalDisplay = document.getElementById('total-price').innerText;
             document.getElementById('modal-total-price').innerText = totalDisplay;
             
-            // Reset modal state
-            document.getElementById('modal-cash-received-input').value = '';
-            document.getElementById('modal-cash-change-display').innerText = '$0.00';
+            // Reset cash inputs
+            const receivedInput = document.getElementById('modal-cash-received-input');
+            if (receivedInput) receivedInput.value = '';
             
+            const changeDisplay = document.getElementById('modal-cash-change-display');
+            if (changeDisplay) changeDisplay.innerText = '$0.00';
+
             document.getElementById('payment-modal').classList.remove('hidden');
-            selectPayment('E-Payment'); // Default to e-payment
+            selectPayment('E-Payment'); // Set default selection
         }
 
         function closePaymentModal() {
@@ -1312,7 +1903,10 @@
             const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
             const totalNumeric = parseFloat(document.getElementById('modal-total-price').innerText.replace('$', ''));
             
-            const cashReceived = parseFloat(document.getElementById('modal-cash-received-input').value) || 0;
+            let cashReceived = parseFloat(document.getElementById('modal-cash-received-input').value) || 0;
+            if (selectedPayment === 'Cash' && cashCurrency === 'KHR') {
+                cashReceived = cashReceived / EXCHANGE_RATE;
+            }
             const cashChange = parseFloat(document.getElementById('modal-cash-change-display').innerText.replace('$', '')) || 0;
 
             const payBtn = document.getElementById('confirm-payment-btn');
@@ -1334,11 +1928,11 @@
                 if (result.status === 'success') {
                     closePaymentModal();
                     // Show the post-payment options modal
-                    showSuccessModal(result.order_id);
+                    showSuccessModal(result.order_id, result.order_number);
                     
                     // BROADCAST: Notify Owner and Inventory pages to refresh
                     stockChannel.postMessage('refresh_data');
-                } else { alert("Transaction Failed: " + result.message); }
+                } else { showNotification("Transaction Failed: " + result.message, "error"); }
             } catch (error) {
                 console.error("Order Processing Error:", error);
                 showNotification("Error processing order. Check console.", "error");
@@ -1348,8 +1942,9 @@
             }
         }
 
-        function showSuccessModal(orderId) {
-            document.getElementById('success-order-display').innerText = `Invoice ID: #${orderId}`;
+        function showSuccessModal(orderId, orderNumber) {
+            const invoiceNumber = orderNumber || orderId;
+            document.getElementById('success-order-display').innerText = `Invoice ID: #${invoiceNumber}`;
             const previewContainer = document.getElementById('soft-invoice-container');
             previewContainer.innerHTML = '<div class="flex items-center justify-center h-full text-slate-300 italic text-sm"><i class="bi bi-arrow-repeat animate-spin mr-2"></i>Generating soft invoice...</div>';
 

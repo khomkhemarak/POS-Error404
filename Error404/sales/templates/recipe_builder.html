@@ -58,9 +58,15 @@
         </div>
         
         <nav class="space-y-1 flex-grow">
-            <a href="{% url 'owner' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+            {% if request.user.profile.is_owner %}
+              <a href="{% url 'owner' %}" class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100">
                 <i class="bi bi-grid-1x2"></i> Dashboard
-            </a>
+              </a>
+            {% elif request.user.profile.is_manager %}
+              <a href="{% url 'manager_display' %}" class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100">
+                <i class="bi bi-graph-up-arrow"></i> Manager Analyst
+              </a>
+            {% endif %}
             <a href="{% url 'inventory_list' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
                 <i class="bi bi-box-seam"></i> Inventory
             </a>
@@ -305,7 +311,7 @@
     </main>
 
     <nav class="md:hidden fixed bottom-0 w-full bg-white border-t-2 border-slate-100 flex justify-around items-center px-2 py-2 pb-safe z-[150] shadow-[0_-4px_15px_rgba(0,0,0,0.05)]">
-        <a href="{% url 'owner' %}" class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-slate-600 transition-colors w-16">
+        <a href="{% url dashboard_route %}" class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-slate-600 transition-colors w-16">
             <i class="bi bi-grid-1x2 text-xl"></i>
             <span class="text-[9px] font-bold uppercase tracking-wide">Dash</span>
         </a>

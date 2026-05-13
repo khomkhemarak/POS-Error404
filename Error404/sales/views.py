@@ -2,6 +2,7 @@ from importlib import import_module
 import importlib
 import json
 import math
+import random
 from decimal import Decimal
 from datetime import timedelta
 import calendar
@@ -13,7 +14,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 
 # Database & Querying
 from django.db import transaction
@@ -22,7 +28,7 @@ from django.db.models.functions import ExtractHour, ExtractDay, ExtractMonth, Tr
 
 # Decorators
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
 try:
     weasyprint = importlib.import_module('weasyprint')
@@ -34,23 +40,96 @@ from itertools import groupby
 
 # Local App Models
 from .models import (
-    Category, 
-    Order, 
-    OrderItem, 
-    Product, 
-    Ingredient, 
-    Recipe, 
-    StockHistory, 
-    Customer
+    Category,
+    Order,
+    OrderItem,
+    Product,
+    Ingredient,
+    Recipe,
+    StockHistory,
+    Customer,
+    DrinkRequest,
+    UserRole,
+    PasswordResetOTP,
 )
 
-#############################
-####### Admin View ##########
-#############################
+##############################################
+####### Admin, Owner and Login View ##########
+##############################################
 
 def is_admin(user):
-    return user.groups.filter(name='Admin').exists() or user.is_superuser
+    return user.is_superuser or (hasattr(user, 'profile') and user.profile.is_owner)
 
+
+def is_manager(user):
+    return hasattr(user, 'profile') and user.profile.is_manager
+
+
+def get_dashboard_route(user):
+    return 'manager_display' if user.is_authenticated and is_manager(user) else 'owner'
+
+
+def get_dashboard_label(user):
+    return 'Manager Analyst' if user.is_authenticated and is_manager(user) else 'Dashboard'
+
+
+# Role-based access control decorators
+def owner_required(view_func):
+    """Decorator to require owner/admin role"""
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        profile = getattr(request.user, 'profile', None)
+        if request.user.is_superuser or (profile and profile.is_owner):
+            return view_func(request, *args, **kwargs)
+        raise PermissionDenied
+    return wrapper
+
+
+def manager_required(view_func):
+    """Decorator to require manager role"""
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        profile = getattr(request.user, 'profile', None)
+        if profile and profile.is_manager:
+            return view_func(request, *args, **kwargs)
+        raise PermissionDenied
+    return wrapper
+
+
+def cashier_required(view_func):
+    """Decorator to require cashier role"""
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        profile = getattr(request.user, 'profile', None)
+        if profile and profile.is_cashier:
+            return view_func(request, *args, **kwargs)
+        raise PermissionDenied
+    return wrapper
+
+
+def manager_or_owner_required(view_func):
+    """Decorator to require manager or owner role"""
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        profile = getattr(request.user, 'profile', None)
+        if request.user.is_superuser or (profile and (profile.is_manager or profile.is_owner)):
+            return view_func(request, *args, **kwargs)
+        raise PermissionDenied
+    return wrapper
+
+
+def cashier_or_manager_required(view_func):
+    """Decorator to require cashier or manager role"""
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        profile = getattr(request.user, 'profile', None)
+        if profile and (profile.is_cashier or profile.is_manager):
+            return view_func(request, *args, **kwargs)
+        raise PermissionDenied
+    return wrapper
+
+
+@owner_required
 def owner_view(request):
     # --- 1. SET TIME WINDOW (Default: Today) ---
     now = timezone.localtime(timezone.now())
@@ -105,6 +184,101 @@ def owner_view(request):
     }
     return render(request, 'owner.html', context)
 
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            # Invalidate any existing session to prevent cross-role access in multiple tabs
+            request.session.flush()
+            login(request, user)
+            # Redirect based on user role or fallback to Django groups
+            user_role = None
+            if hasattr(user, 'profile'):
+                user_role = user.profile.role
+
+            if user.is_superuser or user_role == UserRole.OWNER or user.groups.filter(name='Admin').exists():
+                return redirect('owner')
+            elif user_role == UserRole.MANAGER or user.groups.filter(name__in=['Manager', 'Managers']).exists():
+                return redirect('manager_display')
+            else:
+                return redirect('pos_home')
+        else:
+            messages.error(request, 'Invalid username or password.')
+    return render(request, 'login.html')
+
+def send_password_reset_email(user, otp_code):
+    subject = 'Password reset code'
+    message = (
+        'We received a request to reset the password for your account.\n\n'
+        f'Your one-time verification code is: {otp_code}\n\n'
+        'If you did not request this, you can ignore this message.\n'
+        'This code will expire in 15 minutes.'
+    )
+    send_mail(subject, message, None, [user.email], fail_silently=False)
+
+
+def password_reset_request(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        if email:
+            user_model = get_user_model()
+            users = user_model.objects.filter(email__iexact=email)
+            for user in users:
+                otp = PasswordResetOTP.generate_for_user(user)
+                if user.email:
+                    try:
+                        send_password_reset_email(user, otp.code)
+                    except Exception:
+                        pass
+        messages.success(request, 'If an account exists for that email, a reset code has been sent.')
+        return redirect('password_reset_confirm')
+
+    return render(request, 'forgot_password.html')
+
+
+def password_reset_confirm(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        code = request.POST.get('code', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+
+        if not email or not code or not password or not confirm_password:
+            messages.error(request, 'Please complete all fields.')
+            return render(request, 'reset_password.html')
+
+        if password != confirm_password:
+            messages.error(request, 'The passwords do not match.')
+            return render(request, 'reset_password.html')
+
+        try:
+            user_model = get_user_model()
+            user = user_model.objects.get(email__iexact=email)
+        except user_model.DoesNotExist:
+            messages.error(request, 'Invalid email or reset code.')
+            return render(request, 'reset_password.html')
+
+        otp = PasswordResetOTP.objects.filter(user=user, code=code, is_used=False, expires_at__gte=timezone.now()).order_by('-created_at').first()
+        if not otp:
+            messages.error(request, 'Invalid or expired reset code.')
+            return render(request, 'reset_password.html')
+
+        user.set_password(password)
+        user.save()
+        otp.is_used = True
+        otp.save()
+        messages.success(request, 'Password updated successfully. Please sign in with your new password.')
+        return redirect('login')
+
+    return render(request, 'reset_password.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+@manager_or_owner_required
 def add_product(request):
     if request.method == "POST":
         name = request.POST.get('name')
@@ -179,6 +353,7 @@ def add_product(request):
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
+@manager_or_owner_required
 def delete_product(request, product_id):
     if request.method == "POST":
         product = get_object_or_404(Product, id=product_id)
@@ -202,6 +377,7 @@ def delete_product(request, product_id):
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
+@manager_or_owner_required
 def edit_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     
@@ -259,12 +435,14 @@ def edit_product(request, product_id):
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
+@cashier_required
 def pos_screen(request):
     return render(request, 'pos.html', {
         'products': Product.objects.all(),
         'categories': Category.objects.all(), # This line is required!
     })
 
+@manager_or_owner_required
 def generate_daily_report(request):
     if not HAS_WEASYPRINT:
         error_message = "PDF generation library (weasyprint) is not installed or configured correctly."
@@ -368,7 +546,19 @@ def generate_daily_report(request):
 ######## inventory page ########
 ################################
 
+@login_required
+@manager_or_owner_required
 def inventory_list(request):
+    profile = getattr(request.user, 'profile', None)
+    if profile is None:
+        user_role = 'UNKNOWN'
+    elif profile.is_owner:
+        user_role = 'OWNER'
+    elif profile.is_manager:
+        user_role = 'MANAGER'
+    else:
+        user_role = 'CASHIER'
+
     ingredients = Ingredient.objects.all().order_by('name')
     
     # Fetch logs
@@ -417,8 +607,12 @@ def inventory_list(request):
         'grouped_logs': displayed_logs,
         'page_obj': page_obj,
         'low_stock_count': low_stock_count,
+        'dashboard_route': get_dashboard_route(request.user),
+        'dashboard_label': get_dashboard_label(request.user),
+        'user_role': user_role,
     })
 
+@manager_or_owner_required
 def api_inventory_list(request):
     """Returns the current stock levels and percentages for all ingredients as JSON."""
     ingredients = Ingredient.objects.all().order_by('name')
@@ -442,6 +636,7 @@ def api_inventory_list(request):
         
     return JsonResponse({'ingredients': data})
 
+@manager_or_owner_required
 def api_raw_materials(request):
     """API specifically for raw materials (excludes packaging)"""
     ingredients = Ingredient.objects.filter(is_packaging=False).order_by('name')
@@ -455,6 +650,7 @@ def api_raw_materials(request):
     } for ing in ingredients]
     return JsonResponse({'ingredients': data})
 
+@manager_or_owner_required
 def api_inventory_logs(request):
     """Returns grouped stock history logs for AJAX refresh."""
     raw_logs = StockHistory.objects.select_related('ingredient').all().order_by('-created_at')[:20]
@@ -480,6 +676,7 @@ def api_inventory_logs(request):
                 })
     return JsonResponse({'logs': data})
 
+@manager_or_owner_required
 def add_ingredient(request):
     if request.method == "POST":
         name = request.POST.get('name')
@@ -581,6 +778,7 @@ def update_stock(request, pk):
             
     return redirect('inventory_list')
             
+@manager_or_owner_required
 def delete_ingredient(request, pk):
     if request.method == "POST":
         ingredient = get_object_or_404(Ingredient, pk=pk)
@@ -595,6 +793,7 @@ def delete_ingredient(request, pk):
     return redirect('inventory_list')
 
 @csrf_exempt
+@manager_or_owner_required
 def rename_ingredient(request, pk):
     if request.method == "POST":
         ingredient = get_object_or_404(Ingredient, pk=pk)
@@ -676,6 +875,7 @@ def stock_history_view(request):
     })
 
 @csrf_exempt
+@manager_or_owner_required
 def api_update_stock(request, pk):
     if request.method == 'POST':
         try:
@@ -713,6 +913,7 @@ def api_update_stock(request, pk):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=405)
 
 @csrf_exempt
+@manager_or_owner_required
 def api_deduct_stock(request, pk):
     if request.method == 'POST':
         try:
@@ -756,6 +957,7 @@ def api_deduct_stock(request, pk):
 ####### Recipe Builder #######
 ##############################
 
+@manager_or_owner_required
 def recipe_builder(request):
     products = Product.objects.all().order_by('name')
     ingredients = Ingredient.objects.filter(is_packaging=False).order_by('name')
@@ -854,13 +1056,16 @@ def recipe_builder(request):
         'products': products,
         'ingredients': ingredients,
         'packaging_items': packaging_items,
-        'recipes': recipes
+        'recipes': recipes,
+        'dashboard_route': get_dashboard_route(request.user),
+        'dashboard_label': get_dashboard_label(request.user),
     })
 
 #############################
 ####### Barista view ########
 #############################
 
+@cashier_required
 def pos_view(request):
     query = request.GET.get('search')
     products = Product.objects.all()
@@ -948,11 +1153,14 @@ def process_payment(request):
             point_map = {'Small': 3, 'Medium': 5, 'Large': 7}
 
             for item in cart_items:
-                product = Product.objects.get(id=item.get('id'))
+                product_id = item.get('product_id') or item.get('id')
+                product = Product.objects.get(id=product_id)
                 target_size = item.get('size', 'Medium') 
                 product_type = item.get('type', 'Hot')     
                 qty = int(item.get('qty', 1))
                 extra_shots = int(item.get('shots', 0))
+                is_refund = item.get('is_refund', False)
+                request_id = item.get('request_id')
                 
                 # --- A. DEDUCT BEVERAGE INGREDIENTS ---
                 recipe_items = Recipe.objects.filter(product=product, size=target_size)
@@ -996,7 +1204,7 @@ def process_payment(request):
                             ingredient=ingredient,
                             amount=-usage,
                             type='REDUCTION',
-                            notes=f"Order #{new_order.id} ({product.name})"
+                            notes=f"Order #{new_order.display_order_number} ({product.name})"
                         )
 
                 # --- B. SMART PACKAGING DEDUCTION ---
@@ -1023,7 +1231,7 @@ def process_payment(request):
                             ingredient=target_ing,
                             amount=-qty,
                             type='REDUCTION',
-                            notes=f"Order #{new_order.id} Packaging"
+                            notes=f"Order #{new_order.display_order_number} Packaging"
                         )
 
                 deduct_packaging(cup_cat, target_size)
@@ -1045,7 +1253,7 @@ def process_payment(request):
                             ingredient=carrier,
                             amount=-qty,
                             type='REDUCTION',
-                            notes=f"Order #{new_order.id} Carrier"
+                            notes=f"Order #{new_order.display_order_number} Carrier"
                         )
 
                 # --- D. CREATE ORDER ITEM WITH SNAPSHOTS ---
@@ -1053,8 +1261,13 @@ def process_payment(request):
                 if extra_shots > 0:
                     price_at_sale += Decimal('0.50') * Decimal(str(extra_shots))
 
+                # Handle refunds: free items that still deduct stock
+                if is_refund:
+                    price_at_sale = Decimal('0.00')
+                    # Mark the drink request as processed (could add a processed field later)
+
                 # Loyalty Logic: Apply free drink and calculate points
-                if redeem_free_drink and not free_drink_applied and target_size == 'Medium':
+                elif redeem_free_drink and not free_drink_applied and target_size == 'Medium':
                     price_at_sale = Decimal('0.00')
                     free_drink_applied = True
                 else:
@@ -1069,18 +1282,178 @@ def process_payment(request):
                     product_type=product_type,
                     # LOCK THE DATA: This makes your owner_view reports "Fixed"
                     price_at_sale=price_at_sale,
-                    cost_at_sale=product.get_product_cost(target_size, product_type)
+                    cost_at_sale=product.get_product_cost(target_size, product_type),
+                    is_refund=is_refund
                 )
 
             if customer:
                 customer.points += total_earned_points
                 customer.save()
 
-        return JsonResponse({'status': 'success', 'order_id': new_order.id})
+        return JsonResponse({'status': 'success', 'order_id': new_order.id, 'order_number': new_order.display_order_number})
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-    
+
+@login_required
+def api_order_items(request):
+    order_number = request.GET.get('order_number')
+    order_id = request.GET.get('order_id')
+
+    order = None
+    if order_id:
+        order = Order.objects.filter(id=order_id).first()
+    elif order_number:
+        try:
+            order_number_int = int(order_number)
+            thirty_days_ago = timezone.now() - timezone.timedelta(days=30)
+            order = Order.objects.filter(order_number=order_number_int, created_at__gte=thirty_days_ago).order_by('-created_at').first()
+        except ValueError:
+            order = None
+
+    if not order:
+        return JsonResponse({'status': 'error', 'message': 'Order not found'}, status=404)
+
+    items = order.items.select_related('product').all()
+    order_items = [
+        {
+            'product_id': item.product.id,
+            'product_name': item.product.name,
+            'size': item.order_item.size if hasattr(item, 'order_item') and item.order_item else 'Unknown',
+            'quantity': item.quantity,
+            'price_at_sale': float(item.price_at_sale),
+        }
+        for item in items
+    ]
+
+    return JsonResponse({'status': 'success', 'order_id': order.id, 'order_number': order.display_order_number, 'items': order_items})
+
+@csrf_exempt
+@login_required
+def create_drink_request(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+        order_number = data.get('order_number')
+        product_id = data.get('product_id')
+        quantity = int(data.get('quantity', 1))
+        reason = data.get('reason', 'Wrong Ingredient')
+        note = data.get('note', '')
+
+        order = None
+        if order_id:
+            order = Order.objects.filter(id=order_id).first()
+        elif order_number:
+            try:
+                order_number_int = int(order_number)
+                thirty_days_ago = timezone.now() - timezone.timedelta(days=30)
+                order = Order.objects.filter(order_number=order_number_int, created_at__gte=thirty_days_ago).order_by('-created_at').first()
+            except ValueError:
+                order = None
+
+        if not order:
+            return JsonResponse({'status': 'error', 'message': 'Order not found'}, status=404)
+
+        product = Product.objects.filter(id=product_id).first()
+        if not product:
+            return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
+
+        # Find the order item to get the size
+        order_item = order.items.filter(product_id=product_id).first()
+        size = order_item.size if order_item else 'Small'
+
+        DrinkRequest.objects.create(
+            order=order,
+            product=product,
+            size=size,
+            quantity=max(1, quantity),
+            reason=reason,
+            note=note,
+            requested_by=request.user if request.user.is_authenticated else None,
+        )
+
+        return JsonResponse({'status': 'success', 'message': 'Request sent'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@manager_required
+def accept_drink_request(request, request_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+    try:
+        drink_request = DrinkRequest.objects.get(id=request_id, status='PENDING')
+        drink_request.status = 'RESOLVED'
+        drink_request.save()
+        return JsonResponse({'status': 'success', 'message': 'Request accepted'})
+    except DrinkRequest.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Request not found or already resolved'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@login_required
+def mark_drink_request_refunded(request, request_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+    try:
+        drink_request = DrinkRequest.objects.get(id=request_id, status='RESOLVED')
+        drink_request.status = 'REFUNDED'
+        drink_request.save()
+        return JsonResponse({'status': 'success', 'message': 'Request marked as refunded'})
+    except DrinkRequest.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Request not found or cannot be refunded'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@login_required
+def api_resolved_drink_requests(request):
+    """API for baristas to access resolved drink requests for refunds"""
+    requests = DrinkRequest.objects.filter(status='RESOLVED').select_related('order', 'product', 'requested_by').order_by('-created_at')
+    request_list = []
+    for item in requests:
+        request_list.append({
+            'id': item.id,
+            'order_id': item.order.id,
+            'order_number': item.order.display_order_number,
+            'product_id': item.product.id,
+            'product_name': item.product.name,
+            'size': item.size,
+            'quantity': item.quantity,
+            'reason': item.reason,
+            'note': item.note or '',
+            'requested_by': item.requested_by.get_full_name() if item.requested_by else 'Unknown',
+            'created_at': item.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        })
+
+    return JsonResponse({'status': 'success', 'count': requests.count(), 'requests': request_list})
+
+@manager_required
+def api_drink_requests(request):
+    status_filter = request.GET.get('status', 'PENDING')
+    requests = DrinkRequest.objects.filter(status=status_filter.upper()).select_related('order', 'product', 'requested_by').order_by('-created_at')
+    request_list = []
+    for item in requests:
+        request_list.append({
+            'id': item.id,
+            'order_id': item.order.id,
+            'order_number': item.order.display_order_number,
+            'product_id': item.product.id,
+            'product_name': item.product.name,
+            'size': item.size,
+            'quantity': item.quantity,
+            'reason': item.reason,
+            'note': item.note or '',
+            'requested_by': item.requested_by.get_full_name() if item.requested_by else 'Unknown',
+            'created_at': item.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        })
+
+    return JsonResponse({'status': 'success', 'count': requests.count(), 'requests': request_list})
+
+
 def generate_invoice(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     html_string = render_to_string('invoice_pdf.html', {
@@ -1095,7 +1468,7 @@ def generate_invoice(request, order_id):
         return HttpResponse(html_string)
 
     response = HttpResponse(content_type="application/pdf")
-    response['Content-Disposition'] = f'inline; filename="invoice_{order.id}.pdf"'
+    response['Content-Disposition'] = f'inline; filename="invoice_{order.display_order_number}.pdf"'
     
     if HAS_WEASYPRINT:
         weasyprint.HTML(string=html_string).write_pdf(response)
@@ -1170,10 +1543,7 @@ def complete_order(request, order_id):
 ####### Manager View ########
 #############################
 
-def is_manager(user):
-    # This checks if the user is an admin OR in the 'Managers' group
-    return user.is_staff or user.groups.filter(name='Managers').exists()
-
+@manager_required
 def manager_view(request):
     products = Product.objects.all()
     
@@ -1265,17 +1635,32 @@ def manager_view(request):
         'avg_profitability': round(avg_profitability, 1), 
         'chart_labels': chart_labels,
         'chart_data': chart_data,
+        'popular_items': OrderItem.objects.filter(order__in=todays_orders).values('product__name').annotate(total_qty=Sum('quantity')).order_by('-total_qty')[:5],
+        'top_customers': Customer.objects.order_by('-points')[:5],
         'all_ingredients': Ingredient.objects.filter(is_packaging=False),
+        'dashboard_route': get_dashboard_route(request.user),
+        'dashboard_label': get_dashboard_label(request.user),
     }
     return render(request, 'manager.html', context)
 
+@manager_or_owner_required
 def order_history_view(request):
-    return render(request, 'order_history.html')
+    return render(request, 'order_history.html', {
+        'dashboard_route': get_dashboard_route(request.user),
+        'dashboard_label': get_dashboard_label(request.user),
+    })
 
+@manager_or_owner_required
 def api_order_history(request):
-    # Fetch last 50 orders with related items and products to avoid N+1 queries
-    orders = Order.objects.prefetch_related('items__product').all().order_by('-created_at')[:50]
-    
+    """API to fetch order history for live updates with optional search filtering."""
+    search_query = request.GET.get('q', '').strip()
+    orders = Order.objects.prefetch_related('items__product').all().order_by('-created_at')
+
+    if search_query:
+        # Filter by order number. Django handles integer-to-string conversion for __icontains automatically.
+        orders = orders.filter(order_number__icontains=search_query)
+
+    orders = orders[:50]
     order_list = []
     for order in orders:
         items_data = [
@@ -1287,6 +1672,7 @@ def api_order_history(request):
         
         order_list.append({
             'id': order.id,
+            'order_number': order.display_order_number,
             'created_at': timezone.localtime(order.created_at).strftime('%d %b %Y | %H:%M'),
             'total_amount': float(order.total_amount),
             'is_completed': order.is_completed,
@@ -1295,6 +1681,7 @@ def api_order_history(request):
         
     return JsonResponse({'orders': order_list})
 
+@manager_or_owner_required
 def api_dashboard_stats(request):
     range_type = request.GET.get('range', 'today')
     now = timezone.localtime(timezone.now())
@@ -1477,6 +1864,92 @@ def api_dashboard_stats(request):
 #############################
 
 
+@csrf_exempt
+def check_product_stock(request):
+    """Check if there's enough stock for a product before adding to cart"""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        product_id = data.get('product_id')
+        size = data.get('size', 'Medium')
+        quantity = int(data.get('quantity', 1))
+        sugar_level = data.get('sugar', '100%')
+        extra_shots = int(data.get('extra_shots', 0))
+
+        product = Product.objects.get(id=product_id)
+        
+        # Get recipe items for this product and size
+        recipe_items = Recipe.objects.filter(product=product, size=size)
+        if not recipe_items.exists() and size != 'Medium':
+            recipe_items = Recipe.objects.filter(product=product, size='Medium')
+
+        if not recipe_items.exists():
+            return JsonResponse({
+                'status': 'success',
+                'sufficient': True,
+                'message': 'No recipe defined, assuming sufficient stock'
+            })
+
+        insufficient_ingredients = []
+
+        # Calculate sugar multiplier
+        sugar_map = {
+            '0%': Decimal('0.0'), '25%': Decimal('0.25'), '50%': Decimal('0.5'), 
+            '75%': Decimal('0.75'), '100%': Decimal('1.0'), 'Extra': Decimal('1.5')
+        }
+        if sugar_level in sugar_map:
+            sugar_multiplier = sugar_map[sugar_level]
+        elif sugar_level.endswith('%'):
+            try:
+                sugar_multiplier = Decimal(sugar_level.replace('%', '')) / Decimal('100')
+            except:
+                sugar_multiplier = Decimal('1.0')
+        else:
+            sugar_multiplier = Decimal('1.0')
+
+        for recipe in recipe_items:
+            ingredient = recipe.ingredient
+            required_quantity = Decimal(str(recipe.quantity)) * quantity
+            
+            # Apply sugar multiplier for sugar/syrup ingredients
+            if "sugar" in ingredient.name.lower() or "syrup" in ingredient.name.lower():
+                required_quantity *= sugar_multiplier
+                
+            # Add extra shots for coffee beans
+            if extra_shots > 0 and "bean" in ingredient.name.lower():
+                required_quantity += Decimal('18') * Decimal(str(extra_shots)) * quantity
+
+            if ingredient.stock_quantity < required_quantity:
+                insufficient_ingredients.append({
+                    'name': ingredient.name,
+                    'available': float(ingredient.stock_quantity),
+                    'required': float(required_quantity),
+                    'unit': ingredient.unit
+                })
+
+        if insufficient_ingredients:
+            return JsonResponse({
+                'status': 'error',
+                'sufficient': False,
+                'insufficient_ingredients': insufficient_ingredients,
+                'message': f'Insufficient stock for: {", ".join([ing["name"] for ing in insufficient_ingredients])}'
+            })
+        else:
+            return JsonResponse({
+                'status': 'success',
+                'sufficient': True,
+                'message': 'Stock is sufficient'
+            })
+
+    except Product.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@cashier_or_manager_required
 def kitchen_view(request):
     # 1. Orders that still need to be made (Live Queue)
     # Sorted by 'created_at' so oldest orders stay at the top (FIFO)
@@ -1492,5 +1965,7 @@ def kitchen_view(request):
 
     return render(request, 'kitchen.html', {
         'pending_orders': pending_orders,
-        'completed_orders': completed_orders
+        'completed_orders': completed_orders,
+        'dashboard_route': get_dashboard_route(request.user),
+        'dashboard_label': get_dashboard_label(request.user),
     })

@@ -2,18 +2,32 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # --- Authentication ---
+    path('', views.login_view, name='login'),
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('password-reset/', views.password_reset_request, name='password_reset_request'),
+    path('password-reset/confirm/', views.password_reset_confirm, name='password_reset_confirm'),
+    
     # --- POS & Customer Management ---
     path('pos/', views.pos_view, name='pos_home'),
     path('check-stock/<int:product_id>/', views.check_stock, name='check_stock'),
+    path('api/check-product-stock/', views.check_product_stock, name='check_product_stock'),
     path('api/customer-lookup/', views.customer_lookup, name='customer_lookup'),
     path('api/register-customer/', views.register_customer, name='register_customer'),
     path('api/process-payment/', views.process_payment, name='process_payment'),
+    path('api/order-items/', views.api_order_items, name='api_order_items'),
+    path('api/drink-requests/', views.api_drink_requests, name='api_drink_requests'),
+    path('api/drink-requests/create/', views.create_drink_request, name='create_drink_request'),
+    path('api/drink-requests/accept/<int:request_id>/', views.accept_drink_request, name='accept_drink_request'),
+    path('api/drink-requests/<int:request_id>/mark-refunded/', views.mark_drink_request_refunded, name='mark_drink_request_refunded'),
+    path('api/drink-requests/resolved/', views.api_resolved_drink_requests, name='api_resolved_drink_requests'),
     
     # --- Kitchen Display System (KDS) ---
     path('kitchen/', views.kitchen_view, name='kitchen_view'),
     path('api/kitchen/complete/<int:order_id>/', views.complete_order, name='complete_order'),
     
-    # --- Admin & product Management ---
+    # --- Owner & product Management ---
     path('dashboard/', views.owner_view, name='owner'),
     path('add-product/', views.add_product, name='add_product'),
     path('edit-product/<int:product_id>/', views.edit_product, name='edit_product'),

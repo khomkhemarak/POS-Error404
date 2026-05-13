@@ -1,11 +1,67 @@
 from django.db import models
 from decimal import Decimal
+from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils import timezone
+import random
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
+
+class UserRole(models.TextChoices):
+    OWNER = 'OWNER', 'Owner'
+    MANAGER = 'MANAGER', 'Manager'
+    CASHIER = 'CASHIER', 'Cashier / Barista'
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=20, choices=UserRole.choices, default=UserRole.CASHIER)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} ({self.get_role_display()})"
+
+    @property
+    def is_owner(self):
+        return self.role == UserRole.OWNER
+
+    @property
+    def is_manager(self):
+        return self.role == UserRole.MANAGER
+
+    @property
+    def is_cashier(self):
+        return self.role == UserRole.CASHIER
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+class PasswordResetOTP(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='password_otps')
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"OTP for {self.user.email} ({self.code})"
+
+    @property
+    def is_valid(self):
+        return not self.is_used and timezone.now() <= self.expires_at
+
+    @classmethod
+    def generate_for_user(cls, user, minutes_valid=15):
+        code = f"{random.randint(0, 999999):06d}"
+        expires_at = timezone.now() + timezone.timedelta(minutes=minutes_valid)
+        return cls.objects.create(user=user, code=code, expires_at=expires_at)
+
 class Product(models.Model):
     CATEGORIES = (
         ('Coffee', 'Coffee'),
@@ -162,6 +218,8 @@ class ProductVariant(models.Model):
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
+    order_date = models.DateField(auto_now_add=True)  # Track the date for daily reset
+    order_number = models.PositiveIntegerField(default=0)  # Daily sequence number (resets each day)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_completed = models.BooleanField(default=False)
     service_type = models.CharField(max_length=20, default='Dine-in')
@@ -171,6 +229,20 @@ class Order(models.Model):
     cash_received = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     cash_change = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     cashier_name = models.CharField(max_length=100, blank=True, null=True)
+
+    @classmethod
+    def get_next_order_number(cls):
+        """Get the next order number for today (resets daily)"""
+        from django.utils import timezone
+        today = timezone.now().date()
+        
+        # Get the highest order_number for today
+        latest_order = cls.objects.filter(order_date=today).order_by('-order_number').first()
+        
+        if latest_order:
+            return latest_order.order_number + 1
+        else:
+            return 1
 
     @property
     def tax_amount(self):
@@ -188,6 +260,11 @@ class Order(models.Model):
     def subtotal_amount(self):
         return self.total_amount - self.tax_amount
 
+    @property
+    def display_order_number(self):
+        """Returns a formatted daily order number (resets each day)"""
+        return f"{self.order_number:04d}"
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -200,6 +277,7 @@ class OrderItem(models.Model):
     # This freezes the math so future menu changes don't ruin your past reports
     price_at_sale = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     cost_at_sale = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    is_refund = models.BooleanField(default=False)
     # --------------------------------
 
     STATUS_CHOICES = [
@@ -214,6 +292,26 @@ class OrderItem(models.Model):
     @property
     def total_price(self):
         return self.price_at_sale * self.quantity
+
+class DrinkRequest(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('RESOLVED', 'Resolved'),
+        ('REFUNDED', 'Refunded'),
+    ]
+
+    order = models.ForeignKey(Order, related_name='drink_requests', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    size = models.CharField(max_length=20, default='Small')  # Small, Medium, Large
+    quantity = models.PositiveIntegerField(default=1)
+    reason = models.CharField(max_length=150, default='Wrong Ingredient')
+    note = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Request #{self.id} - {self.product.name} for Order {self.order.display_order_number} ({self.status})"
 
 class Ingredient(models.Model):
     PACKAGING_CHOICES = (
@@ -354,3 +452,14 @@ class Customer(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.phone})"
+
+
+# Signal to automatically set the daily order number when creating an order
+@receiver(post_save, sender=Order)
+def set_daily_order_number(sender, instance, created, **kwargs):
+    """Automatically assign the daily order number when an order is created"""
+    if created and instance.order_number == 0:
+        # Get the next order number for today
+        next_number = Order.get_next_order_number()
+        instance.order_number = next_number
+        instance.save(update_fields=['order_number'])

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Error404 | CafeFlow Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+      :root {
+        --bg-color: #0f1113;
+        --lamp-light: transparent;
+        --card-opacity: 0.05;
+        --beam-opacity: 0;
+      }
+
+      [data-theme="on"] {
+        --bg-color: #1a1c20;
+        --lamp-light: rgba(255, 225, 125, 0.4);
+        --card-opacity: 1;
+        --beam-opacity: 1;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        overflow: hidden;
+        font-family: "Plus Jakarta Sans", sans-serif;
+      }
+
+      /* Lamp Wrapper - Absolute Top Right */
+      .lamp-wrapper { 
+        position: absolute; 
+        top: 0; 
+        right: 15%; 
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* Ceiling Mount Pipe */
+      .lamp-wrapper::before {
+        content: '';
+        width: 4px;
+        height: 30px;
+        background: linear-gradient(to bottom, #000, #444);
+      }
+
+      .lamp-head {
+        width: 90px; 
+        height: 50px;
+        background: #d1d5db;
+        border-radius: 0 0 50px 50px; /* Hanging inverted dome */
+        position: relative;
+        z-index: 2;
+        box-shadow: inset 0 -5px 10px rgba(0,0,0,0.2);
+      }
+
+      /* Inner Glow of the Bulb */
+      .lamp-head::after {
+        content: '';
+        position: absolute;
+        bottom: 5px;
+        left: 20px;
+        width: 50px;
+        height: 15px;
+        background: var(--lamp-light);
+        filter: blur(10px);
+        border-radius: 50%;
+        transition: background 0.4s ease;
+      }
+
+      /* Pull Cord */
+      .lamp-cord {
+        width: 20px; 
+        cursor: pointer;
+        position: absolute; 
+        left: 35px;
+        top: 45px;
+        transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 3;
+      }
+      .cord-line { 
+        width: 2px; 
+        height: 120px; 
+        background: rgba(255,255,255,0.4); 
+        margin-left: 9px; 
+      }
+      .cord-bead { 
+        width: 12px; 
+        height: 12px; 
+        background: #f0ad4e; 
+        border-radius: 50%; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+      }
+
+      /* Logical Volumetric Light Beam */
+      .lamp::after {
+        content: '';
+        position: absolute;
+        top: 40px; 
+        left: 50%;
+        transform: translateX(-50%); /* Keeps beam centered under lamp */
+        width: 450px; /* Wider spread for logic */
+        height: 800px;
+        
+        /* LOGIC: Light is brightest at the source (top) and fades as it travels (bottom) */
+        background: radial-gradient(
+          circle at 50% 0%, 
+          var(--lamp-light) 0%, 
+          rgba(255, 225, 125, 0.1) 30%, 
+          transparent 70%
+        );
+        
+        /* LOGIC: Clip the light into a natural 30-degree cone shape */
+        clip-path: polygon(45% 0%, 55% 0%, 100% 100%, 0% 100%);
+        
+        /* LOGIC: Light scattering (Tyndall effect) */
+        filter: blur(30px);
+        opacity: var(--beam-opacity);
+        pointer-events: none;
+        transition: opacity 0.6s ease-in-out;
+        z-index: 1;
+      }
+
+      /* Glassmorphic Card Styling */
+      .login-card {
+        background: rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        padding: 50px 40px;
+        border-radius: 32px;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        opacity: var(--card-opacity);
+        transform: translateY(var(--card-translate, 10px));
+        transition: opacity 0.8s ease, transform 0.8s ease, background 0.4s ease;
+        width: 400px;
+        position: relative;
+        z-index: 10;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+      }
+
+      [data-theme="on"] .login-card {
+        --card-translate: 0px;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .login-card h2 { 
+        color: #fff; 
+        text-align: center; 
+        margin-bottom: 35px; 
+        font-size: 2.2rem; 
+        font-weight: 800;
+        letter-spacing: -1px;
+      }
+
+      .input-group { margin-bottom: 25px; }
+      .input-group label { 
+        display: block; 
+        color: rgba(255,255,255,0.8); 
+        margin-bottom: 8px; 
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .input-group input {
+        width: 100%; 
+        padding: 14px; 
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 14px; 
+        background: rgba(255, 255, 255, 0.08); 
+        color: #fff;
+        outline: none;
+        transition: all 0.3s ease;
+      }
+      .input-group input:focus {
+        border-color: #f0ad4e;
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .sign-in-btn {
+        width: 100%; 
+        padding: 15px; 
+        background: #f0ad4e; 
+        color: #121417;
+        border-radius: 14px; 
+        font-weight: 800; 
+        font-size: 1.1rem;
+        cursor: pointer; 
+        transition: all 0.3s ease;
+        margin-top: 10px;
+      }
+      .sign-in-btn:hover { 
+        background: #ffbd66;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(240, 173, 78, 0.2);
+      }
+
+      .error-message {
+        background: rgba(255, 107, 107, 0.15);
+        border: 1px solid rgba(255, 107, 107, 0.3);
+        color: #ff8e8e;
+        padding: 10px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="lamp-wrapper">
+      <div class="lamp">
+        <div class="lamp-head"></div>
+        <div class="lamp-cord" id="lampCord" onclick="toggleLamp()">
+          <div class="cord-line"></div>
+          <div class="cord-bead"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="login-card" id="loginCard">
+      <h2>Welcome</h2>
+      
+      {% if messages %}
+        <div class="error-message">
+          {% for message in messages %}
+            {{ message }}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="POST">
+        {% csrf_token %}
+        <div class="input-group">
+          <label>Username</label>
+          <input type="text" name="username" placeholder="Enter username" required>
+        </div>
+        <div class="input-group">
+          <label>Password</label>
+          <input type="password" name="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="sign-in-btn">Sign In</button>
+      </form>
+      <div class="text-center mt-4">
+        <a href="{% url 'password_reset_request' %}" class="text-sm text-slate-300 hover:text-white">Forgot password?</a>
+      </div>
+    </div>
+
+    <script>
+      function toggleLamp() {
+        const body = document.body;
+        const cord = document.getElementById('lampCord');
+        const isLampOn = body.getAttribute('data-theme') === 'on';
+
+        // Animate cord pull
+        cord.style.transform = 'translateY(20px)';
+        setTimeout(() => { 
+            cord.style.transform = 'translateY(0)'; 
+        }, 150);
+
+        // Toggle Theme
+        body.setAttribute('data-theme', isLampOn ? 'off' : 'on');
+      }
+    </script>
+  </body>
+</html>
