@@ -902,13 +902,9 @@
       id="ingredient-modal"
       class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4"
     >
-      <div
-        class="bg-white w-full max-w-md rounded-[2rem] p-8 border-2 border-slate-200 bento-card transform transition-all"
-      >
+      <div class="bg-white w-full max-w-md rounded-[2rem] p-8 border-2 border-slate-200 bento-card transform transition-all">
         <div class="flex justify-between items-center mb-8">
-          <h2
-            class="text-2xl font-black text-slate-900 tracking-tight uppercase"
-          >
+          <h2 class="text-2xl font-black text-slate-900 tracking-tight uppercase">
             New Ingredient
           </h2>
           <button
@@ -919,21 +915,13 @@
           </button>
         </div>
 
-        <form
-          action="{% url 'add_ingredient' %}"
-          method="POST"
-          class="space-y-5"
-        >
+        <form action="{% url 'add_ingredient' %}" method="POST" class="space-y-5">
           {% csrf_token %}
           <div>
-            <label
-              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
-              >Ingredient Name</label
-            >
+            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Ingredient Name</label>
             <input
               type="text"
               name="name"
-              value=""
               placeholder="e.g. Arabica Beans"
               required
               class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition placeholder-slate-400 font-bold"
@@ -942,10 +930,7 @@
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label
-                class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
-                >Quantity (Items)</label
-              >
+              <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Quantity (Items)</label>
               <input
                 type="number"
                 id="calc-qty"
@@ -957,10 +942,7 @@
               />
             </div>
             <div>
-              <label
-                class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
-                >Unit</label
-              >
+              <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Unit</label>
               <select
                 id="calc-unit"
                 name="unit"
@@ -975,19 +957,13 @@
           </div>
 
           <div class="mb-5">
-            <label
-              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
-              >Price per 1 Item ($)</label
-            >
+            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Price per 1 Item ($)</label>
             <div class="relative">
-              <span
-                class="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 font-black"
-                >$</span
-              >
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 font-black">$</span>
               <input
                 type="number"
                 name="price_per_item"
-                value=""
+                oninput="calculateTotal()"
                 step="0.01"
                 placeholder="0.00"
                 required
@@ -997,33 +973,17 @@
           </div>
 
           <div>
-            <label
-              class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
-              >Initial Stock per 1 Item</label
-            >
+            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Initial Stock per 1 Item</label>
             <input
               type="number"
               id="calc-stock"
               name="stock_per_item"
-              value=""
               placeholder="e.g. 1000"
               step="0.01"
               oninput="calculateTotal()"
               required
               class="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 focus:border-orange-500 outline-none transition font-bold placeholder-slate-400"
             />
-          </div>
-
-          <div
-            class="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 flex justify-between items-center mt-2"
-          >
-            <span
-              class="text-orange-600 font-black text-[10px] uppercase tracking-widest"
-              >Total Stock:</span
-            >
-            <span id="total-display" class="text-orange-600 font-black text-xl"
-              >0g (0)</span
-            >
           </div>
 
           <div class="pt-4">
@@ -1034,12 +994,7 @@
               Save Ingredient
             </button>
           </div>
-          <input
-            type="hidden"
-            name="packaging_type"
-            id="packaging_type_input"
-            value="NONE"
-          />
+          <input type="hidden" name="packaging_type" id="packaging_type_input" value="NONE" />
         </form>
       </div>
     </div>
@@ -1568,6 +1523,11 @@
                                 class="bg-white border-2 border-slate-200 text-slate-600 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 px-4 py-2 rounded-xl text-[10px] font-black transition uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(203,213,225,0.7)] hover:shadow-[2px_2px_0px_0px_rgba(249,115,22,0.3)] active:translate-y-[1px]">
                                 Update
                             </button>
+                            <button type="button"
+                                onclick="openDeductModal('${ing.id}', '${jsEscape(ing.name)}', '${Number(ing.initial_stock_per_item || 0).toFixed(2)}')"
+                                class="bg-white border-2 border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-300 hover:bg-red-50 px-4 py-2 rounded-xl text-[10px] font-black transition uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(203,213,225,0.7)] hover:shadow-[2px_2px_0px_0px_rgba(239,68,68,0.1)] active:translate-y-[1px]">
+                                Deduct
+                            </button>
                             <button type="button" onclick="openDeleteModal('${ing.id}', '${jsEscape(ing.name)}')" class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition border-2 border-transparent hover:border-red-200 rounded-xl">
                                 <i class="bi bi-trash3-fill"></i>
                             </button>
@@ -1605,6 +1565,10 @@
               </div>
             </div>
             <div class="mobile-inv-card-actions">
+              <button type="button" class="mob-upd-btn" style="color: #ef4444; margin-bottom: 2px;"
+                      onclick="openDeductModal('${ing.id}', '${jsEscape(ing.name)}', '${Number(ing.initial_stock_per_item || 0).toFixed(2)}')">
+                <i class="bi bi-dash-lg"></i>
+              </button>
               <button type="button" class="mob-upd-btn"
                       onclick="openUpdateModal('${ing.id}', '${jsEscape(ing.name)}', '${Number(ing.initial_stock_per_item || 0).toFixed(2)}', '${Number(ing.last_purchase_price || 0).toFixed(2)}')">
                 <i class="bi bi-arrow-repeat"></i>
@@ -2049,13 +2013,28 @@
       }
 
       function calculateTotal() {
-        const qty = parseFloat(document.getElementById("calc-qty").value) || 0;
-        const stockPerItem =
-          parseFloat(document.getElementById("calc-stock").value) || 0;
-        const unit = document.getElementById("calc-unit").value;
-        const total = qty * stockPerItem;
-        const display = document.getElementById("total-display");
-        if (display) display.innerText = `${total}${unit} (${qty})`;
+          const qtyItems = parseFloat(document.getElementById("calc-qty").value) || 0;
+          const stockPerItem = parseFloat(document.getElementById("calc-stock").value) || 0;
+          const pricePerItem = parseFloat(document.querySelector('input[name="price_per_item"]').value) || 0;
+          const unit = document.getElementById("calc-unit").value;
+
+          const totalStock = qtyItems * stockPerItem;
+          
+          // Only update if the element exists in the current HTML
+          const totalDisplay = document.getElementById("total-display");
+          if (totalDisplay) {
+              totalDisplay.innerText = `${totalStock}${unit} (${qtyItems})`;
+          }
+
+          let unitCost = 0;
+          if (stockPerItem > 0) {
+              unitCost = pricePerItem / stockPerItem;
+          }
+          
+          const unitCostDisplay = document.getElementById("unit-cost-display");
+          if (unitCostDisplay) {
+              unitCostDisplay.innerText = `$${unitCost.toFixed(4)}`;
+          }
       }
 
       window.onclick = function (event) {

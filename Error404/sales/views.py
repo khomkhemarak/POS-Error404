@@ -1192,7 +1192,7 @@ def process_payment(request):
                             
                         # Extra Shot Stock Deduction (Coffee Bean only)
                         if extra_shots > 0 and "bean" in ingredient.name.lower():
-                            usage += Decimal('18') * Decimal(str(extra_shots)) * qty
+                            usage += Decimal('10') * Decimal(str(extra_shots)) * qty
 
                         ingredient.stock_quantity = max(Decimal('0.00'), ingredient.stock_quantity - usage)
                         if ingredient.initial_stock_per_item > 0:
@@ -1919,7 +1919,7 @@ def check_product_stock(request):
                 
             # Add extra shots for coffee beans
             if extra_shots > 0 and "bean" in ingredient.name.lower():
-                required_quantity += Decimal('18') * Decimal(str(extra_shots)) * quantity
+                required_quantity += Decimal('10') * Decimal(str(extra_shots)) * quantity
 
             if ingredient.stock_quantity < required_quantity:
                 insufficient_ingredients.append({
