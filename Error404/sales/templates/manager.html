@@ -137,27 +137,41 @@
   <body
     class="bg-[#f8fafc] text-slate-900 flex flex-col md:flex-row min-h-screen"
   >
+    <header class="md:hidden sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-100 z-[100] px-3 py-2.5 flex justify-between items-center shadow-sm">
+      <h1 class="text-lg font-[800] tracking-tighter text-orange-600 uppercase">Error404</h1>
+      <button onclick="toggleSidebar()" class="text-xl text-slate-600 focus:outline-none p-1">
+        <i class="bi bi-list"></i>
+      </button>
+    </header>
+
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-[190] hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
     <aside
       id="sidebar"
-      class="fixed inset-y-0 left-0 w-60 md:w-64 shrink-0 bg-white border-r border-slate-200 p-5 md:p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[150] md:sticky md:top-0 md:h-screen"
+      class="fixed inset-y-0 left-0 h-[100dvh] max-h-[100dvh] w-60 md:w-64 shrink-0 bg-white border-r border-slate-200 p-5 md:p-6 flex flex-col overflow-hidden transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[200] md:sticky md:top-0 md:h-screen"
     >
-      <div class="mb-10">
-        <h1 class="text-2xl font-800 tracking-tighter text-orange-600">
-          Error404
-        </h1>
-        <p
-          class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
-        >
-          Management Suite
-        </p>
+      <div class="mb-10 flex justify-between items-start">
+        <div>
+          <h1 class="text-2xl font-800 tracking-tighter text-orange-600">
+            Error404
+          </h1>
+          <p
+            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+          >
+            Management Suite
+          </p>
+        </div>
+        <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-slate-900 text-xl">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
 
-      <nav class="space-y-1 flex-grow">
+      <nav class="space-y-1 flex-1 min-h-0 overflow-y-auto custom-scrollbar pb-4">
         <a
           href="{% url dashboard_route %}"
           class="flex items-center gap-3 p-2.5 md:p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100"
         >
-          <i class="bi bi-grid-1x2-fill"></i> {{ dashboard_label }}
+          <i class="bi bi-graph-up-arrow"></i> {{ dashboard_label }}
         </a>
 
         <a
@@ -182,20 +196,121 @@
         </a>
       </nav>
 
-      <div class="pt-6 border-t border-slate-100">
+      <div class="pt-4 md:pt-6 border-t border-slate-100 shrink-0 bg-white">
 
-        <a
-          href="{% url 'logout' %}"
-          class="flex items-center gap-3 p-2.5 md:p-3 text-slate-400 hover:text-red-500 transition-all text-sm font-bold uppercase tracking-tighter"
+        <button
+          type="button"
+          onclick="openSettingsModal()"
+          class="w-full flex items-center gap-3 p-2.5 md:p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all text-sm font-bold uppercase tracking-tighter rounded-xl"
         >
-          <i class="bi bi-box-arrow-right"></i> Logout
-        </a>
+          <i class="bi bi-gear-fill"></i> Settings
+        </button>
       </div>
     </aside>
+
+    <div id="settingsModal" class="hidden fixed inset-0 z-[260] bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4">
+      <div class="bg-white w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-[2rem] md:rounded-[2.5rem] border-2 border-slate-200 shadow-2xl">
+        <div class="p-5 md:p-7 border-b-2 border-slate-100 flex items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl md:text-2xl font-[900] text-slate-900 uppercase tracking-tight">Settings</h2>
+            <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mt-1">Account and access</p>
+          </div>
+          <button type="button" onclick="closeSettingsModal()" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-0">
+          <div class="p-5 md:p-7 bg-slate-50/80 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-100">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-2xl border-2 border-orange-200">
+                <i class="bi bi-person-fill"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="font-[900] text-slate-900 truncate">{{ request.user.get_full_name|default:request.user.username }}</p>
+                <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest truncate">{{ request.user.email|default:"No email set" }}</p>
+              </div>
+            </div>
+
+            <div class="mt-6 space-y-3">
+              <div class="bg-white border-2 border-slate-100 rounded-2xl p-4">
+                <p class="text-[10px] font-[900] uppercase tracking-widest text-slate-400">Role</p>
+                <p class="text-sm font-[800] text-slate-900 mt-1">
+                  {% if request.user.profile %}{{ request.user.profile.get_role_display }}{% else %}Staff{% endif %}
+                </p>
+              </div>
+            </div>
+
+            <a href="{% url 'logout' %}" class="mt-6 w-full flex items-center justify-center gap-2 rounded-2xl bg-red-50 border-2 border-red-100 text-red-600 py-3.5 font-[900] uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-white hover:border-red-500 transition-all">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </div>
+
+          <div class="p-5 md:p-7 space-y-5">
+            <form method="POST" action="{% url 'account_settings' %}" class="space-y-3">
+              {% csrf_token %}
+              <input type="hidden" name="section" value="profile" />
+              <input type="hidden" name="next" value="{{ request.path }}" />
+              <h3 class="text-sm font-[900] text-slate-900 uppercase tracking-tight">User Profile</h3>
+              <div>
+                <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Username</label>
+                <input name="username" value="{{ request.user.username }}" placeholder="Username" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">First Name</label>
+                  <input name="first_name" value="{{ request.user.first_name }}" placeholder="First name" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Last Name</label>
+                  <input name="last_name" value="{{ request.user.last_name }}" placeholder="Last name" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+                </div>
+              </div>
+              <button type="submit" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-[900] uppercase tracking-widest hover:bg-slate-800 transition-all">Save Profile</button>
+            </form>
+
+            <form method="POST" action="{% url 'account_settings' %}" class="space-y-3 pt-5 border-t-2 border-slate-100">
+              {% csrf_token %}
+              <input type="hidden" name="section" value="email" />
+              <input type="hidden" name="next" value="{{ request.path }}" />
+              <h3 class="text-sm font-[900] text-slate-900 tracking-tight">Change Email</h3>
+              <input type="email" name="email" value="{{ request.user.email }}" placeholder="Email address" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+              <button type="submit" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-orange-500 text-white text-[10px] font-[900] uppercase tracking-widest hover:bg-orange-600 transition-all">Update Email</button>
+            </form>
+
+            <form method="POST" action="{% url 'account_settings' %}" class="space-y-3 pt-5 border-t-2 border-slate-100">
+              {% csrf_token %}
+              <input type="hidden" name="section" value="password" />
+              <input type="hidden" name="next" value="{{ request.path }}" />
+              <h3 class="text-sm font-[900] text-slate-900 tracking-tight">Change Password</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <input type="password" name="current_password" placeholder="Current password" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-2 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+                <input type="password" name="new_password" placeholder="New password" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+                <input type="password" name="confirm_password" placeholder="Confirm password" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-2 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+              </div>
+              <button type="submit" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-[900] uppercase tracking-widest hover:bg-slate-800 transition-all">Update Password</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <main
       class="flex-1 w-full px-4 pt-2 pb-4 md:p-8 lg:p-10 max-w-[1600px] mx-auto overflow-y-auto overflow-x-hidden custom-scrollbar min-h-screen"
     >
+      {% if messages %}
+      <div class="fixed top-16 right-3 md:top-5 md:right-5 z-[300] space-y-3 w-[calc(100%-24px)] md:w-auto">
+        {% for message in messages %}
+        <div class="notification flex items-center p-3 md:p-4 w-full md:min-w-[300px] rounded-2xl border-2 bg-white shadow-lg {% if message.tags == 'success' %}border-emerald-300 text-emerald-700{% else %}border-orange-300 text-orange-700{% endif %}">
+          <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-emerald-500{% else %}bi-info-circle-fill text-orange-500{% endif %} text-lg mr-3"></i>
+          <p class="font-black uppercase tracking-widest text-[9px] md:text-[10px] leading-tight">{{ message }}</p>
+          <button onclick="this.parentElement.remove()" class="ml-auto pl-3 opacity-50 hover:opacity-100 transition-opacity">
+            <i class="bi bi-x-lg text-xs"></i>
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
       <div id="drink-request-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[250] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-3xl rounded-[2rem] p-6 border-2 border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.1)] relative">
           <div class="flex items-center justify-between mb-5">
@@ -244,17 +359,11 @@
                   Catalog & Profitability Analysis
                 </p>
               </div>
-              <button
-                onclick="toggleSidebar()"
-                class="md:hidden w-12 h-12 bg-white border-2 border-slate-200 rounded-2xl text-slate-600 flex items-center justify-center shadow-sm active:scale-95 transition-all flex-shrink-0"
-              >
-                <i class="bi bi-list text-2xl"></i>
-              </button>
             </div>
 
-            <div class="flex items-center gap-3 mt-4">
+            <div class="flex items-center gap-2 mt-4 min-w-0">
               <div
-                class="flex items-center gap-2 text-slate-500 font-mono text-[10px] font-bold bg-slate-100/50 px-3 py-1.5 rounded-full border border-slate-200/50"
+                class="flex items-center gap-1.5 md:gap-2 text-slate-500 font-mono text-[9px] md:text-[10px] font-bold bg-slate-100/50 px-2 md:px-3 py-1.5 rounded-full border border-slate-200/50 flex-shrink-0"
               >
                 <i class="bi bi-clock text-orange-500"></i>
                 <span id="live-clock">00:00:00</span>
@@ -263,22 +372,32 @@
                   >-- --- ----</span
                 >
               </div>
+
+              <div class="relative inline-block text-left flex-1 min-w-[7.5rem] md:hidden">
+                <select
+                  id="dateRangeFilterMobile"
+                  onchange="syncDateRangeFilter(this.value); updateDashboardData()"
+                  class="appearance-none w-full bg-white border-2 border-slate-200 rounded-2xl py-2 pl-4 pr-9 text-slate-900 font-bold focus:outline-none focus:border-orange-500 transition-all cursor-pointer text-[9px] uppercase tracking-widest shadow-sm"
+                >
+                    <option value="today" selected>Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="30days">Last 30 Days</option>
+                    <option value="year">Year to Date</option>
+                </select>
+                <i
+                  class="bi bi-calendar3 absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none text-xs"
+                ></i>
+              </div>
             </div>
           </div>
 
           <!-- Actions -->
-          <div
-            class="flex flex-col lg:flex-row w-full lg:w-auto gap-3 md:gap-4"
-          >
-            <button id="requestReportButton" onclick="openRequestReportsModal()" class="relative inline-flex items-center justify-center bg-rose-500 text-white rounded-2xl px-5 py-3 text-[10px] font-[800] uppercase tracking-widest hover:bg-rose-600 transition shadow-sm">
-              <i class="bi bi-bell-fill mr-2"></i>
-              Request Reports
-              <span id="requestReportBadge" class="absolute -top-2 -right-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white text-rose-600 text-[10px] font-black px-1.5">0</span>
-            </button>
-            <div class="relative inline-block text-left w-full sm:w-auto">
+          <div class="flex flex-col items-end gap-3 md:gap-4 w-full lg:w-auto">
+            <div class="relative hidden md:inline-block text-left w-[46%] min-w-[9.5rem] sm:w-44">
               <select
                 id="dateRangeFilter"
-                onchange="updateDashboardData()"
+                onchange="syncDateRangeFilter(this.value); updateDashboardData()"
                 class="appearance-none w-full bg-white border-2 border-slate-200 rounded-2xl md:rounded-3xl py-3 md:py-4 text-xs md:text-sm pl-5 pr-12 text-slate-900 font-bold focus:outline-none focus:border-orange-500 transition-all cursor-pointer text-[9px] md:text-[10px] uppercase tracking-widest shadow-sm"
               >
                   <option value="today" selected>Today</option>
@@ -293,45 +412,49 @@
               ></i>
             </div>
 
-            <div
-              class="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:gap-3"
-            >
-              <button
-                type="button"
-                onclick="openAddModal()"
-                class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 md:gap-2 bg-orange-500 hover:bg-orange-600 text-white font-[800] px-3 md:px-8 py-3.5 md:py-4 rounded-2xl md:rounded-3xl transition-all shadow-sm md:shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[9px] md:text-[10px] border-2 border-orange-500 min-w-0"
-              >
-                <i class="bi bi-plus-lg text-sm md:text-lg"></i>
-                <span class="truncate hidden min-[360px]:inline"
-                  >Add Drink</span
-                >
-                <span class="truncate min-[360px]:hidden">Add</span>
+            <div class="grid grid-cols-2 lg:flex lg:flex-row gap-2 md:gap-3 w-full lg:w-auto">
+              <button id="requestReportButton" onclick="openRequestReportsModal()" class="relative flex items-center justify-center gap-1.5 md:gap-2 bg-rose-500 text-white font-[800] px-3 md:px-8 py-3.5 md:py-4 rounded-2xl md:rounded-3xl transition-all shadow-sm md:shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[9px] md:text-[10px] border-2 border-rose-500 hover:bg-rose-600 min-w-0">
+                <i class="bi bi-bell-fill text-sm md:text-lg"></i>
+                <span class="truncate hidden min-[360px]:inline">Request Reports</span>
+                <span class="truncate min-[360px]:hidden">Reports</span>
+                <span id="requestReportBadge" class="absolute -top-2 -right-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white text-rose-600 text-[10px] font-black px-1.5">0</span>
               </button>
-              <a
-                href="/export-recipes/"
-                class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 md:gap-2 bg-slate-800 hover:bg-slate-900 text-white font-[800] px-3 md:px-8 py-3.5 md:py-4 rounded-2xl md:rounded-3xl transition-all shadow-sm md:shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[9px] md:text-[10px] border-2 border-slate-800 min-w-0"
-              >
-                <i class="bi bi-journal-text text-sm md:text-lg"></i>
-                <span class="truncate">Export Recipes</span>
-              </a>
-              <a
-                href="{% url 'generate_daily_report' %}"
-                target="_blank"
-                class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 md:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-[800] px-3 md:px-8 py-3.5 md:py-4 rounded-2xl md:rounded-3xl transition-all shadow-sm md:shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[9px] md:text-[10px] border-2 border-blue-500 min-w-0"
-              >
-                <i class="bi bi-file-earmark-pdf text-sm md:text-lg"></i>
-                <span class="truncate hidden min-[360px]:inline"
-                  >Daily Report</span
+                <button
+                  type="button"
+                  onclick="openAddModal()"
+                  class="flex lg:flex-none items-center justify-center gap-1.5 md:gap-2 bg-orange-500 hover:bg-orange-600 text-white font-[800] px-3 md:px-8 py-3.5 md:py-4 rounded-2xl md:rounded-3xl transition-all shadow-sm md:shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[9px] md:text-[10px] border-2 border-orange-500 min-w-0"
                 >
-                <span class="truncate min-[360px]:hidden">Report</span>
-              </a>
+                  <i class="bi bi-plus-lg text-sm md:text-lg"></i>
+                  <span class="truncate hidden min-[360px]:inline"
+                    >Add Drink</span
+                  >
+                  <span class="truncate min-[360px]:hidden">Add</span>
+                </button>
+                <a
+                  href="/export-recipes/"
+                  class="flex lg:flex-none items-center justify-center gap-1.5 md:gap-2 bg-slate-800 hover:bg-slate-900 text-white font-[800] px-3 md:px-8 py-3.5 md:py-4 rounded-2xl md:rounded-3xl transition-all shadow-sm md:shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[9px] md:text-[10px] border-2 border-slate-800 min-w-0"
+                >
+                  <i class="bi bi-journal-text text-sm md:text-lg"></i>
+                  <span class="truncate">Export Recipes</span>
+                </a>
+                <a
+                  href="{% url 'generate_daily_report' %}"
+                  target="_blank"
+                  class="flex lg:flex-none items-center justify-center gap-1.5 md:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-[800] px-3 md:px-8 py-3.5 md:py-4 rounded-2xl md:rounded-3xl transition-all shadow-sm md:shadow-[4px_4px_0px_0px_rgba(203,213,225,1)] active:translate-y-[2px] active:shadow-none uppercase tracking-widest text-[9px] md:text-[10px] border-2 border-blue-500 min-w-0"
+                >
+                  <i class="bi bi-file-earmark-pdf text-sm md:text-lg"></i>
+                  <span class="truncate hidden min-[360px]:inline"
+                    >Daily Report</span
+                  >
+                  <span class="truncate min-[360px]:hidden">Report</span>
+                </a>
             </div>
           </div>
         </div>
 
         <!-- 2. Bento Stat Cards -->
         <div
-          class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6"
+          class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 mt-6 md:mt-8"
         >
           <div
             class="bento-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] flex flex-col justify-between shadow-sm"
@@ -566,7 +689,7 @@
         </div>
 
         <!--Raw Material section-->
-        <div class="bento-card rounded-[2.5rem] p-5 md:p-8 mb-6">
+        <div class="bento-card rounded-[2.5rem] p-5 md:p-8 mt-6 md:mt-8 mb-6">
           <div class="flex justify-between items-center mb-6">
             <h3
               class="text-lg font-[800] text-slate-900 tracking-tight uppercase"
@@ -622,7 +745,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          <div class="lg:col-span-8 bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col min-h-[400px]">
+          <div class="lg:col-span-12 bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col min-h-[400px]">
             <div class="flex justify-between items-center mb-6">
               <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">
                 Sales Trend Analysis
@@ -633,47 +756,49 @@
             </div>
           </div>
 
-          <div class="lg:col-span-4 flex flex-col gap-6">
-            <div class="bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col flex-1">
-              <h3 class="text-lg font-[800] mb-4 text-slate-900 tracking-tight uppercase">
+          <div class="lg:col-span-12 grid grid-cols-2 gap-2.5 md:gap-6">
+            <div class="bento-card rounded-2xl md:rounded-[2.5rem] p-3 md:p-8 flex flex-col flex-1 min-w-0">
+              <h3 class="text-[10px] md:text-lg font-[800] mb-2 md:mb-4 text-slate-900 tracking-tight uppercase">
                 Top Sellers
               </h3>
               <div id="topSellersList" class="divide-y-2 divide-slate-100 flex-grow">
                 {% for item in popular_items|slice:":3" %}
-                <div class="flex justify-between items-center py-3 group">
-                  <span class="font-bold text-slate-700 group-hover:text-orange-600 transition-colors">{{ item.product__name }}</span>
-                  <span class="bg-orange-50 text-orange-600 border border-orange-100 px-3 py-1 rounded-lg text-[10px] font-[800] tracking-widest uppercase">
+                <div class="flex justify-between items-center gap-1.5 py-1.5 md:py-3 group">
+                  <span class="font-bold text-[9px] md:text-sm text-slate-700 group-hover:text-orange-600 transition-colors truncate">{{ item.product__name }}</span>
+                  <span class="bg-orange-50 text-orange-600 border border-orange-100 px-1.5 md:px-3 py-0.5 md:py-1 rounded-md md:rounded-lg text-[7px] md:text-[10px] font-[800] tracking-widest uppercase shrink-0">
                     {{ item.total_qty }}
                   </span>
                 </div>
                 {% empty %}
-                <p class="text-slate-400 font-semibold py-4 text-sm">No sales data.</p>
+                <p class="text-slate-400 font-semibold py-1.5 md:py-4 text-[9px] md:text-sm">No sales data.</p>
                 {% endfor %}
               </div>
             </div>
 
-            <div class="bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col flex-1">
-              <h3 class="text-lg font-[800] mb-4 text-slate-900 tracking-tight uppercase flex justify-between items-center">
-                Customers Loyalty <i class="bi bi-star-fill text-amber-400"></i>
+            <div class="bento-card rounded-2xl md:rounded-[2.5rem] p-3 md:p-8 flex flex-col flex-1 min-w-0">
+              <h3 class="text-[10px] md:text-lg font-[800] mb-2 md:mb-4 text-slate-900 tracking-tight uppercase flex justify-between items-center">
+                <span class="md:hidden">Loyalty</span>
+                <span class="hidden md:inline">Customers Loyalty</span>
+                <i class="bi bi-star-fill text-amber-400 text-[9px] md:text-base"></i>
               </h3>
               <div class="divide-y-2 divide-slate-100 flex-grow">
                 {% for customer in top_customers|slice:":3" %}
-                <div class="flex justify-between items-center py-3">
-                  <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-slate-50 border-2 border-slate-100 text-slate-500 flex items-center justify-center text-xs font-[800]">
+                <div class="flex justify-between items-center gap-1 py-1.5 md:py-3">
+                  <div class="flex items-center gap-1 md:gap-3 min-w-0">
+                    <div class="w-4 h-4 md:w-8 md:h-8 rounded-md md:rounded-lg bg-slate-50 border md:border-2 border-slate-100 text-slate-500 flex items-center justify-center text-[7px] md:text-xs font-[800] shrink-0">
                       #{{ forloop.counter }}
                     </div>
-                    <div>
-                      <p class="font-bold text-slate-800 text-sm leading-tight">{{ customer.name }}</p>
-                      <p class="text-[9px] text-slate-400 font-[800] tracking-widest uppercase">{{ customer.phone }}</p>
+                    <div class="min-w-0">
+                      <p class="font-bold text-slate-800 text-[9px] md:text-sm leading-tight truncate">{{ customer.name }}</p>
+                      <p class="text-[6px] md:text-[9px] text-slate-400 font-[800] tracking-widest uppercase truncate">{{ customer.phone }}</p>
                     </div>
                   </div>
-                  <div class="text-right">
-                    <p class="font-[800] text-amber-500">{{ customer.points }} <span class="text-[8px] text-slate-400 uppercase tracking-widest">pts</span></p>
+                  <div class="text-right shrink-0">
+                    <p class="font-[800] text-[9px] md:text-base text-amber-500">{{ customer.points }} <span class="text-[5px] md:text-[8px] text-slate-400 uppercase tracking-widest">pts</span></p>
                   </div>
                 </div>
                 {% empty %}
-                <p class="text-slate-400 font-semibold py-4 text-sm">No customers yet.</p>
+                <p class="text-slate-400 font-semibold py-1.5 md:py-4 text-[9px] md:text-sm">No customers yet.</p>
                 {% endfor %}
               </div>
             </div>
@@ -717,47 +842,57 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[1050px]">
+          <div class="overflow-x-auto lg:overflow-x-hidden">
+            <table class="w-full table-fixed text-left border-collapse min-w-[1050px] lg:min-w-0">
+              <colgroup>
+                <col class="lg:w-[22%]" />
+                <col class="lg:w-[7%]" />
+                <col class="lg:w-[11%]" />
+                <col class="lg:w-[11%]" />
+                <col class="lg:w-[11%]" />
+                <col class="lg:w-[16%]" />
+                <col class="lg:w-[13%]" />
+                <col class="lg:w-[9%]" />
+              </colgroup>
               <thead>
                 <tr class="border-b-2 border-slate-50 bg-slate-50/30">
                   <th
-                    class="px-3 md:px-8 py-2 md:py-5 text-[9px] md:text-[10px] font-[800] text-slate-400 uppercase tracking-widest sticky left-0 bg-slate-50/95 backdrop-blur-md z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
+                    class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-[9px] md:text-[9px] xl:text-[10px] font-[800] text-slate-400 uppercase tracking-widest sticky left-0 bg-slate-50/95 backdrop-blur-md z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
                   >
                     product Details
                   </th>
                   <th
-                    class="px-3 md:px-8 py-2 md:py-5 text-[9px] md:text-[10px] font-[800] text-slate-400 uppercase tracking-widest"
+                    class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-[9px] md:text-[9px] xl:text-[10px] font-[800] text-slate-400 uppercase tracking-widest"
                   >
                     Drink Type
                   </th>
                   <th
-                    class="px-3 md:px-8 py-2 md:py-5 text-[9px] md:text-[10px] font-[800] text-slate-400 uppercase tracking-widest text-center"
+                    class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-[9px] md:text-[9px] xl:text-[10px] font-[800] text-slate-400 uppercase tracking-widest text-center"
                   >
                     Price (All Sizes)
                   </th>
                   <th
-                    class="px-3 md:px-8 py-2 md:py-5 text-[9px] md:text-[10px] font-[800] text-slate-400 uppercase tracking-widest text-center"
+                    class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-[9px] md:text-[9px] xl:text-[10px] font-[800] text-slate-400 uppercase tracking-widest text-center"
                   >
                     Cost (All Sizes)
                   </th>
                   <th
-                    class="px-3 md:px-8 py-2 md:py-5 text-[9px] md:text-[10px] font-[800] text-slate-400 uppercase tracking-widest text-center"
+                    class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-[9px] md:text-[9px] xl:text-[10px] font-[800] text-slate-400 uppercase tracking-widest text-center"
                   >
                     Profit (All Sizes)
                   </th>
                   <th
-                    class="px-3 md:px-8 py-2 md:py-5 text-[9px] md:text-[10px] font-[800] text-slate-400 uppercase tracking-widest"
+                    class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-[9px] md:text-[9px] xl:text-[10px] font-[800] text-slate-400 uppercase tracking-widest"
                   >
                     Stock Potential
                   </th>
                   <th
-                    class="px-3 md:px-8 py-2 md:py-5 text-[9px] md:text-[10px] font-[800] text-slate-400 uppercase tracking-widest text-center"
+                    class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-[9px] md:text-[9px] xl:text-[10px] font-[800] text-slate-400 uppercase tracking-widest text-center"
                   >
                     Actions
                   </th>
                   <th
-                    class="px-3 md:px-8 py-2 md:py-5 text-[9px] md:text-[10px] font-[800] text-slate-400 uppercase tracking-widest text-right"
+                    class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-[9px] md:text-[9px] xl:text-[10px] font-[800] text-slate-400 uppercase tracking-widest text-right"
                   >
                     Restock
                   </th>
@@ -769,10 +904,10 @@
                   onclick="toggleRowExpansion(event, this)"
                   class="product-row group hover:bg-slate-50/50 transition-colors cursor-pointer"
                 >
-                  <td class="px-2 py-2 md:py-4">
-                    <div class="flex items-center gap-3 md:gap-5">
+                  <td class="px-2 md:px-3 lg:px-4 py-2 md:py-4">
+                    <div class="flex items-center gap-3 md:gap-3 xl:gap-4 min-w-0">
                       <div
-                        class="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-50 relative flex-shrink-0"
+                        class="w-10 h-10 md:w-11 md:h-11 xl:w-14 xl:h-14 rounded-xl md:rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-50 relative flex-shrink-0"
                       >
                         <img
                           id="prod-img-{{ product.id }}"
@@ -780,10 +915,10 @@
                           class="w-full h-full object-cover"
                         />
                       </div>
-                      <div>
+                      <div class="min-w-0">
                         <h3
                           id="prod-name-{{ product.id }}"
-                          class="font-[800] text-slate-900 leading-tight text-xs md:text-sm flex items-center gap-2"
+                          class="font-[800] text-slate-900 leading-tight text-xs md:text-[13px] xl:text-sm flex items-center gap-2 truncate"
                         >
                           {{ product.name }}
                           <i
@@ -792,7 +927,7 @@
                         </h3>
                         <p
                           id="prod-category-{{ product.id }}"
-                          class="text-slate-400 text-[8px] md:text-[10px] font-[800] uppercase tracking-widest mt-1"
+                          class="text-slate-400 text-[8px] md:text-[9px] xl:text-[10px] font-[800] uppercase tracking-widest mt-1 truncate"
                         >
                           {{ product.category }}
                         </p>
@@ -800,7 +935,7 @@
                     </div>
                   </td>
 
-                  <td class="px-3 md:px-8 py-2 md:py-5">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4">
                     <div id="prod-tags-{{ product.id }}" class="flex gap-1">
                       {% if product.can_be_hot %}<span
                         class="w-4 h-4 md:w-5 md:h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-[8px] md:text-[9px] font-black shadow-sm"
@@ -818,9 +953,9 @@
                     </div>
                   </td>
 
-                  <td class="px-3 md:px-8 py-2 md:py-5 text-center">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-center">
                     <div
-                      class="flex flex-col gap-1 min-w-[70px] md:min-w-[90px] items-center"
+                      class="flex flex-col gap-1 min-w-[70px] md:min-w-0 items-center"
                     >
                       <div
                         class="flex gap-1 text-[9px] md:text-[10px] font-bold"
@@ -858,9 +993,9 @@
                       </div>
                     </div>
                   </td>
-                  <td class="px-3 md:px-8 py-2 md:py-5 text-center">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-center">
                     <div
-                      class="flex flex-col gap-1 min-w-[70px] md:min-w-[80px] items-center"
+                      class="flex flex-col gap-1 min-w-[70px] md:min-w-0 items-center"
                     >
                       <div
                         class="flex gap-1 text-[9px] md:text-[10px] font-black text-rose-600"
@@ -892,9 +1027,9 @@
                       </div>
                     </div>
                   </td>
-                  <td class="px-3 md:px-8 py-2 md:py-5 text-center">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-center">
                     <div
-                      class="flex flex-col gap-1 min-w-[70px] md:min-w-[80px] items-center"
+                      class="flex flex-col gap-1 min-w-[70px] md:min-w-0 items-center"
                     >
                       <div
                         class="flex gap-1 text-[9px] md:text-[10px] font-black text-emerald-600"
@@ -927,9 +1062,9 @@
                     </div>
                   </td>
 
-                  <td class="px-3 md:px-8 py-2 md:py-5">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4">
                     <div
-                      class="flex flex-col gap-2 min-w-[120px] md:min-w-[140px]"
+                      class="flex flex-col gap-2 min-w-[120px] md:min-w-0"
                     >
                       <span
                         id="potential-{{ product.id }}"
@@ -949,13 +1084,13 @@
                     </div>
                   </td>
 
-                  <td class="px-3 md:px-8 py-2 md:py-5">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4">
                     <div
                       class="flex items-center justify-center gap-1 md:gap-2"
                     >
                       <button
                         onclick="openEditModal('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price_small }}', '{{ product.price_medium }}', '{{ product.price_large }}', '{{ product.category|escapejs }}', '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')"
-                        class="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center border-2 border-blue-100 hover:border-blue-600 shadow-sm"
+                        class="w-7 h-7 md:w-8 md:h-8 xl:w-9 xl:h-9 rounded-lg md:rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center border-2 border-blue-100 hover:border-blue-600 shadow-sm"
                         title="Edit product"
                       >
                         <i class="bi bi-pencil-square text-xs md:text-base"></i>
@@ -964,7 +1099,7 @@
                       <button
                         type="button"
                         onclick="openDeleteModal('{{ product.id }}', '{{ product.name|escapejs }}')"
-                        class="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border-2 border-rose-100 hover:border-rose-600 shadow-sm"
+                        class="w-7 h-7 md:w-8 md:h-8 xl:w-9 xl:h-9 rounded-lg md:rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border-2 border-rose-100 hover:border-rose-600 shadow-sm"
                         title="Delete product"
                       >
                         <i class="bi bi-trash3 text-xs md:text-base"></i>
@@ -972,11 +1107,11 @@
                     </div>
                   </td>
 
-                  <td class="px-3 md:px-8 py-2 md:py-5 text-right">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-right">
                     <button
                       id="update-btn-{{ product.id }}"
                       onclick="openUpdateModal('{{ product.limiting_ing.id }}', '{{ product.limiting_ing.name|escapejs }}', '{{ product.limiting_ing.initial_stock_per_item }}', '{{ product.limiting_ing.last_purchase_price }}')"
-                      class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl bg-slate-50 text-slate-400 hover:bg-orange-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:shadow-orange-200"
+                      class="inline-flex items-center justify-center w-8 h-8 xl:w-10 xl:h-10 rounded-xl md:rounded-2xl bg-slate-50 text-slate-400 hover:bg-orange-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:shadow-orange-200"
                     >
                       <i class="bi bi-plus-lg text-sm md:text-lg"></i>
                     </button>
@@ -1392,29 +1527,29 @@
               newRow.onclick = (e) => toggleRowExpansion(e, newRow);
 
               newRow.innerHTML = `
-                  <td class="px-2 py-1">
-                      <div class="flex items-center gap-5">
-                          <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-50 relative flex-shrink-0">
+                  <td class="px-2 md:px-3 lg:px-4 py-2 md:py-4">
+                      <div class="flex items-center gap-3 md:gap-3 xl:gap-4 min-w-0">
+                          <div class="w-10 h-10 md:w-11 md:h-11 xl:w-14 xl:h-14 rounded-xl md:rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-50 relative flex-shrink-0">
                               <img id="prod-img-${p.id}" src="${p.image_url || 'https://placehold.co/100x100/e2e8f0/94a3b8?text=Product'}" class="w-full h-full object-cover">
                           </div>
-                          <div>
-                              <h3 id="prod-name-${p.id}" class="font-[800] text-slate-900 leading-tight text-sm flex items-center gap-2">
+                          <div class="min-w-0">
+                              <h3 id="prod-name-${p.id}" class="font-[800] text-slate-900 leading-tight text-xs md:text-[13px] xl:text-sm flex items-center gap-2 truncate">
                                   ${p.name}
                                   <i class="bi bi-chevron-down text-[10px] text-slate-300 transition-transform row-chevron"></i>
                               </h3>
-                              <p id="prod-category-${p.id}" class="text-slate-400 text-[10px] font-[800] uppercase tracking-widest mt-1">${p.category}</p>
+                              <p id="prod-category-${p.id}" class="text-slate-400 text-[8px] md:text-[9px] xl:text-[10px] font-[800] uppercase tracking-widest mt-1 truncate">${p.category}</p>
                           </div>
                       </div>
                   </td>
-                  <td class="px-4 md:px-8 py-3 md:py-5">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4">
                       <div id="prod-tags-${p.id}" class="flex gap-1">
                           ${p.can_be_hot ? '<span class="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-[9px] font-black shadow-sm">H</span>' : ''}
                           ${p.can_be_iced ? '<span class="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[9px] font-black shadow-sm">I</span>' : ''}
                           ${p.can_be_frappe ? '<span class="w-5 h-5 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-[9px] font-black shadow-sm">F</span>' : ''}
                       </div>
                   </td>
-                  <td class="px-4 md:px-8 py-3 md:py-5 text-center">
-                      <div class="flex flex-col gap-1 min-w-[90px] items-center">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-center">
+                      <div class="flex flex-col gap-1 min-w-[70px] md:min-w-0 items-center">
                           <div class="flex gap-1 text-[10px] font-bold"><span class="text-slate-400 uppercase">S:</span> <span id="prod-price-s-${p.id}" class="text-slate-900">$${parseFloat(p.price_small || p.price).toFixed(2)}</span></div>
                           <div class="variant-details hidden flex flex-col gap-1 items-center">
                               <div class="flex gap-1 text-[10px] font-bold"><span class="text-slate-400 uppercase">M:</span> <span id="prod-price-m-${p.id}" class="text-slate-900">$${parseFloat(p.price_medium || 0).toFixed(2)}</span></div>
@@ -1422,8 +1557,8 @@
                           </div>
                       </div>
                   </td>
-                  <td class="px-4 md:px-8 py-3 md:py-5 text-center">
-                      <div class="flex flex-col gap-1 min-w-[80px] items-center">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-center">
+                      <div class="flex flex-col gap-1 min-w-[70px] md:min-w-0 items-center">
                           <div class="flex gap-1 text-[10px] font-black text-rose-600"><span class="text-slate-400 uppercase">S:</span> <span id="prod-cost-s-${p.id}">$${parseFloat(p.cost || 0).toFixed(3)}</span></div>
                           <div class="variant-details hidden flex flex-col gap-1 items-center">
                               <div class="flex gap-1 text-[10px] font-black text-rose-600"><span class="text-slate-400 uppercase">M:</span> <span id="prod-cost-m-${p.id}">$0.000</span></div>
@@ -1431,8 +1566,8 @@
                           </div>
                       </div>
                   </td>
-                  <td class="px-4 md:px-8 py-3 md:py-5 text-center">
-                      <div class="flex flex-col gap-1 min-w-[80px] items-center">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-center">
+                      <div class="flex flex-col gap-1 min-w-[70px] md:min-w-0 items-center">
                           <div class="flex gap-1 text-[10px] font-black text-emerald-600"><span class="text-slate-400 uppercase">S:</span> <span id="prod-profit-s-${p.id}">$${parseFloat(p.profit || 0).toFixed(3)}</span></div>
                           <div class="variant-details hidden flex flex-col gap-1 items-center">
                               <div class="flex gap-1 text-[10px] font-black text-emerald-600"><span class="text-slate-400 uppercase">M:</span> <span id="prod-profit-m-${p.id}">$0.000</span></div>
@@ -1440,18 +1575,18 @@
                           </div>
                       </div>
                   </td>
-                  <td class="px-4 md:px-8 py-3 md:py-5">
-                      <div class="flex flex-col gap-2 min-w-[140px]">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4">
+                      <div class="flex flex-col gap-2 min-w-[120px] md:min-w-0">
                           <span id="potential-${p.id}" class="text-[11px] font-[900] uppercase tracking-tighter text-amber-500 animate-pulse">Syncing...</span>
                           <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-50">
                               <div class="h-full transition-all duration-700 bg-slate-300 w-full animate-pulse"></div>
                           </div>
                       </div>
                   </td>
-                  <td class="px-4 md:px-8 py-3 md:py-5">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4">
                       <div class="flex items-center justify-center gap-2">
                           <a href="/edit-product/${p.id}/"
-                                  class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center border-2 border-blue-100 hover:border-blue-600 shadow-sm"
+                                  class="w-7 h-7 md:w-8 md:h-8 xl:w-9 xl:h-9 rounded-lg md:rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center border-2 border-blue-100 hover:border-blue-600 shadow-sm"
                                   title="Edit product">
                               <i class="bi bi-pencil-square"></i>
                           </a>
@@ -1459,17 +1594,17 @@
                           <form action="/delete-product/${p.id}/" method="POST" onsubmit="return confirm('Are you sure you want to delete this product?');" class="inline">
                               {% csrf_token %}
                               <button type="submit"
-                                      class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border-2 border-rose-100 hover:border-rose-600 shadow-sm"
+                                      class="w-7 h-7 md:w-8 md:h-8 xl:w-9 xl:h-9 rounded-lg md:rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border-2 border-rose-100 hover:border-rose-600 shadow-sm"
                                       title="Delete product">
                                   <i class="bi bi-trash3"></i>
                               </button>
                           </form>
                       </div>
                   </td>
-                  <td class="px-4 md:px-8 py-3 md:py-5 text-right">
+                  <td class="px-3 md:px-3 lg:px-4 py-2 md:py-4 text-right">
                       <button id="update-btn-${p.id}"
                               onclick="openUpdateModal('${p.limiting_ing ? p.limiting_ing.id : ''}', '${p.limiting_ing ? p.limiting_ing.name : ''}', '${p.limiting_ing ? p.limiting_ing.initial_stock_per_item : ''}', '${p.limiting_ing ? p.limiting_ing.last_purchase_price : ''}')"
-                              class="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-50 text-slate-400 hover:bg-orange-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:shadow-orange-200"
+                              class="inline-flex items-center justify-center w-8 h-8 xl:w-10 xl:h-10 rounded-xl md:rounded-2xl bg-slate-50 text-slate-400 hover:bg-orange-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:shadow-orange-200"
                               title="Restock product">
                           <i class="bi bi-plus-lg"></i>
                       </button>
@@ -1536,7 +1671,9 @@
       // 2. SIDEBAR LOGIC
       function toggleSidebar() {
           const sidebar = document.getElementById('sidebar');
+          const overlay = document.getElementById('sidebarOverlay');
           if (sidebar) sidebar.classList.toggle('-translate-x-full');
+          if (overlay) overlay.classList.toggle('hidden');
       }
 
       // 3. CHART INITIALIZATION
@@ -1739,12 +1876,28 @@
           modal.classList.remove('flex');
       }
 
+      function openSettingsModal() {
+          const modal = document.getElementById('settingsModal');
+          if (!modal) return;
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+      }
+
+      function closeSettingsModal() {
+          const modal = document.getElementById('settingsModal');
+          if (!modal) return;
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+      }
+
       // Modal dismiss logic (Clicking backdrop)
       window.onclick = function(event) {
           const delModal = document.getElementById('deleteModal');
           const updateModal = document.getElementById('updateStockModal');
+          const settingsModal = document.getElementById('settingsModal');
           if (event.target == delModal) closeDeleteModal();
           if (event.target == updateModal) closeStockModal();
+          if (event.target == settingsModal) closeSettingsModal();
       }
 
       // 6. ECOSYSTEM (TIME & THEME)
@@ -1778,9 +1931,17 @@
       updateDashboardEcosystem();
 
       // 7. DASHBOARD DATA SYNC (CORE ENGINE)
+      function syncDateRangeFilter(value) {
+          document.querySelectorAll('#dateRangeFilter, #dateRangeFilterMobile').forEach(filter => {
+              filter.value = value;
+          });
+      }
+
       async function updateDashboardData() {
           const rangeFilter = document.getElementById('dateRangeFilter');
-          const range = rangeFilter?.value || 'today';
+          const mobileRangeFilter = document.getElementById('dateRangeFilterMobile');
+          const isMobileRange = window.matchMedia('(max-width: 767px)').matches;
+          const range = (isMobileRange ? mobileRangeFilter?.value : rangeFilter?.value) || rangeFilter?.value || mobileRangeFilter?.value || 'today';
 
           try {
               // Update Raw Materials Grid dynamically

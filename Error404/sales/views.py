@@ -17,9 +17,11 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
+from django.contrib.auth import password_validation
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ValidationError
 
 # Database & Querying
 from django.db import transaction
@@ -277,6 +279,71 @@ def password_reset_confirm(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+
+@login_required
+def account_settings(request):
+    if request.method != 'POST':
+        return redirect(get_dashboard_route(request.user))
+
+    section = request.POST.get('section', '')
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or get_dashboard_route(request.user)
+    user = request.user
+
+    if section == 'profile':
+        username = request.POST.get('username', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        user_model = get_user_model()
+        if not username:
+            messages.error(request, 'Username cannot be empty.')
+        elif user_model.objects.filter(username__iexact=username).exclude(pk=user.pk).exists():
+            messages.error(request, 'That username is already used by another account.')
+        else:
+            user.username = username
+            user.first_name = first_name
+            user.last_name = last_name
+            user.save(update_fields=['username', 'first_name', 'last_name'])
+            messages.success(request, 'Profile updated.')
+
+    elif section == 'email':
+        email = request.POST.get('email', '').strip()
+        if not email:
+            messages.error(request, 'Email cannot be empty.')
+        else:
+            user_model = get_user_model()
+            email_taken = user_model.objects.filter(email__iexact=email).exclude(pk=user.pk).exists()
+            if email_taken:
+                messages.error(request, 'That email is already used by another account.')
+            else:
+                user.email = email
+                user.save(update_fields=['email'])
+                messages.success(request, 'Email updated.')
+
+    elif section == 'password':
+        current_password = request.POST.get('current_password', '')
+        new_password = request.POST.get('new_password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+
+        if not user.check_password(current_password):
+            messages.error(request, 'Current password is incorrect.')
+        elif new_password != confirm_password:
+            messages.error(request, 'The new passwords do not match.')
+        else:
+            try:
+                password_validation.validate_password(new_password, user)
+            except ValidationError as error:
+                messages.error(request, ' '.join(error.messages))
+            else:
+                user.set_password(new_password)
+                user.save(update_fields=['password'])
+                update_session_auth_hash(request, user)
+                messages.success(request, 'Password updated.')
+
+    else:
+        messages.error(request, 'Unknown settings action.')
+
+    return redirect(next_url)
 
 @manager_or_owner_required
 def add_product(request):

@@ -2,318 +2,293 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Error404 | Inventory Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
     />
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap");
-      body {
-        font-family: "Inter", sans-serif;
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap");
+    body {
+      font-family: "Inter", sans-serif;
+    }
+    #sidebar {
+      font-family: "Plus Jakarta Sans", sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+
+    /* Flat 2.0 Light Theme Shadows */
+    .bento-card {
+      box-shadow: 4px 4px 0px 0px rgba(203, 213, 225, 0.7);
+    }
+    .bento-card-interactive:hover {
+      box-shadow: 6px 6px 0px 0px rgba(249, 115, 22, 0.3);
+      transform: translate(-2px, -2px);
+    }
+    .bento-btn-blue:hover {
+      box-shadow: 6px 6px 0px 0px rgba(14, 165, 233, 0.3);
+      transform: translate(-2px, -2px);
+    }
+    .bento-btn-red:hover {
+      box-shadow: 6px 6px 0px 0px rgba(239, 68, 68, 0.3);
+      transform: translate(-2px, -2px);
+    }
+
+    /* ===== MOBILE CARD VIEW ===== */
+    .mobile-card-list { display: none; }
+
+    @media (max-width: 767px) {
+      /* Hide desktop table wrapper */
+      .desktop-table-wrapper { display: none !important; }
+      /* Show mobile cards */
+      .mobile-card-list { display: block !important; }
+
+      /* Compact header & right-side button alignment */
+      .inv-header-title { font-size: 1.5rem !important; }
+      .inv-header-sub { font-size: 8px !important; }
+
+      .inv-add-btn {
+        width: max-content !important;
+        white-space: nowrap !important;
+        padding: 8px 12px !important;
+        border-radius: 12px !important;
+        font-size: 8px !important;
+        letter-spacing: 0.02em !important;
+        margin-top: 0 !important; /* Prevents layout displacement on header row alignment */
       }
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
+      .inv-add-btn i {
+        font-size: 11px !important;
       }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+
+      /* Compact supply bar - segmented control feel */
+      .supply-bar {
+        gap: 8px !important;
+        padding-bottom: 8px !important;
+        margin-bottom: 12px !important;
+      }
+      .supply-bar button {
+        padding: 8px 12px !important;
+        border-radius: 12px !important;
+        font-size: 9px !important;
+        border-width: 1.5px !important;
+        box-shadow: 2px 2px 0px 0px rgba(203, 213, 225, 0.5) !important;
+      }
+      .supply-bar button i { font-size: 11px !important; }
+
+      /* Filter tabs compact */
+      .filter-tabs {
+        gap: 12px !important;
+        padding-bottom: 10px !important;
+        margin-bottom: 12px !important;
+      }
+
+      /* Compact search wrapper inside the flex row */
+      .search-wrapper input {
+        padding: 10px 10px 10px 34px !important;
+        border-radius: 12px !important;
+        font-size: 12px !important;
+      }
+      .search-wrapper i { left: 12px !important; font-size: 13px !important; }
+
+      /* Low-height mobile inventory card loop layout */
+      .mobile-inv-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        box-shadow: 3px 3px 0px 0px rgba(203, 213, 225, 0.5);
+        transition: all 0.15s ease;
+      }
+      .mobile-inv-card:active {
+        transform: translate(1px, 1px);
+        box-shadow: 1px 1px 0px 0px rgba(203, 213, 225, 0.5);
+      }
+      .mobile-inv-card-icon {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
         border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: #94a3b8;
+      }
+      .mobile-inv-card-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .mobile-inv-card-name {
+        font-weight: 900;
+        font-size: 13px;
+        color: #1e293b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 2px;
+        letter-spacing: -0.02em;
+      }
+      .mobile-inv-card-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .mobile-inv-card-meta span {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .mobile-inv-card-meta .stock-val {
+        color: #10b981;
+      }
+      .mobile-inv-card-meta .stock-val.low {
+        color: #ef4444;
+      }
+      .mobile-inv-card-meta .qty-val {
+        color: #10b981;
+      }
+      .mobile-inv-card-meta .qty-val.low {
+        color: #ef4444;
+      }
+      .mobile-inv-card-meta .meta-label {
+        color: #94a3b8;
+        font-size: 9px;
+        font-weight: 700;
+      }
+      .mobile-inv-card-actions {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+      }
+      .mobile-inv-card-actions .mob-del-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        border: 1.5px solid transparent;
+        color: #ef4444;
+        background: #fef2f2;
+        font-size: 15px;
+        transition: all 0.15s ease;
+        cursor: pointer;
+      }
+      .mobile-inv-card-actions .mob-del-btn:hover {
+        border-color: #fca5a5;
+        background: #fee2e2;
+      }
+      .mobile-inv-card-actions .mob-upd-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        border: 1.5px solid #e2e8f0;
+        color: #64748b;
+        background: #fff;
+        font-size: 14px;
+        transition: all 0.15s ease;
+        cursor: pointer;
+      }
+      .mobile-inv-card-actions .mob-upd-btn:hover {
+        border-color: #fdba74;
+        color: #ea580c;
+        background: #fff7ed;
       }
 
-      /* Flat 2.0 Light Theme Shadows */
-      .bento-card {
-        box-shadow: 4px 4px 0px 0px rgba(203, 213, 225, 0.7);
+      /* No results mobile */
+      .mobile-no-results {
+        text-align: center;
+        padding: 48px 20px;
       }
-      .bento-card-interactive:hover {
-        box-shadow: 6px 6px 0px 0px rgba(249, 115, 22, 0.3);
-        transform: translate(-2px, -2px);
-      }
-      .bento-btn-blue:hover {
-        box-shadow: 6px 6px 0px 0px rgba(14, 165, 233, 0.3);
-        transform: translate(-2px, -2px);
-      }
-      .bento-btn-red:hover {
-        box-shadow: 6px 6px 0px 0px rgba(239, 68, 68, 0.3);
-        transform: translate(-2px, -2px);
-      }
-
-      /* ===== MOBILE CARD VIEW ===== */
-      .mobile-card-list { display: none; }
-      .mobile-telemetry { display: none; }
-
-      @media (max-width: 767px) {
-        /* Hide desktop table wrapper */
-        .desktop-table-wrapper { display: none !important; }
-        /* Show mobile cards */
-        .mobile-card-list { display: block !important; }
-        .mobile-telemetry { display: flex !important; }
-
-        /* Compact header */
-        .inv-header-title { font-size: 1.5rem !important; }
-        .inv-header-sub { font-size: 8px !important; }
-        .inv-add-btn {
-          width: 100% !important;
-          padding: 12px 16px !important;
-          border-radius: 14px !important;
-          font-size: 9px !important;
-        }
-
-        /* Compact supply bar - segmented control feel */
-        .supply-bar {
-          gap: 8px !important;
-          padding-bottom: 8px !important;
-          margin-bottom: 12px !important;
-        }
-        .supply-bar button {
-          padding: 8px 12px !important;
-          border-radius: 12px !important;
-          font-size: 9px !important;
-          border-width: 1.5px !important;
-          box-shadow: 2px 2px 0px 0px rgba(203, 213, 225, 0.5) !important;
-        }
-        .supply-bar button i { font-size: 11px !important; }
-
-        /* Filter tabs compact */
-        .filter-tabs {
-          gap: 16px !important;
-          padding-bottom: 10px !important;
-          margin-bottom: 12px !important;
-        }
-
-        /* Full-width search */
-        .search-wrapper {
-          max-width: 100% !important;
-          margin-bottom: 12px !important;
-        }
-        .search-wrapper input {
-          padding: 12px 12px 12px 44px !important;
-          border-radius: 14px !important;
-          font-size: 13px !important;
-        }
-        .search-wrapper i { left: 14px !important; font-size: 15px !important; }
-
-        /* Mobile inventory card */
-        .mobile-inv-card {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          background: #fff;
-          border: 1.5px solid #e2e8f0;
-          border-radius: 16px;
-          padding: 14px;
-          margin-bottom: 10px;
-          box-shadow: 3px 3px 0px 0px rgba(203, 213, 225, 0.5);
-          transition: all 0.15s ease;
-        }
-        .mobile-inv-card:active {
-          transform: translate(1px, 1px);
-          box-shadow: 1px 1px 0px 0px rgba(203, 213, 225, 0.5);
-        }
-        .mobile-inv-card-icon {
-          width: 46px;
-          height: 46px;
-          min-width: 46px;
-          background: #f8fafc;
-          border: 1.5px solid #e2e8f0;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          color: #94a3b8;
-        }
-        .mobile-inv-card-body {
-          flex: 1;
-          min-width: 0;
-        }
-        .mobile-inv-card-name {
-          font-weight: 900;
-          font-size: 13px;
-          color: #1e293b;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          margin-bottom: 4px;
-          letter-spacing: -0.02em;
-        }
-        .mobile-inv-card-meta {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-        .mobile-inv-card-meta span {
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-        }
-        .mobile-inv-card-meta .stock-val {
-          color: #10b981;
-        }
-        .mobile-inv-card-meta .stock-val.low {
-          color: #ef4444;
-        }
-        .mobile-inv-card-meta .qty-val {
-          color: #10b981;
-        }
-        .mobile-inv-card-meta .qty-val.low {
-          color: #ef4444;
-        }
-        .mobile-inv-card-meta .meta-label {
-          color: #94a3b8;
-          font-size: 9px;
-          font-weight: 700;
-        }
-        .mobile-inv-card-actions {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 6px;
-        }
-        .mobile-inv-card-actions .mob-del-btn {
-          width: 36px;
-          height: 36px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 10px;
-          border: 1.5px solid transparent;
-          color: #ef4444;
-          background: #fef2f2;
-          font-size: 15px;
-          transition: all 0.15s ease;
-          cursor: pointer;
-        }
-        .mobile-inv-card-actions .mob-del-btn:hover {
-          border-color: #fca5a5;
-          background: #fee2e2;
-        }
-        .mobile-inv-card-actions .mob-upd-btn {
-          width: 36px;
-          height: 36px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 10px;
-          border: 1.5px solid #e2e8f0;
-          color: #64748b;
-          background: #fff;
-          font-size: 14px;
-          transition: all 0.15s ease;
-          cursor: pointer;
-        }
-        .mobile-inv-card-actions .mob-upd-btn:hover {
-          border-color: #fdba74;
-          color: #ea580c;
-          background: #fff7ed;
-        }
-
-        /* Telemetry summary */
-        .mobile-telemetry {
-          gap: 12px;
-          margin-bottom: 14px;
-          padding: 12px 14px;
-          background: #fff;
-          border: 1.5px solid #e2e8f0;
-          border-radius: 14px;
-          box-shadow: 3px 3px 0px 0px rgba(203, 213, 225, 0.5);
-        }
-        .mobile-telemetry .tele-item {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .mobile-telemetry .tele-label {
-          font-size: 9px;
-          font-weight: 700;
-          color: #94a3b8;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-        }
-        .mobile-telemetry .tele-value {
-          font-size: 14px;
-          font-weight: 900;
-          color: #10b981;
-        }
-        .mobile-telemetry .tele-value.warn {
-          color: #ef4444;
-        }
-        .mobile-telemetry .tele-sep {
-          width: 1.5px;
-          height: 24px;
-          background: #e2e8f0;
-          border-radius: 2px;
-        }
-
-        /* No results mobile */
-        .mobile-no-results {
-          text-align: center;
-          padding: 48px 20px;
-        }
-        .mobile-no-results i { font-size: 28px; color: #cbd5e1; }
-        .mobile-no-results p { margin-top: 8px; }
-      }
-    </style>
+      .mobile-no-results i { font-size: 28px; color: #cbd5e1; }
+      .mobile-no-results p { margin-top: 8px; }
+    }
+  </style>
   </head>
-  <body
-    class="bg-[#F4F4F5] text-slate-800 flex flex-col md:flex-row min-h-screen"
-  >
-    <div
-      class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-[100]"
-    >
-      <h1 class="text-xl font-[800] tracking-tighter text-orange-600">
+  <body class="bg-[#F8FAFC] text-slate-800 flex flex-col md:flex-row min-h-screen">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden bg-white/95 backdrop-blur-md border-b border-slate-200 p-3.5 flex justify-between items-center sticky top-0 z-[100] shadow-sm">
+      <h1 class="text-xl font-[800] tracking-tighter text-orange-600 uppercase">
         Error404
       </h1>
-      <button onclick="toggleSidebar()" class="text-2xl text-slate-600">
+      <button onclick="toggleSidebar()" class="text-2xl text-slate-600 focus:outline-none p-1">
         <i class="bi bi-list"></i>
       </button>
     </div>
 
+    <!-- Sidebar Overlay (Mobile) -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-[140] hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Drawer -->
     <aside
       id="sidebar"
-      class="fixed inset-y-0 left-0 w-64 shrink-0 bg-white border-r border-slate-200 p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[150] md:sticky md:top-0 md:h-screen"
+      class="fixed inset-y-0 left-0 w-60 md:w-64 shrink-0 bg-white border-r border-slate-200 p-5 md:p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[150] md:sticky md:top-0 md:h-screen"
     >
-      <div class="mb-10">
-        <h1 class="text-2xl font-800 tracking-tighter text-orange-600">
-          Error404
-        </h1>
-        <p
-          class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
-        >
-          Management Suite
-        </p>
+      <div class="mb-10 flex justify-between items-start">
+        <div>
+          <h1 class="text-2xl font-800 tracking-tighter text-orange-600">
+            Error404
+          </h1>
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Management Suite
+          </p>
+        </div>
+        <!-- Mobile Close Button -->
+        <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-slate-900 text-xl">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
 
-      <nav class="space-y-1 flex-grow">
+      <nav class="space-y-1 flex-grow overflow-y-auto custom-scrollbar pr-1">
         {% if request.user.profile.is_owner %}
-          <a href="{% url 'owner' %}" class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100">
+          <a href="{% url 'owner' %}" class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
             <i class="bi bi-grid-1x2"></i> Dashboard
           </a>
         {% elif request.user.profile.is_manager %}
-          <a href="{% url 'manager_display' %}" class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100">
+          <a href="{% url 'manager_display' %}" class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
             <i class="bi bi-graph-up-arrow"></i> Manager Analyst
           </a>
         {% endif %}
 
         <a
           href="{% url 'inventory_list' %}"
-          class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100"
+          class="flex items-center gap-3 p-2.5 md:p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100"
         >
           <i class="bi bi-box-seam"></i> Inventory
         </a>
 
         <a
           href="{% url 'recipe_builder' %}"
-          class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold"
+          class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold"
         >
           <i class="bi bi-journal-text"></i> Recipe Builder
         </a>
 
         <a
           href="/kitchen/"
-          class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold"
+          class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold"
         >
           <i class="bi bi-cup-hot"></i> Kitchen View
         </a>
@@ -322,7 +297,7 @@
       <div class="pt-6 border-t border-slate-100">
         <a
           href="/logout/"
-          class="flex items-center gap-3 p-3 text-slate-400 hover:text-red-500 transition-colors text-sm font-bold"
+          class="flex items-center gap-3 p-2.5 md:p-3 text-slate-400 hover:text-red-500 transition-all text-sm font-bold uppercase tracking-tighter"
         >
           <i class="bi bi-box-arrow-left"></i> Logout
         </a>
@@ -356,27 +331,37 @@
       </div>
       {% endif %}
 
-      <header
-        class="mb-8 md:mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-      >
-        <div>
-          <h1
-            class="inv-header-title text-3xl md:text-4xl font-black tracking-tight text-slate-900 uppercase"
+<!-- Main Header Block -->
+      <header class="mb-8 md:mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+
+        <!-- Row Container: Handles side-by-side alignment on mobile, clean layouts on desktop -->
+        <div class="w-full flex flex-row justify-between items-center md:items-start md:block">
+          <div>
+            <h1 class="inv-header-title text-3xl md:text-4xl font-black tracking-tight text-slate-900 uppercase">
+              Inventory
+            </h1>
+            <p class="inv-header-sub text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1">
+              Manage raw ingredients and stock levels
+            </p>
+          </div>
+
+          <!-- Action Button: Placed inside the flex row to snap right next to the title text on mobile -->
+          <button
+            onclick="toggleModal()"
+            class="inv-add-btn md:hidden bg-orange-500 border-2 border-orange-500 text-white px-6 py-4 rounded-2xl font-black bento-card bento-card-interactive transition flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest"
           >
-            Inventory
-          </h1>
-          <p
-            class="inv-header-sub text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1"
-          >
-            Manage raw ingredients and stock levels
-          </p>
+            <i class="bi bi-plus-lg text-lg"></i> Add Ingredient
+          </button>
         </div>
+
+        <!-- Desktop Action Button: Kept outside to preserve clean responsive layouts for large viewports -->
         <button
           onclick="toggleModal()"
-          class="inv-add-btn w-full md:w-auto bg-orange-500 border-2 border-orange-500 text-white px-6 py-4 rounded-2xl font-black bento-card bento-card-interactive transition flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest"
+          class="inv-add-btn hidden md:flex w-full md:w-auto bg-orange-500 border-2 border-orange-500 text-white px-6 py-4 rounded-2xl font-black bento-card bento-card-interactive transition items-center justify-center gap-2 text-[10px] uppercase tracking-widest"
         >
           <i class="bi bi-plus-lg text-lg"></i> Add Ingredient
         </button>
+
       </header>
 
       <div
@@ -448,13 +433,13 @@
       </div>
 
       <div
-        class="filter-tabs flex items-center gap-8 mb-6 border-b-2 border-slate-200 pb-4 overflow-x-auto whitespace-nowrap"
+        class="filter-tabs flex flex-wrap items-center gap-4 md:gap-8 mb-6 border-b-2 border-slate-200 pb-4"
       >
         <button
           type="button"
           onclick="filterInventory('all')"
           id="filter-all"
-          class="text-[11px] font-black uppercase tracking-widest transition-all"
+          class="text-[11px] font-black uppercase tracking-widest transition-all text-orange-600 border-b-2 border-orange-500 pb-4 -mb-[18px]"
         >
           All Items
         </button>
@@ -476,17 +461,32 @@
         </button>
       </div>
 
-      <div class="search-wrapper relative mb-6 group max-w-md">
-        <i
-          class="bi bi-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors text-lg"
-        ></i>
-        <input
-          type="text"
-          id="inventorySearch"
-          onkeyup="filterInventory(currentFilter)"
-          placeholder="Search ingredients or supplies..."
-          class="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-2xl pl-14 pr-4 py-4 focus:border-orange-500 outline-none transition bento-card placeholder-slate-400 font-bold"
-        />
+      <!-- Shared Row Content Wrapper: Search Bar and Telemetry Inline Controls -->
+      <div class="flex flex-row items-center gap-2 mb-6 w-full">
+        <!-- Search Wrapper -->
+        <div class="search-wrapper relative group flex-1 w-full">
+          <i class="bi bi-search absolute left-4 md:left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors text-sm md:text-lg"></i>
+          <input
+            type="text"
+            id="inventorySearch"
+            onkeyup="filterInventory(currentFilter)"
+            placeholder="Search items..."
+            class="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-xl md:rounded-2xl pl-10 md:pl-14 pr-3 md:pr-4 py-2.5 md:py-4 focus:border-orange-500 outline-none transition bento-card placeholder-slate-400 font-bold text-xs md:text-sm"
+          />
+        </div>
+
+        <!-- Inline Telemetry Widget -->
+        <div class="flex items-center gap-2 md:gap-4 bg-white border-2 border-slate-200 rounded-xl md:rounded-2xl px-3 md:px-5 py-2 md:py-3 bento-card whitespace-nowrap h-full min-h-[42px] md:min-h-[58px] flex-shrink-0">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</span>
+            <span class="text-xs md:text-base font-black text-slate-800">{{ ingredients|length }}</span>
+          </div>
+          <div class="w-[1.5px] h-4 md:h-6 bg-slate-200"></div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Low</span>
+            <span class="text-xs md:text-base font-black text-red-500" id="mobile-low-stock-count">{{ low_stock_count|default:"0" }}</span>
+          </div>
+        </div>
       </div>
 
       <div
@@ -704,19 +704,6 @@
         </div>
       </div>
 
-      <!-- ===== MOBILE TELEMETRY SUMMARY ===== -->
-      <div class="mobile-telemetry" style="display:none;">
-        <div class="tele-item">
-          <span class="tele-label">Total Items</span>
-          <span class="tele-value">{{ ingredients|length }}</span>
-        </div>
-        <div class="tele-sep"></div>
-        <div class="tele-item">
-          <span class="tele-label">Low Stock</span>
-          <span class="tele-value warn" id="mobile-low-stock-count">{{ low_stock_count|default:"0" }}</span>
-        </div>
-      </div>
-
       <!-- ===== MOBILE CARD LIST ===== -->
       <div class="mobile-card-list" id="mobileCardList" style="display:none;">
         {% for ing in ingredients %}
@@ -739,6 +726,10 @@
             </div>
           </div>
           <div class="mobile-inv-card-actions">
+            <button type="button" class="mob-upd-btn" style="color: #ef4444; margin-bottom: 2px;"
+                    onclick="openDeductModal('{{ ing.id }}', '{{ ing.name|escapejs }}', '{{ ing.initial_stock_per_item }}')">
+              <i class="bi bi-dash-lg"></i>
+            </button>
             <button type="button" class="mob-upd-btn"
                     onclick="openUpdateModal('{{ ing.id }}', '{{ ing.name|escapejs }}', '{{ ing.initial_stock_per_item }}', '{{ ing.last_purchase_price }}')">
               <i class="bi bi-arrow-repeat"></i>
@@ -1673,7 +1664,9 @@
 
       function toggleSidebar() {
         const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebarOverlay");
         if (sidebar) sidebar.classList.toggle("-translate-x-full");
+        if (overlay) overlay.classList.toggle("hidden");
       }
 
       // 4. SEARCH & FILTER LOGIC
@@ -1696,7 +1689,7 @@
         Object.values(tabs).forEach((tab) => {
           if (tab) {
             tab.className =
-              "text-[11px] font-black uppercase tracking-widest text-slate-400 transition-all";
+              "text-[11px] font-black uppercase tracking-widest text-slate-400 transition-all hover:text-slate-600";
           }
         });
 

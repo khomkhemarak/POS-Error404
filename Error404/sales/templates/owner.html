@@ -2,378 +2,449 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Error404 | Owner Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        #sidebar { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        @media (min-width: 768px) {
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
+
         /* Flat 2.0 Light Theme Shadows */
         .bento-card {
-            box-shadow: 4px 4px 0px 0px rgba(203, 213, 225, 0.7); /* Solid Slate-300 shadow */
+            box-shadow: 4px 4px 0px 0px rgba(203, 213, 225, 0.7);
         }
         .bento-card:hover {
-            box-shadow: 6px 6px 0px 0px rgba(249, 115, 22, 0.3); /* Subtle orange hover */
+            box-shadow: 6px 6px 0px 0px rgba(249, 115, 22, 0.3);
             transform: translate(-2px, -2px);
         }
     </style>
 </head>
-<body class="bg-[#F4F4F5] text-slate-800 flex flex-col md:flex-row min-h-screen">
+<body class="bg-[#F8FAFC] text-slate-800 flex flex-col md:flex-row min-h-screen">
 
-    <div class="fixed top-5 right-5 z-[200] space-y-3">
+    <div class="fixed top-5 right-3 md:right-5 z-[300] space-y-3 w-[calc(100%-24px)] md:w-auto">
         {% if messages %}
             {% for message in messages %}
-            <div class="notification transform transition-all duration-500 translate-x-0 opacity-100 flex items-center p-4 min-w-[300px] rounded-2xl border-2 bento-card
-                {% if message.tags == 'success' %} bg-emerald-50 border-emerald-400 text-emerald-800 
+            <div class="notification transform transition-all duration-500 translate-x-0 opacity-100 flex items-center p-2.5 md:p-4 w-full md:min-w-[300px] rounded-2xl border-2 bento-card
+                {% if message.tags == 'success' %} bg-emerald-50 border-emerald-400 text-emerald-800
                 {% else %} bg-orange-50 border-orange-400 text-orange-800 {% endif %}">
-                
-                <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-emerald-500{% else %}bi-info-circle-fill text-orange-500{% endif %} text-xl mr-3"></i>
-                <p class="font-black uppercase tracking-widest text-[10px]">{{ message }}</p>
-                
-                <button onclick="this.parentElement.remove()" class="ml-auto pl-4 opacity-50 hover:opacity-100 transition-opacity">
-                    <i class="bi bi-x-lg text-xs"></i>
+
+                <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-emerald-500{% else %}bi-info-circle-fill text-orange-500{% endif %} text-base md:text-xl mr-3"></i>
+                <p class="font-black uppercase tracking-widest text-[8px] md:text-[10px] leading-tight">{{ message }}</p>
+
+                <button onclick="this.parentElement.remove()" class="ml-auto pl-2 md:pl-4 opacity-50 hover:opacity-100 transition-opacity">
+                    <i class="bi bi-x-lg text-[10px] md:text-xs"></i>
                 </button>
             </div>
             {% endfor %}
         {% endif %}
     </div>
 
-    <div class="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-[100]">
-        <h1 class="text-xl font-[800] tracking-tighter text-orange-600">Error404</h1>
-        <button onclick="toggleSidebar()" class="text-2xl text-slate-600">
+    <header class="md:hidden sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-100 z-[100] px-3 py-2.5 flex justify-between items-center shadow-sm">
+        <h1 class="text-lg font-[800] tracking-tighter text-orange-600 uppercase">Error404</h1>
+        <button onclick="toggleSidebar()" class="text-xl text-slate-600 focus:outline-none p-1">
             <i class="bi bi-list"></i>
         </button>
-    </div>
+    </header>
 
-    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 shrink-0 bg-white border-r border-slate-200 p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[150] md:sticky md:top-0 md:h-screen">
-        <div class="mb-10">
-            <h1 class="text-2xl font-800 tracking-tighter text-orange-600">Error404</h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management Suite</p>
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-[190] hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-60 md:w-64 shrink-0 bg-white border-r border-slate-200 p-5 md:p-6 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[200] md:sticky md:top-0 md:h-screen">
+        <div class="flex justify-between items-start mb-10">
+            <div>
+                <h1 class="text-2xl font-800 tracking-tighter text-orange-600">Error404</h1>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management Suite</p>
+            </div>
+            <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-slate-900 text-xl">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
-        
-        <nav class="space-y-1 flex-grow">
-            <a href="{% url 'owner' %}" class="flex items-center gap-3 p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100">
+
+        <nav class="space-y-1 flex-grow overflow-y-auto custom-scrollbar pr-1">
+            <a href="{% url 'owner' %}" class="flex items-center gap-3 p-2.5 md:p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100">
                 <i class="bi bi-grid-1x2"></i> Dashboard
             </a>
 
-            <a href="{% url 'inventory_list' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+            <a href="{% url 'inventory_list' %}" class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
                 <i class="bi bi-box-seam"></i> Inventory
             </a>
 
-            <a href="{% url 'recipe_builder' %}" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+            <a href="{% url 'recipe_builder' %}" class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
                 <i class="bi bi-journal-text"></i> Recipe Builder
             </a>
-            
-            <a href="/kitchen/" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
-                <i class="bi bi-cup-hot"></i> Kitchen View
+
+            <a href="{% url 'kitchen_view' %}" class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+                <i class="bi bi-cup-hot"></i> Kitchen
             </a>
+
         </nav>
 
         <div class="pt-6 border-t border-slate-100">
-            <div class="flex items-center gap-3 px-3 py-2">
-                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                    <i class="bi bi-person-circle"></i>
-                </div>
-                <div class="overflow-hidden">
-                    <p class="text-xs font-bold text-slate-900 truncate">Admin User</p>
-                </div>
-            </div>
-            <a
-              href="{% url 'logout' %}"
-              class="flex items-center gap-3 p-2.5 md:p-3 text-slate-400 hover:text-red-500 transition-all text-sm font-bold uppercase tracking-tighter"
-            >
-              <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
+            <button type="button" onclick="openSettingsModal()" class="w-full flex items-center gap-3 p-2.5 md:p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all text-sm font-bold uppercase tracking-tighter rounded-xl">
+              <i class="bi bi-gear-fill"></i> Settings
+            </button>
         </div>
     </aside>
-    
-    <main class="flex-1 p-4 md:p-8 lg:p-10 max-w-[1600px] mx-auto w-full overflow-y-auto overflow-x-hidden custom-scrollbar">
 
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-                <div class="flex items-center gap-3">
-                    <h1 class="text-3xl md:text-4xl font-[800] tracking-tight text-slate-900 uppercase">Executive Summary</h1>
-                    <span class="relative flex h-3 w-3">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
+    <div id="settingsModal" class="hidden fixed inset-0 z-[260] bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-[2rem] md:rounded-[2.5rem] border-2 border-slate-200 shadow-2xl">
+            <div class="p-5 md:p-7 border-b-2 border-slate-100 flex items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-[900] text-slate-900 uppercase tracking-tight">Settings</h2>
+                    <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mt-1">Account and access</p>
                 </div>
-                <p class="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1">Live Business Telemetry</p>
-            </div>
-
-            <div class="flex flex-col sm:flex-row w-full md:w-auto gap-4">
-                <!-- Calendar Filter Container -->
-                <div class="relative w-full md:w-64 group">
-                    <!-- 
-                        Added 'range-btn' and 'active-range' classes. 
-                        The 'data-range' will be updated dynamically by the JS function below.
-                    -->
-                        
-                    <select id="dateRange" 
-                        onchange="handleDropdownChange(this)" 
-                        data-range="today"
-                        class="range-btn active-range w-full bg-white border-2 border-slate-200 text-slate-900 text-[11px] font-[800] uppercase tracking-wider rounded-2xl appearance-none block p-4 pr-12 focus:ring-orange-500 focus:border-orange-500 transition-all cursor-pointer shadow-[4px_4px_0px_0px_rgba(203,213,225,0.4)] hover:border-slate-300 outline-none">
-                        <option value="today">Today</option>
-                        <option value="week">This Week</option>
-                        <option value="month">This Month</option>
-                        <option value="30days">Last 30 Days</option>
-                        <option value="year">Year to Date</option>
-                    </select>
-                    
-                    <!-- Positioned Calendar Icon -->
-                    <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center border-l-2 border-slate-100 pl-3">
-                        <i class="bi bi-calendar3 text-orange-500 text-base"></i>
-                    </div>
-                </div>
-
-                <button onclick="openAddModal()" class="w-full md:w-auto bg-orange-500 border-2 border-orange-500 text-white px-6 py-4 rounded-2xl font-[800] transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest hover:bg-orange-600 shadow-[4px_4px_0px_0px_rgba(203,213,225,0.7)] active:translate-y-[2px] active:shadow-none">
-                    <i class="bi bi-plus-lg text-lg"></i> Add New Drink
+                <button type="button" onclick="closeSettingsModal()" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
+                    <i class="bi bi-x-lg"></i>
                 </button>
             </div>
-        </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 mb-8">
-            
-            <div class="md:col-span-7 lg:col-span-8 bento-card p-8 rounded-[3rem] border-orange-100 bg-gradient-to-br from-white to-orange-50/50 flex flex-col justify-between min-h-[200px]">
-                <div class="flex justify-between items-start">
-                    <div class="w-14 h-14 bg-orange-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-orange-200">
-                        <i class="bi bi-currency-dollar"></i>
+            <div class="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-0">
+                <div class="p-5 md:p-7 bg-slate-50/80 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-100">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-2xl border-2 border-orange-200">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="font-[900] text-slate-900 truncate">{{ request.user.get_full_name|default:request.user.username }}</p>
+                            <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest truncate">{{ request.user.email|default:"No email set" }}</p>
+                        </div>
                     </div>
-                </div>
-                <div class="mt-4">
-                    <p class="text-sm font-[800] text-slate-400 uppercase tracking-widest mb-1">Total income</p>
-                    <h2 id="incomeValue" class="text-5xl font-[800] text-slate-900">${{ total_income|floatformat:2 }}</h2>
-                </div>
-            </div>
 
-            <div class="md:col-span-5 lg:col-span-4 bento-card p-8 rounded-[3rem] border-emerald-100 bg-emerald-50/30 flex flex-col justify-between min-h-[200px]">
-                <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl border-2 border-emerald-200">
-                    <i class="bi bi-graph-up-arrow"></i>
-                </div>
-                <div class="mt-4">
-                    <p class="text-sm font-[800] text-emerald-600/70 uppercase tracking-widest mb-1">Total Profit</p>
-                    <h2 id="profitValue" class="text-4xl font-[800] text-emerald-700">${{ total_profit|floatformat:2 }}</h2>
-                </div>
-            </div>
+                    <div class="mt-6 bg-white border-2 border-slate-100 rounded-2xl p-4">
+                        <p class="text-[10px] font-[900] uppercase tracking-widest text-slate-400">Role</p>
+                        <p class="text-sm font-[800] text-slate-900 mt-1">
+                            {% if request.user.profile %}{{ request.user.profile.get_role_display }}{% else %}Owner{% endif %}
+                        </p>
+                    </div>
 
-            <div class="md:col-span-4 bento-card p-6 rounded-[2.5rem] flex items-center gap-5">
-                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl border-2 border-blue-100">
-                    <i class="bi bi-bag-check"></i>
+                    <a href="{% url 'logout' %}" class="mt-6 w-full flex items-center justify-center gap-2 rounded-2xl bg-red-50 border-2 border-red-100 text-red-600 py-3.5 font-[900] uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-white hover:border-red-500 transition-all">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
                 </div>
-                <div>
-                    <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest">Orders</p>
-                    <h2 id="orderCount" class="text-2xl font-[800] text-slate-900">{{ order_count }}</h2>
-                </div>
-            </div>
 
-            <div id="stockAlertCard" class="md:col-span-4 bento-card p-6 rounded-[2.5rem] flex items-center gap-5 transition-colors duration-500">
-                <div id="stockIcon" class="w-12 h-12 rounded-xl flex items-center justify-center text-xl">
-                    <i class="bi bi-exclamation-triangle"></i>
-                </div>
-                <div>
-                    <p id="stockAlertLabel" class="text-[10px] font-[800] uppercase tracking-widest">Stock Alerts</p>
-                    <h2 id="stockAlertValue" class="text-2xl font-[800]">
-                        {{ low_stock_products.count|add:low_stock_ingredients.count }}
-                    </h2>
+                <div class="p-5 md:p-7 space-y-5">
+                    <form method="POST" action="{% url 'account_settings' %}" class="space-y-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="profile" />
+                        <input type="hidden" name="next" value="{{ request.path }}" />
+                        <h3 class="text-sm font-[900] text-slate-900 uppercase tracking-tight">User Profile</h3>
+                        <div>
+                            <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Username</label>
+                            <input name="username" value="{{ request.user.username }}" placeholder="Username" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">First Name</label>
+                                <input name="first_name" value="{{ request.user.first_name }}" placeholder="First name" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Last Name</label>
+                                <input name="last_name" value="{{ request.user.last_name }}" placeholder="Last name" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-[900] uppercase tracking-widest hover:bg-slate-800 transition-all">Save Profile</button>
+                    </form>
+
+                    <form method="POST" action="{% url 'account_settings' %}" class="space-y-3 pt-5 border-t-2 border-slate-100">
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="email" />
+                        <input type="hidden" name="next" value="{{ request.path }}" />
+                        <h3 class="text-sm font-[900] text-slate-900 uppercase tracking-tight">Change Email</h3>
+                        <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Email</label>
+                        <input type="email" name="email" value="{{ request.user.email }}" placeholder="Email address" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+                        <button type="submit" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-orange-500 text-white text-[10px] font-[900] uppercase tracking-widest hover:bg-orange-600 transition-all">Update Email</button>
+                    </form>
+
+                    <form method="POST" action="{% url 'account_settings' %}" class="space-y-3 pt-5 border-t-2 border-slate-100">
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="password" />
+                        <input type="hidden" name="next" value="{{ request.path }}" />
+                        <h3 class="text-sm font-[900] text-slate-900 uppercase tracking-tight">Change Password</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <input type="password" name="current_password" placeholder="Current password" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+                            <input type="password" name="new_password" placeholder="New password" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+                            <input type="password" name="confirm_password" placeholder="Confirm password" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+                        </div>
+                        <button type="submit" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-[900] uppercase tracking-widest hover:bg-slate-800 transition-all">Update Password</button>
+                    </form>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-            
-            <div class="lg:col-span-8 bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col min-h-[400px]">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">Sales Trend</h3>
-                </div>
-                <div class="flex-grow w-full relative">
-                    <canvas id="salesChart"></canvas>
-                </div>
-            </div>
+    <main class="flex-1 p-2 sm:p-4 md:p-8 lg:p-10 w-full overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <div class="max-w-[1600px] mx-auto space-y-3 md:space-y-6 lg:space-y-8">
 
-            <div class="lg:col-span-4 flex flex-col gap-6">
-                <div class="bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col flex-1">
-                    <h3 class="text-lg font-[800] mb-4 text-slate-900 tracking-tight uppercase">Top Sellers</h3>
-                    <div id="topSellersList" class="divide-y-2 divide-slate-100 flex-grow">
-                        {% for item in popular_items|slice:":3" %}
-                        <div class="flex justify-between items-center py-3 group">
-                            <span class="font-bold text-slate-700 group-hover:text-orange-600 transition-colors">{{ item.product__name }}</span>
-                            <span class="bg-orange-50 text-orange-600 border border-orange-100 px-3 py-1 rounded-lg text-[10px] font-[800] tracking-widest uppercase">
-                                {{ item.total_qty }}
-                            </span>
-                        </div>
-                        {% empty %}
-                        <p class="text-slate-400 font-semibold py-4 text-sm">No sales data.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="bento-card rounded-[2.5rem] p-6 md:p-8 flex flex-col flex-1">
-                    <h3 class="text-lg font-[800] mb-4 text-slate-900 tracking-tight uppercase flex justify-between items-center">
-                        Customers Loyalty <i class="bi bi-star-fill text-amber-400"></i>
-                    </h3>
-                    <div class="divide-y-2 divide-slate-100 flex-grow">
-                        {% for customer in top_customers|slice:":3" %}
-                        <div class="flex justify-between items-center py-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-slate-50 border-2 border-slate-100 text-slate-500 flex items-center justify-center text-xs font-[800]">
-                                    #{{ forloop.counter }}
-                                </div>
-                                <div>
-                                    <p class="font-bold text-slate-800 text-sm leading-tight">{{ customer.name }}</p>
-                                    <p class="text-[9px] text-slate-400 font-[800] tracking-widest uppercase">{{ customer.phone }}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-[800] text-amber-500">{{ customer.points }} <span class="text-[8px] text-slate-400 uppercase tracking-widest">pts</span></p>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <p class="text-slate-400 font-semibold py-4 text-sm">No customers yet.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bento-card rounded-[2.5rem] p-6 md:p-8 mb-6">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">Raw Materials Overview</h3>
-                <a href="{% url 'inventory_list' %}" class="text-[10px] font-[800] text-orange-500 hover:text-orange-600 uppercase tracking-widest transition-colors bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">Manage &rarr;</a>
-            </div>
-            <div id="rawMaterialsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {% for ing in all_ingredients %}
-                <div class="p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-orange-200 transition-colors">
-                    <div class="flex justify-between items-start mb-2">
-                        <p class="text-slate-500 text-[10px] font-[800] tracking-widest uppercase truncate pr-2">{{ ing.name }}</p>
-                        <span class="text-[10px] font-[800] {% if ing.is_low_stock %}text-red-500{% else %}text-emerald-500{% endif %}">
-                            {{ ing.stock_percent|floatformat:0 }}%
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 mb-2 md:mb-6">
+                <div>
+                    <div class="flex items-center gap-2 md:gap-3">
+                        <h1 class="text-xl md:text-3xl lg:text-4xl font-[800] tracking-tight text-slate-900 uppercase">Overall View</h1>
+                        <span class="relative flex h-2 w-2 md:h-3 md:w-3 shrink-0">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 md:h-3 md:w-3 bg-emerald-500"></span>
                         </span>
                     </div>
-                    <div class="flex items-end gap-1">
-                        <p class="text-2xl font-[800] text-slate-900">{{ ing.stock_quantity|floatformat:0 }}</p>
-                        <span class="text-[10px] font-[800] text-slate-400 uppercase pb-1">{{ ing.unit }}</span>
-                    </div>
-                    <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden border border-slate-300">
-                        <div class="h-full transition-all duration-500 {% if ing.is_low_stock %} bg-red-500 {% else %} bg-emerald-500 {% endif %}" 
-                            style="width: {{ ing.stock_percent }}%; min-width: 4px;"> </div>
-                    </div>
+                    <p class="text-slate-500 font-bold uppercase tracking-widest text-[8px] md:text-[10px] mt-0.5 md:mt-1">Live Business Performance</p>
                 </div>
-                {% endfor %}
-            </div>
-        </div>
 
-        <div class="bento-card rounded-[2.5rem] p-6 md:p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-[800] text-slate-900 tracking-tight uppercase">Menu Catalog</h3>
-                <span class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-lg">{{ products.count }} Items</span>
-            </div>
-            <div id="menuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {% for product in products %}
-                {% if product.category != 'Matcha' %}
-                <!-- 1. Added data-product-id here -->
-                <div data-product-id="{{ product.id }}" class="relative bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[140px]">
-                    <div class="flex gap-4">
-                        {% if product.image %}
-                        <img src="{{ product.image.url }}" class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 shrink-0">
-                        {% else %}
-                        <div class="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 border-2 border-slate-100 shrink-0"><i class="bi bi-cup text-xl"></i></div>
-                        {% endif %}
-                        <div>
-                            <!-- 2. Added class="product-name" -->
-                            <p class="product-name font-[800] text-slate-900 text-sm leading-tight">{{ product.name }}</p>
-                            <!-- 3. Added class="product-category" -->
-                            <span class="product-category inline-block mt-1 text-[8px] bg-slate-50 border border-slate-200 text-slate-500 px-2 py-0.5 rounded-md font-[800] tracking-widest uppercase">{{ product.category }}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-end justify-between mt-4 pt-4 border-t-2 border-slate-50">
-                        <div>
-                            <span class="text-[8px] font-[800] text-emerald-500 uppercase tracking-widest block mb-0.5">Profit</span>
-                            <span class="product-profit text-sm font-[800] text-slate-700">${{ product.get_profit|stringformat:".2f" }}</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-[8px] font-[800] text-slate-400 uppercase tracking-widest block mb-0.5">Price</span>
-                            <span class="product-price text-sm font-[800] text-orange-600">${{ product.price_small }}</span>
+                <div class="flex flex-row w-full md:w-auto gap-2 md:gap-4">
+                    <div class="relative flex-1 md:w-64 group">
+                        <select id="dateRange"
+                            onchange="handleDropdownChange(this)"
+                            data-range="today"
+                            class="range-btn active-range w-full bg-white border-2 border-slate-200 text-slate-900 text-[9px] md:text-[11px] font-[800] uppercase tracking-wider rounded-xl md:rounded-2xl appearance-none block p-2.5 md:p-4 pr-8 md:pr-12 focus:ring-orange-500 focus:border-orange-500 transition-all cursor-pointer shadow-sm hover:border-slate-300 outline-none">
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="30days">Last 30 Days</option>
+                            <option value="year">Year to Date</option>
+                        </select>
+                        <div class="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center border-l-2 border-slate-100 pl-2 md:pl-3">
+                            <i class="bi bi-calendar3 text-orange-500 text-[10px] md:text-base"></i>
                         </div>
                     </div>
 
-                    <!-- Buttons ... -->
-                    <div class="absolute top-2 right-2 flex flex-col gap-2 group-hover:opacity-100 transition-opacity">
-                        <button onclick="openEditModal('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price_small }}', '{{ product.price_medium }}', '{{ product.price_large }}', '{{ product.category }}', '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')" 
-                                class="w-8 h-8 bg-white text-orange-500 rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm">
-                            <i class="bi bi-pencil-fill text-xs"></i>
-                        </button>
-                        <button type="button" onclick="openDeleteModal('{{ product.id }}', '{{ product.name|escapejs }}')" class="w-8 h-8 bg-white text-red-500 rounded-lg flex items-center justify-center hover:bg-red-50 border border-slate-200 shadow-sm">
-                            <i class="bi bi-trash3-fill text-xs"></i>
-                        </button>
+                    <button onclick="openAddModal()" class="flex-[0.8] md:flex-none md:w-auto bg-orange-500 border-2 border-orange-500 text-white px-3 py-2.5 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-[800] transition-all flex items-center justify-center gap-1.5 md:gap-2 text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-orange-600 bento-card active:translate-y-[2px] active:shadow-none whitespace-nowrap">
+                        <i class="bi bi-plus-lg text-[10px] md:text-lg"></i> Add Drink
+                    </button>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-2 md:grid-cols-12 gap-2.5 md:gap-5 lg:gap-6">
+
+                <div class="col-span-1 md:col-span-4 bento-card p-3 md:p-6 rounded-[1.25rem] md:rounded-[2.5rem] bg-gradient-to-br from-white to-orange-50/30 border-orange-100 flex flex-row items-center gap-2 sm:gap-5 min-h-0">
+                    <div class="w-8 h-8 md:w-12 md:h-12 bg-orange-500 text-white rounded-lg md:rounded-xl flex items-center justify-center text-sm md:text-xl shadow-md shadow-orange-100 shrink-0">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div>
+                        <p class="text-[8px] md:text-[10px] font-[800] text-slate-400 uppercase tracking-widest leading-none mb-1">Total Income</p>
+                        <h2 id="incomeValue" class="text-lg md:text-2xl font-[800] text-slate-900 tracking-tight leading-none">${{ total_income|floatformat:2 }}</h2>
                     </div>
                 </div>
-                {% endif %}
-                {% endfor %}
+
+                <div class="col-span-1 md:col-span-4 bento-card p-3 md:p-6 rounded-[1.25rem] md:rounded-[2.5rem] bg-emerald-50/20 border-emerald-100 flex flex-row items-center gap-2 sm:gap-5 min-h-0">
+                    <div class="w-8 h-8 md:w-12 md:h-12 bg-emerald-100 text-emerald-600 rounded-lg md:rounded-xl flex items-center justify-center text-sm md:text-xl border-2 border-emerald-200 shrink-0">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <div>
+                        <p class="text-[8px] md:text-[10px] font-[800] text-emerald-600/70 uppercase tracking-widest leading-none mb-1">Total Profit</p>
+                        <h2 id="profitValue" class="text-lg md:text-2xl font-[800] text-emerald-700 tracking-tight leading-none">${{ total_profit|floatformat:2 }}</h2>
+                    </div>
+                </div>
+
+                <div class="col-span-1 md:col-span-4 bento-card p-3 md:p-6 rounded-[1.25rem] md:rounded-[2.5rem] flex flex-row items-center gap-2 sm:gap-5 min-h-0">
+                    <div class="w-8 h-8 md:w-12 md:h-12 bg-blue-50 text-blue-600 rounded-lg md:rounded-xl flex items-center justify-center text-sm md:text-xl border-2 border-blue-100 shrink-0">
+                        <i class="bi bi-bag-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-[8px] md:text-[10px] font-[800] text-slate-400 uppercase tracking-widest leading-none mb-1">Orders</p>
+                        <h2 id="orderCount" class="text-lg md:text-2xl font-[800] text-slate-900 leading-none">{{ order_count }}</h2>
+                    </div>
+                </div>
+
+                <div id="stockAlertCard" class="col-span-1 md:col-span-4 bento-card p-3 md:p-6 rounded-[1.25rem] md:rounded-[2.5rem] flex flex-row items-center gap-2 sm:gap-5 transition-colors duration-500 min-h-0">
+                    <div id="stockIcon" class="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl flex items-center justify-center text-sm md:text-xl shrink-0 bg-red-50 text-red-500">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <p id="stockAlertLabel" class="text-[8px] md:text-[10px] font-[800] uppercase tracking-widest text-slate-400 leading-none mb-1">Stock Alerts</p>
+                        <h2 id="stockAlertValue" class="text-lg md:text-2xl font-[800] text-red-600 leading-none">
+                            {{ low_stock_products.count|add:low_stock_ingredients.count }}
+                        </h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6">
+                <div class="lg:col-span-8 bento-card rounded-2xl md:rounded-[2.5rem] p-4 md:p-6 lg:p-8 flex flex-col min-h-[250px] md:min-h-[400px]">
+                    <div class="flex justify-between items-center mb-3 md:mb-6">
+                        <h3 class="text-xs md:text-lg font-[800] text-slate-900 tracking-tight uppercase">Sales Trend</h3>
+                    </div>
+                    <div class="flex-grow w-full relative min-h-[150px] md:min-h-[200px]">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-4 grid grid-cols-2 lg:flex lg:flex-col gap-2.5 md:gap-6">
+
+                    <div class="bento-card rounded-2xl md:rounded-[2.5rem] p-3 md:p-6 lg:p-8 flex flex-col flex-1 min-h-0">
+                        <h3 class="text-[10px] md:text-lg font-[800] mb-2 md:mb-4 text-slate-900 tracking-tight uppercase">Top Sellers</h3>
+                        <div id="topSellersList" class="divide-y-2 divide-slate-100 flex-grow">
+                            {% for item in popular_items|slice:":3" %}
+                            <div class="flex justify-between items-center py-1.5 md:py-3 group">
+                                <span class="text-[9px] md:text-sm font-bold text-slate-700 group-hover:text-orange-600 transition-colors line-clamp-1 pr-1.5">{{ item.product__name }}</span>
+                                <span class="bg-orange-50 text-orange-600 border border-orange-100 px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-md md:rounded-lg text-[7px] md:text-[10px] font-[800] tracking-widest uppercase shrink-0">
+                                    {{ item.total_qty }}
+                                </span>
+                            </div>
+                            {% empty %}
+                            <p class="text-slate-400 font-semibold py-1.5 md:py-3 text-[9px] md:text-sm">No sales data.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="bento-card rounded-2xl md:rounded-[2.5rem] p-3 md:p-6 lg:p-8 flex flex-col flex-1 min-h-0">
+                        <h3 class="text-[10px] md:text-lg font-[800] mb-2 md:mb-4 text-slate-900 tracking-tight uppercase flex justify-between items-center">
+                            Loyalty <i class="bi bi-star-fill text-amber-400 text-[9px] md:text-base"></i>
+                        </h3>
+                        <div class="divide-y-2 divide-slate-100 flex-grow">
+                            {% for customer in top_customers|slice:":3" %}
+                            <div class="flex justify-between items-center py-1.5 md:py-3">
+                                <div class="flex items-center gap-1 md:gap-3 min-w-0 flex-1">
+                                    <div class="w-4 h-4 md:w-8 md:h-8 rounded-md md:rounded-lg bg-slate-50 border border-slate-100 text-slate-500 flex items-center justify-center text-[7px] md:text-xs font-[800] shrink-0">
+                                        #{{ forloop.counter }}
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="font-bold text-slate-800 text-[9px] md:text-sm leading-tight truncate">{{ customer.name }}</p>
+                                        <p class="text-[6px] md:text-[9px] text-slate-400 font-[800] tracking-widest uppercase truncate">{{ customer.phone }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0 pl-1">
+                                    <p class="text-[9px] md:text-sm font-[800] text-amber-500">{{ customer.points }} <span class="text-[5px] md:text-[8px] text-slate-400 uppercase tracking-widest">pts</span></p>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-slate-400 font-semibold py-1.5 md:py-3 text-[9px] md:text-sm">No customers yet.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bento-card rounded-2xl md:rounded-[2.5rem] p-3 md:p-6 lg:p-8">
+                <div class="flex justify-between items-center mb-3 md:mb-6 px-1">
+                    <h3 class="text-xs md:text-lg font-[800] text-slate-900 tracking-tight uppercase">Raw Materials</h3>
+                    <a href="{% url 'inventory_list' %}" class="text-[8px] md:text-[10px] font-[800] text-orange-500 hover:text-orange-600 uppercase tracking-widest transition-colors bg-orange-50 px-2 py-1 md:px-2.5 md:py-1.5 rounded-md md:rounded-lg border border-orange-100 whitespace-nowrap">Manage &rarr;</a>
+                </div>
+                <div id="rawMaterialsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-4">
+                    {% for ing in all_ingredients %}
+                    <div class="p-2.5 md:p-5 bg-slate-50 rounded-xl md:rounded-2xl border-2 border-slate-100 hover:border-orange-200 transition-colors">
+                        <div class="flex justify-between items-start mb-1 md:mb-2 gap-1">
+                            <p class="text-slate-500 text-[8px] md:text-[10px] font-[800] tracking-widest uppercase truncate">{{ ing.name }}</p>
+                            <span class="text-[8px] md:text-[10px] font-[800] {% if ing.is_low_stock %}text-red-500{% else %}text-emerald-500{% endif %} shrink-0">
+                                {{ ing.stock_percent|floatformat:0 }}%
+                            </span>
+                        </div>
+                        <div class="flex items-end gap-1">
+                            <p class="text-sm md:text-2xl font-[800] text-slate-900 leading-none">{{ ing.stock_quantity|floatformat:0 }}</p>
+                            <span class="text-[7px] md:text-[10px] font-[800] text-slate-400 uppercase pb-0 md:pb-1">{{ ing.unit }}</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-1 md:h-2 rounded-full mt-1.5 md:mt-3 overflow-hidden border border-slate-300">
+                            <div class="h-full transition-all duration-500 {% if ing.is_low_stock %} bg-red-500 {% else %} bg-emerald-500 {% endif %}"
+                                style="width: {{ ing.stock_percent }}%; min-width: 4px;"> </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bento-card rounded-2xl md:rounded-[2.5rem] p-3 md:p-6 lg:p-8 mb-6">
+                <div class="flex justify-between items-center mb-3 md:mb-6 px-1">
+                    <h3 class="text-xs md:text-lg font-[800] text-slate-900 tracking-tight uppercase">Menu Catalog</h3>
+                    <span class="text-[8px] md:text-[10px] font-[800] text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-1 md:px-2.5 md:py-1.5 rounded-md md:rounded-lg whitespace-nowrap">{{ products.count }} Items</span>
+                </div>
+
+                <div id="menuGrid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
+                    {% for product in products %}
+                    {% if product.category != 'Matcha' %}
+                    <div data-product-id="{{ product.id }}" class="relative bg-white p-2 md:p-4 rounded-xl md:rounded-2xl border-2 border-slate-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[100px] md:min-h-[140px]">
+
+                        <div class="flex gap-1.5 md:gap-4 pr-7 md:pr-0">
+                            {% if product.image %}
+                            <img src="{{ product.image.url }}" class="w-8 h-8 md:w-14 md:h-14 rounded-md md:rounded-xl object-cover border border-slate-100 shrink-0">
+                            {% else %}
+                            <div class="w-8 h-8 md:w-14 md:h-14 bg-slate-50 rounded-md md:rounded-xl flex items-center justify-center text-slate-300 border border-slate-100 shrink-0">
+                                <i class="bi bi-cup text-xs md:text-xl"></i>
+                            </div>
+                            {% endif %}
+                            <div class="min-w-0 flex-1 flex flex-col justify-center">
+                                <p class="product-name font-[800] text-slate-900 text-[10px] md:text-sm leading-tight truncate">{{ product.name }}</p>
+                                <div class="mt-0.5">
+                                    <span class="product-category inline-block text-[5px] md:text-[8px] bg-slate-50 border border-slate-200 text-slate-500 px-1 md:px-2 py-0.5 rounded md:rounded-md font-[800] tracking-widest uppercase truncate max-w-full">{{ product.category }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-end justify-between mt-2 md:mt-4 pt-1.5 md:pt-4 border-t border-slate-50">
+                            <div>
+                                <span class="text-[5px] md:text-[8px] font-[800] text-emerald-500 uppercase tracking-widest block mb-0">Profit</span>
+                                <span class="product-profit text-[9px] md:text-sm font-[800] text-slate-700">${{ product.get_profit|stringformat:".2f" }}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[5px] md:text-[8px] font-[800] text-slate-400 uppercase tracking-widest block mb-0">Price</span>
+                                <span class="product-price text-[9px] md:text-sm font-[800] text-orange-600">${{ product.price_small }}</span>
+                            </div>
+                        </div>
+
+                        <div class="absolute top-1.5 right-1.5 flex flex-col gap-1 md:gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="openEditModal('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price_small }}', '{{ product.price_medium }}', '{{ product.price_large }}', '{{ product.category }}', '{{ product.can_be_hot }}', '{{ product.can_be_iced }}', '{{ product.can_be_frappe }}')"
+                                    class="w-5 h-5 md:w-8 md:h-8 bg-white text-orange-500 rounded-md md:rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm transition-colors">
+                                <i class="bi bi-pencil-fill text-[7px] md:text-xs"></i>
+                            </button>
+                            <button type="button" onclick="openDeleteModal('{{ product.id }}', '{{ product.name|escapejs }}')" class="w-5 h-5 md:w-8 md:h-8 bg-white text-red-500 rounded-md md:rounded-lg flex items-center justify-center hover:bg-red-50 border border-slate-200 shadow-sm transition-colors">
+                                <i class="bi bi-trash3-fill text-[7px] md:text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </main>
 
-    <div id="productModal" 
-        class="hidden fixed inset-0 z-[999] flex items-center justify-center p-2 bg-slate-900/70 backdrop-blur-md">
-        
-        <div class="bg-white w-full max-w-[28rem] rounded-[2.5rem] p-6 md:p-7 border-[3px] border-slate-900 shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] relative 
-                    animate-in fade-in zoom-in duration-300 transform transition-all mx-auto max-h-[95vh] overflow-y-auto">
-            
-            <div class="flex justify-between items-center mb-6">
+    <div id="productModal" class="hidden fixed inset-0 z-[999] flex items-center justify-center p-3 md:p-4 bg-slate-900/70 backdrop-blur-md">
+        <div class="bg-white w-full max-w-[28rem] rounded-3xl md:rounded-[2.5rem] p-4 md:p-7 border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.15)] md:shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] relative animate-in fade-in zoom-in duration-300 transform transition-all mx-2 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center mb-4 md:mb-6">
                 <div>
-                    <h2 id="modalTitle" class="text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Create product</h2>
-                    <div class="h-1.5 w-12 bg-orange-500 mt-2 rounded-full"></div>
+                    <h2 id="modalTitle" class="text-lg md:text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Create product</h2>
+                    <div class="h-1 md:h-1.5 w-8 md:w-12 bg-orange-500 mt-1 md:mt-2 rounded-full"></div>
                 </div>
-                <button onclick="toggleproductModal()" 
-                        class="w-11 h-11 bg-slate-50 rounded-2xl text-slate-900 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center border-2 border-slate-200 hover:border-red-600 shadow-sm">
-                    <i class="bi bi-x-lg text-xl"></i>
+                <button onclick="toggleproductModal()" class="w-8 h-8 md:w-11 md:h-11 bg-slate-50 rounded-lg md:rounded-2xl text-slate-900 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center border-2 border-slate-200 hover:border-red-600 shadow-sm shrink-0">
+                    <i class="bi bi-x-lg text-sm md:text-xl"></i>
                 </button>
             </div>
-            
-            <form id="productForm" action="{% url 'add_product' %}" method="POST" enctype="multipart/form-data" class="space-y-5">
-                {% csrf_token %}
-                
-                <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all shadow-sm">
-                    <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">product Identity</label>
-                    <input type="text" name="name" placeholder="e.g. Amber Latte" required
-                        class="w-full bg-transparent text-slate-900 text-lg outline-none placeholder-slate-300 font-[800]">
-                </div>
 
-                <div class="grid grid-cols-3 gap-3">
-                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
-                        <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Small Price</label>
-                        <div class="flex items-center">
-                            <span class="text-slate-900 font-black mr-1 text-xs">$</span>
-                            <input type="number" step="0.01" name="price_small" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
+            <form id="productForm" action="{% url 'add_product' %}" method="POST" enctype="multipart/form-data" class="space-y-3 md:space-y-5">
+                {% csrf_token %}
+                <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all shadow-sm">
+                    <label class="block text-[8px] md:text-[10px] font-[900] uppercase text-slate-400 mb-1 md:mb-1.5 tracking-[0.15em]">product Identity</label>
+                    <input type="text" name="name" placeholder="e.g. Amber Latte" required class="w-full bg-transparent text-slate-900 text-sm md:text-lg outline-none placeholder-slate-300 font-[800]">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
+                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm flex sm:block justify-between items-center">
+                        <label class="block text-[7px] md:text-[8px] font-[900] uppercase text-slate-400 sm:mb-1 tracking-widest shrink-0">Small Price</label>
+                        <div class="flex items-center w-24 sm:w-full justify-end sm:justify-start">
+                            <span class="text-slate-900 font-black mr-1 text-[10px] md:text-xs">$</span>
+                            <input type="number" step="0.01" name="price_small" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-xs md:text-sm outline-none font-[800] text-right sm:text-left">
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
-                        <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Medium Price</label>
-                        <div class="flex items-center">
-                            <span class="text-slate-900 font-black mr-1 text-xs">$</span>
-                            <input type="number" step="0.01" name="price_medium" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
+                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm flex sm:block justify-between items-center">
+                        <label class="block text-[7px] md:text-[8px] font-[900] uppercase text-slate-400 sm:mb-1 tracking-widest shrink-0">Medium Price</label>
+                        <div class="flex items-center w-24 sm:w-full justify-end sm:justify-start">
+                            <span class="text-slate-900 font-black mr-1 text-[10px] md:text-xs">$</span>
+                            <input type="number" step="0.01" name="price_medium" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-xs md:text-sm outline-none font-[800] text-right sm:text-left">
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
-                        <label class="block text-[8px] font-[900] uppercase text-slate-400 mb-1 tracking-widest">Large Price</label>
-                        <div class="flex items-center">
-                            <span class="text-slate-900 font-black mr-1 text-xs">$</span>
-                            <input type="number" step="0.01" name="price_large" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-sm outline-none font-[800]">
+                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm flex sm:block justify-between items-center">
+                        <label class="block text-[7px] md:text-[8px] font-[900] uppercase text-slate-400 sm:mb-1 tracking-widest shrink-0">Large Price</label>
+                        <div class="flex items-center w-24 sm:w-full justify-end sm:justify-start">
+                            <span class="text-slate-900 font-black mr-1 text-[10px] md:text-xs">$</span>
+                            <input type="number" step="0.01" name="price_large" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-xs md:text-sm outline-none font-[800] text-right sm:text-left">
                         </div>
                     </div>
                 </div>
-                    
-                <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
-                    <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">Category</label>
+                <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+                    <label class="block text-[8px] md:text-[10px] font-[900] uppercase text-slate-400 mb-1 md:mb-1.5 tracking-[0.15em]">Category</label>
                     <div class="relative">
-                        <select name="category" required
-                                class="w-full bg-transparent text-slate-900 outline-none cursor-pointer appearance-none font-[800] text-base">
+                        <select name="category" required class="w-full bg-transparent text-slate-900 outline-none cursor-pointer appearance-none font-[800] text-xs md:text-base pr-8">
                             <option value="" disabled selected>Select Category...</option>
                             {% for category in categories %}
                                 {% if category.name != 'Matcha' %}
@@ -381,51 +452,48 @@
                                 {% endif %}
                             {% endfor %}
                         </select>
-                        <i class="bi bi-chevron-down absolute right-0 top-0 text-slate-900 pointer-events-none"></i>
+                        <i class="bi bi-chevron-down absolute right-0 top-1/2 -translate-y-1/2 text-slate-900 pointer-events-none text-[10px] md:text-sm"></i>
                     </div>
                 </div>
-
                 <div>
-                    <label class="block text-[10px] font-[900] uppercase text-slate-500 mb-3 ml-1 tracking-widest text-center">Available Variations</label>
-                    <div class="grid grid-cols-3 gap-3">
+                    <label class="block text-[8px] md:text-[10px] font-[900] uppercase text-slate-500 mb-1.5 md:mb-3 ml-1 tracking-widest text-center">Available Variations</label>
+                    <div class="grid grid-cols-3 gap-1.5 md:gap-3">
                         <label class="cursor-pointer group">
                             <input type="checkbox" name="can_be_hot" class="hidden peer" checked>
-                            <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all shadow-sm">
-                                <i class="bi bi-thermometer-sun text-2xl mb-1"></i>
-                                <span class="text-[9px] font-[900] uppercase tracking-wider">Hot</span>
+                            <div class="flex flex-col items-center justify-center py-2 md:py-4 rounded-lg md:rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all shadow-sm">
+                                <i class="bi bi-thermometer-sun text-sm md:text-2xl mb-0.5 md:mb-1"></i>
+                                <span class="text-[7px] md:text-[9px] font-[900] uppercase tracking-wider">Hot</span>
                             </div>
                         </label>
                         <label class="cursor-pointer group">
                             <input type="checkbox" name="can_be_iced" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all shadow-sm">
-                                <i class="bi bi-snow text-2xl mb-1"></i>
-                                <span class="text-[9px] font-[900] uppercase tracking-wider">Iced</span>
+                            <div class="flex flex-col items-center justify-center py-2 md:py-4 rounded-lg md:rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all shadow-sm">
+                                <i class="bi bi-snow text-sm md:text-2xl mb-0.5 md:mb-1"></i>
+                                <span class="text-[7px] md:text-[9px] font-[900] uppercase tracking-wider">Iced</span>
                             </div>
                         </label>
                         <label class="cursor-pointer group">
                             <input type="checkbox" name="can_be_frappe" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-4 rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all shadow-sm">
-                                <i class="bi bi-stars text-2xl mb-1"></i>
-                                <span class="text-[9px] font-[900] uppercase tracking-wider">Frappe</span>
+                            <div class="flex flex-col items-center justify-center py-2 md:py-4 rounded-lg md:rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all shadow-sm">
+                                <i class="bi bi-stars text-sm md:text-2xl mb-0.5 md:mb-1"></i>
+                                <span class="text-[7px] md:text-[9px] font-[900] uppercase tracking-wider">Frappe</span>
                             </div>
                         </label>
                     </div>
                 </div>
-
-                <div class="border-2 border-dashed border-slate-300 rounded-[1.5rem] p-5 bg-slate-50/50 hover:bg-slate-50 hover:border-orange-400 transition-all group">
-                    <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-2 tracking-widest">Visual Display</label>
-                    <div class="flex items-center gap-4">
-                        <div class="bg-slate-200 h-12 w-12 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-orange-500 transition-colors">
-                            <i class="bi bi-image text-2xl"></i>
+                <div class="border-2 border-dashed border-slate-300 rounded-xl md:rounded-[1.5rem] p-3 md:p-5 bg-slate-50/50 hover:bg-slate-50 hover:border-orange-400 transition-all group">
+                    <label class="block text-[8px] md:text-[10px] font-[900] uppercase text-slate-400 mb-1.5 md:mb-2 tracking-widest">Visual Display</label>
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-4">
+                        <div class="bg-slate-200 h-8 w-8 md:h-12 md:w-12 rounded-lg md:rounded-xl flex items-center justify-center text-slate-400 group-hover:text-orange-500 transition-colors shrink-0 hidden sm:flex">
+                            <i class="bi bi-image text-sm md:text-2xl"></i>
                         </div>
                         <input type="file" name="image" accept="image/*"
-                            class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:uppercase file:font-[900] file:bg-slate-900 file:text-white cursor-pointer hover:file:bg-orange-600 transition-all">
+                            class="block w-full text-[9px] md:text-xs text-slate-500 file:mr-2 md:file:mr-4 file:py-1 md:file:py-2 file:px-2 md:file:px-4 file:rounded-md md:file:rounded-xl file:border-0 file:text-[8px] md:file:text-[10px] file:uppercase file:font-[900] file:bg-slate-900 file:text-white cursor-pointer hover:file:bg-orange-600 transition-all">
                     </div>
                 </div>
-
-                <div class="pt-2">
-                    <button id="modalSubmitBtn" type="submit" 
-                            class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-[900] transition-all text-sm tracking-[0.15em] uppercase hover:bg-slate-800 shadow-[0px_8px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none">
+                <div class="pt-1 md:pt-2">
+                    <button id="modalSubmitBtn" type="submit"
+                            class="w-full bg-slate-900 text-white py-3 md:py-5 rounded-xl md:rounded-[1.5rem] font-[900] transition-all text-[10px] md:text-sm tracking-[0.1em] md:tracking-[0.15em] uppercase hover:bg-slate-800 shadow-[0px_4px_0px_0px_#0f172a] md:shadow-[0px_8px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none">
                         Confirm & Save product
                     </button>
                 </div>
@@ -433,56 +501,50 @@
         </div>
     </div>
 
-    <div id="editModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[999] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-lg border-[3px] border-slate-900 shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] overflow-hidden animate-in fade-in zoom-in duration-300">
-            
-            <div class="p-7 bg-slate-50 border-b-[3px] border-slate-900 flex justify-between items-center">
+    <div id="editModal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[999] flex items-center justify-center p-3 md:p-4">
+        <div class="bg-white rounded-3xl md:rounded-[2.5rem] w-full max-w-lg border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.15)] md:shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] overflow-hidden animate-in fade-in zoom-in duration-300 mx-2 max-h-[90vh] flex flex-col">
+            <div class="p-4 md:p-7 bg-slate-50 border-b-[3px] border-slate-900 flex justify-between items-center shrink-0">
                 <div>
-                    <h3 id="modalTitle" class="text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Edit Drink Detail</h3>
-                    <div class="h-1.5 w-10 bg-orange-500 mt-2 rounded-full"></div>
+                    <h3 id="editModalTitle" class="text-lg md:text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Edit Drink Detail</h3>
+                    <div class="h-1 md:h-1.5 w-6 md:w-10 bg-orange-500 mt-1 md:mt-2 rounded-full"></div>
                 </div>
-                <button onclick="closeEditModal()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border-2 border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 transition-all">
-                    <i class="bi bi-x-lg text-lg"></i>
+                <button onclick="closeEditModal()" class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-white border-2 border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 transition-all shrink-0">
+                    <i class="bi bi-x-lg text-sm md:text-lg"></i>
                 </button>
             </div>
-
-            <form id="editproductForm" method="POST" enctype="multipart/form-data" class="p-7 space-y-5">
+            <form id="editproductForm" method="POST" enctype="multipart/form-data" class="p-4 md:p-7 space-y-3 md:space-y-5 overflow-y-auto custom-scrollbar">
                 {% csrf_token %}
-                
-                <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all">
-                    <label class="block text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">product Name</label>
-                    <input type="text" id="editproductName" name="name" required 
-                        class="w-full bg-transparent outline-none text-slate-900 font-[800] text-lg placeholder-slate-300">
+                <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all">
+                    <label class="block text-[8px] md:text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Product Name</label>
+                    <input type="text" id="editproductName" name="name" required class="w-full bg-transparent outline-none text-slate-900 font-[800] text-sm md:text-lg placeholder-slate-300">
                 </div>
-
-                <div class="grid grid-cols-3 gap-3">
-                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
-                        <label class="block text-[9px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Small</label>
-                        <div class="flex items-center text-slate-900 font-[900]">
-                            <span class="mr-1">$</span>
-                            <input type="number" step="0.01" id="editPriceSmall" name="price_small" required class="w-full bg-transparent outline-none">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
+                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all flex sm:block justify-between items-center">
+                        <label class="block text-[7px] md:text-[9px] font-[900] text-slate-400 uppercase tracking-widest sm:mb-1 shrink-0">Small</label>
+                        <div class="flex items-center text-slate-900 font-[900] w-24 sm:w-full justify-end sm:justify-start">
+                            <span class="mr-1 text-[10px] md:text-base">$</span>
+                            <input type="number" step="0.01" id="editPriceSmall" name="price_small" required class="w-full bg-transparent outline-none text-right sm:text-left text-xs md:text-sm">
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
-                        <label class="block text-[9px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Medium</label>
-                        <div class="flex items-center text-slate-900 font-[900]">
-                            <span class="mr-1">$</span>
-                            <input type="number" step="0.01" id="editPriceMedium" name="price_medium" required class="w-full bg-transparent outline-none">
+                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all flex sm:block justify-between items-center">
+                        <label class="block text-[7px] md:text-[9px] font-[900] text-slate-400 uppercase tracking-widest sm:mb-1 shrink-0">Medium</label>
+                        <div class="flex items-center text-slate-900 font-[900] w-24 sm:w-full justify-end sm:justify-start">
+                            <span class="mr-1 text-[10px] md:text-base">$</span>
+                            <input type="number" step="0.01" id="editPriceMedium" name="price_medium" required class="w-full bg-transparent outline-none text-right sm:text-left text-xs md:text-sm">
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
-                        <label class="block text-[9px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Large</label>
-                        <div class="flex items-center text-slate-900 font-[900]">
-                            <span class="mr-1">$</span>
-                            <input type="number" step="0.01" id="editPriceLarge" name="price_large" required class="w-full bg-transparent outline-none">
+                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all flex sm:block justify-between items-center">
+                        <label class="block text-[7px] md:text-[9px] font-[900] text-slate-400 uppercase tracking-widest sm:mb-1 shrink-0">Large</label>
+                        <div class="flex items-center text-slate-900 font-[900] w-24 sm:w-full justify-end sm:justify-start">
+                            <span class="mr-1 text-[10px] md:text-base">$</span>
+                            <input type="number" step="0.01" id="editPriceLarge" name="price_large" required class="w-full bg-transparent outline-none text-right sm:text-left text-xs md:text-sm">
                         </div>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
-                        <label class="block text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Category</label>
-                        <select id="editproductCategory" name="category" class="w-full bg-transparent outline-none font-[800] text-slate-900 cursor-pointer">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
+                    <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
+                        <label class="block text-[8px] md:text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Category</label>
+                        <select id="editproductCategory" name="category" class="w-full bg-transparent outline-none font-[800] text-slate-900 cursor-pointer text-xs md:text-base appearance-none pr-4">
                             {% for cat in categories %}
                                 {% if cat.name != 'Matcha' %}
                                 <option value="{{ cat.id }}">{{ cat.name }}</option>
@@ -490,49 +552,47 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-orange-400 transition-all relative">
-                        <label class="block text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Update Image</label>
-                        <input type="file" name="image" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
-                        <div class="flex items-center text-slate-400 text-[10px] font-bold">
-                            <i class="bi bi-cloud-arrow-up mr-2 text-base"></i> Browse...
+                    <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 border-dashed border-slate-200 hover:border-orange-400 transition-all relative overflow-hidden">
+                        <label class="block text-[8px] md:text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Update Image</label>
+                        <input type="file" name="image" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10">
+                        <div class="flex items-center text-slate-400 text-[8px] md:text-[10px] font-bold">
+                            <i class="bi bi-cloud-arrow-up mr-1.5 md:mr-2 text-xs md:text-base"></i> Browse...
                         </div>
                     </div>
                 </div>
-
-                <div class="space-y-3">
-                    <label class="block text-[10px] font-[900] text-slate-500 uppercase tracking-widest text-center">Available Variations</label>
-                    <div class="flex gap-3">
+                <div class="space-y-1.5 md:space-y-3">
+                    <label class="block text-[8px] md:text-[10px] font-[900] text-slate-500 uppercase tracking-widest text-center">Available Variations</label>
+                    <div class="flex gap-1.5 md:gap-3">
                         <label class="flex-1 cursor-pointer group">
                             <input type="checkbox" name="can_be_hot" id="editCanHot" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-3 rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">
-                                <i class="bi bi-thermometer-sun text-xl mb-1"></i>
-                                <span class="text-[9px] font-[900] uppercase">Hot</span>
+                            <div class="flex flex-col items-center justify-center py-2 md:py-3 rounded-lg md:rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">
+                                <i class="bi bi-thermometer-sun text-sm md:text-xl mb-0.5 md:mb-1"></i>
+                                <span class="text-[7px] md:text-[9px] font-[900] uppercase">Hot</span>
                             </div>
                         </label>
                         <label class="flex-1 cursor-pointer group">
                             <input type="checkbox" name="can_be_iced" id="editCanIced" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-3 rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all">
-                                <i class="bi bi-snow text-xl mb-1"></i>
-                                <span class="text-[9px] font-[900] uppercase">Iced</span>
+                            <div class="flex flex-col items-center justify-center py-2 md:py-3 rounded-lg md:rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all">
+                                <i class="bi bi-snow text-sm md:text-xl mb-0.5 md:mb-1"></i>
+                                <span class="text-[7px] md:text-[9px] font-[900] uppercase">Iced</span>
                             </div>
                         </label>
                         <label class="flex-1 cursor-pointer group">
                             <input type="checkbox" name="can_be_frappe" id="editCanFrappe" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-3 rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all">
-                                <i class="bi bi-stars text-xl mb-1"></i>
-                                <span class="text-[9px] font-[900] uppercase">Frappe</span>
+                            <div class="flex flex-col items-center justify-center py-2 md:py-3 rounded-lg md:rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all">
+                                <i class="bi bi-stars text-sm md:text-xl mb-0.5 md:mb-1"></i>
+                                <span class="text-[7px] md:text-[9px] font-[900] uppercase">Frappe</span>
                             </div>
                         </label>
                     </div>
                 </div>
-
-                <div class="flex gap-4 pt-2">
-                    <button type="button" onclick="closeEditModal()" 
-                            class="flex-1 py-4 rounded-2xl font-[900] text-xs uppercase border-2 border-slate-200 text-slate-400 hover:bg-slate-50 transition-all">
+                <div class="flex gap-2 md:gap-4 pt-1 md:pt-2">
+                    <button type="button" onclick="closeEditModal()"
+                            class="flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-[900] text-[9px] md:text-xs uppercase border-2 border-slate-200 text-slate-400 hover:bg-slate-50 transition-all">
                         Cancel
                     </button>
-                    <button type="submit" id="modalSubmitBtn" 
-                            class="flex-[1.5] py-4 bg-slate-900 text-white rounded-2xl font-[900] text-xs uppercase shadow-[0px_6px_0px_0px_#1e293b] hover:bg-orange-600 active:translate-y-1 active:shadow-none transition-all">
+                    <button type="submit"
+                            class="flex-[1.5] py-3 md:py-4 bg-slate-900 text-white rounded-xl md:rounded-2xl font-[900] text-[9px] md:text-xs uppercase shadow-[0px_4px_0px_0px_#1e293b] md:shadow-[0px_6px_0px_0px_#1e293b] hover:bg-orange-600 active:translate-y-1 active:shadow-none transition-all tracking-wider">
                         Update
                     </button>
                 </div>
@@ -540,34 +600,26 @@
         </div>
     </div>
 
-    <div id="deleteproductModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[250] flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2.5rem] border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(239,68,68,0.2)] w-full max-w-sm overflow-hidden p-8 text-center relative">
-            
-            <div class="w-24 h-24 bg-red-50 border-2 border-red-100 text-red-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6 transform -rotate-6 shadow-sm">
-                <i class="bi bi-trash3 text-4xl"></i>
+    <div id="deleteproductModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[250] flex items-center justify-center p-3 md:p-4">
+        <div class="bg-white rounded-3xl md:rounded-[2.5rem] border-[3px] border-slate-900 shadow-[6px_6px_0px_0px_rgba(239,68,68,0.2)] md:shadow-[8px_8px_0px_0px_rgba(239,68,68,0.2)] w-full max-w-sm overflow-hidden p-6 md:p-8 text-center relative mx-2">
+            <div class="w-12 h-12 md:w-24 md:h-24 bg-red-50 border-2 border-red-100 text-red-500 rounded-xl md:rounded-[2rem] flex items-center justify-center mx-auto mb-3 md:mb-6 transform -rotate-6 shadow-sm">
+                <i class="bi bi-trash3 text-2xl md:text-4xl"></i>
             </div>
-            
-            <h3 class="text-2xl font-[800] text-slate-900 mb-2 uppercase tracking-tight">Delete Drink?</h3>
-            <p class="text-slate-500 font-medium text-sm mb-8 leading-relaxed">
+            <h3 class="text-lg md:text-2xl font-[800] text-slate-900 mb-1.5 md:mb-2 uppercase tracking-tight">Delete Drink?</h3>
+            <p class="text-slate-500 font-medium text-[10px] md:text-sm mb-5 md:mb-8 leading-relaxed">
                 You are sure to delete<br>
-                <span id="deleteProdName" class="font-[800] text-red-500 bg-red-50 px-2 py-0.5 rounded-md"></span>
-                
+                <span id="deleteProdName" class="font-[800] text-red-500 bg-red-50 px-1.5 md:px-2 py-0.5 rounded-md break-all"></span>
             </p>
-
-            <div class="flex flex-col gap-3">
-                <button type="button" 
-                        onclick="executeDelete()" 
-                        class="w-full py-4 bg-red-500 text-white font-[800] rounded-2xl uppercase tracking-widest text-xs transition-all hover:bg-red-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-y-1 active:shadow-none">
+            <div class="flex flex-col gap-2 md:gap-3">
+                <button type="button" onclick="executeDelete()"
+                        class="w-full py-3 md:py-4 bg-red-500 text-white font-[800] rounded-xl md:rounded-2xl uppercase tracking-widest text-[9px] md:text-xs transition-all hover:bg-red-600 shadow-[0px_4px_0px_0px_#991b1b] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-y-1 active:shadow-none">
                     Confirm Deletion
                 </button>
-                
-                <button type="button" 
-                        onclick="closeDeleteproductModal()" 
-                        class="w-full py-4 text-slate-400 font-[800] hover:text-slate-900 transition-colors uppercase tracking-widest text-[10px]">
+                <button type="button" onclick="closeDeleteproductModal()"
+                        class="w-full py-3 md:py-4 text-slate-400 font-[800] hover:text-slate-900 transition-colors uppercase tracking-widest text-[8px] md:text-[10px]">
                     No, Keep it
                 </button>
             </div>
-
             {% csrf_token %}
         </div>
     </div>
@@ -577,12 +629,12 @@
         let productToDeleteId = null;
         let salesChart;
 
-        // --- 0. CHART INITIALIZATION & UPDATES ---
+        // --- CHART INITIALIZATION ---
         function updateChart(labels, salesData) {
             const canvas = document.getElementById('salesChart');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
-            
+
             if (salesChart) {
                 salesChart.data.labels = labels;
                 salesChart.data.datasets[0].data = salesData;
@@ -597,11 +649,11 @@
                             data: salesData,
                             borderColor: '#f97316',
                             backgroundColor: 'rgba(249, 115, 22, 0.05)',
-                            borderWidth: 4,
+                            borderWidth: window.innerWidth < 768 ? 2 : 3,
                             pointBackgroundColor: '#fff',
                             pointBorderColor: '#f97316',
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
+                            pointRadius: window.innerWidth < 768 ? 2 : 3,
+                            pointHoverRadius: 4,
                             tension: 0.4,
                             fill: true
                         }]
@@ -613,18 +665,16 @@
                             legend: { display: false },
                             tooltip: {
                                 backgroundColor: '#1e293b',
-                                titleFont: { size: 10, weight: 'bold' },
-                                bodyFont: { size: 12, weight: '900' },
-                                padding: 12,
+                                titleFont: { size: 9, weight: 'bold' },
+                                bodyFont: { size: 11, weight: '900' },
+                                padding: 8,
                                 displayColors: false,
-                                callbacks: {
-                                    label: (ctx) => ` $${ctx.parsed.y.toFixed(2)}`
-                                }
+                                callbacks: { label: (ctx) => ` $${ctx.parsed.y.toFixed(2)}` }
                             }
                         },
                         scales: {
-                            y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { weight: '800', size: 10 }, color: '#94a3b8' } },
-                            x: { grid: { display: false }, ticks: { font: { weight: '800', size: 10 }, color: '#94a3b8' } }
+                            y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { weight: '800', size: 8 }, color: '#94a3b8' } },
+                            x: { grid: { display: false }, ticks: { font: { weight: '800', size: 8 }, color: '#94a3b8', maxRotation: 45, minRotation: 0 } }
                         }
                     }
                 });
@@ -633,11 +683,33 @@
 
         function handleDropdownChange(select) { refreshDashboardStats(); }
 
-        // --- 1. MODAL CONTROLS ---
+        // --- SIDEBAR TOGGLE ---
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
         }
 
+        function openSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        document.getElementById('settingsModal')?.addEventListener('click', function(event) {
+            if (event.target === this) closeSettingsModal();
+        });
+
+        // --- MODAL CONTROLS ---
         function toggleproductModal() {
             const modal = document.getElementById('productModal');
             modal.classList.toggle('hidden');
@@ -646,15 +718,11 @@
 
         function openAddModal() {
             const form = document.getElementById('productForm');
-            // Capture the current category before resetting
             const currentCategory = form.querySelector('select[name="category"]').value;
-            
             form.reset();
-            // Restore the category so the user doesn't have to re-select it
             form.querySelector('select[name="category"]').value = currentCategory;
-            
             document.getElementById('modalTitle').innerText = "Create Drink";
-            document.getElementById('modalSubmitBtn').innerText = "Confirm & Save Drink";
+            document.getElementById('modalSubmitBtn').innerText = "Confirm & Save product";
             form.action = "{% url 'add_product' %}";
             toggleproductModal();
         }
@@ -662,8 +730,7 @@
         function openEditModal(id, name, pSmall, pMedium, pLarge, categoryName, canH, canI, canF) {
             const modal = document.getElementById('editModal');
             const form = document.getElementById('editproductForm');
-            document.getElementById('modalTitle').innerText = "Edit Drink";
-            document.getElementById('modalSubmitBtn');
+            document.getElementById('editModalTitle').innerText = "Edit Drink";
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
@@ -674,7 +741,6 @@
 
             const categorySelect = form.querySelector('select[name="category"]');
             let selectedCategoryValue = '';
-
             if (categoryName) {
                 const trimmedCategoryName = categoryName.trim();
                 for (const option of categorySelect.options) {
@@ -684,7 +750,6 @@
                     }
                 }
             }
-
             if (selectedCategoryValue) {
                 categorySelect.value = selectedCategoryValue;
             } else {
@@ -695,7 +760,6 @@
             form.querySelector('input[name="can_be_hot"]').checked = (canH === 'True');
             form.querySelector('input[name="can_be_iced"]').checked = (canI === 'True');
             form.querySelector('input[name="can_be_frappe"]').checked = (canF === 'True');
-
             form.action = `/edit-product/${id}/`;
         }
 
@@ -704,7 +768,7 @@
             document.getElementById('editModal').classList.remove('flex');
         }
 
-        // --- 2. DELETE LOGIC ---
+        // --- DELETE LOGIC ---
         function openDeleteModal(id, name) {
             productToDeleteId = id;
             const nameSpan = document.getElementById('deleteProdName');
@@ -742,86 +806,71 @@
             } catch (error) { console.error(error); }
         }
 
-        // --- 3. UI INJECTION HELPERS ---
+        // --- UI INJECTION HELPERS ---
         function renderNewCard(product, canH, canI, canF) {
-            const menuGrid = document.getElementById('menuGrid'); 
+            const menuGrid = document.getElementById('menuGrid');
             if (!menuGrid) return;
-
             const newCard = document.createElement('div');
             newCard.setAttribute('data-product-id', product.id);
-            
-            // 1. STYLING: Match exactly with the Django loop classes for consistent sizing
-            newCard.className = "relative bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[140px] opacity-0 scale-95";
-            
-            const displayImage = product.image_url 
-                ? `<img src="${product.image_url}?t=${new Date().getTime()}" class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 shrink-0">`
-                : `<div class="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 border-2 border-slate-100 shrink-0"><i class="bi bi-cup text-xl"></i></div>`;
+            newCard.className = "relative bg-white p-2.5 md:p-4 rounded-xl md:rounded-2xl border-2 border-orange-500 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between min-h-[100px] md:min-h-[140px] opacity-0 scale-95";
+
+            const displayImage = product.image_url
+                ? `<img src="${product.image_url}?t=${new Date().getTime()}" class="w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl object-cover border-2 border-slate-100 shrink-0">`
+                : `<div class="w-10 h-10 md:w-14 md:h-14 bg-slate-50 rounded-lg md:rounded-xl flex items-center justify-center text-slate-300 border-2 border-slate-100 shrink-0"><i class="bi bi-cup text-base md:text-xl"></i></div>`;
 
             newCard.innerHTML = `
-                <div class="flex gap-4">
+                <div class="flex gap-2.5 md:gap-4 pr-10 md:pr-0">
                     ${displayImage}
-                    <div>
-                        <p class="product-name font-[800] text-slate-900 text-sm leading-tight">${product.name}</p>
-                        <span class="product-category inline-block mt-1 text-[8px] bg-slate-50 border border-slate-200 text-slate-500 px-2 py-0.5 rounded-md font-[800] tracking-widest uppercase">${product.category}</span>
+                    <div class="min-w-0 flex-1 flex flex-col justify-center">
+                        <p class="product-name font-[800] text-slate-900 text-[11px] md:text-sm leading-tight truncate">${product.name}</p>
+                        <div>
+                            <span class="product-category inline-block mt-0.5 md:mt-1 text-[6px] md:text-[8px] bg-slate-50 border border-slate-200 text-slate-500 px-1 md:px-2 py-0.5 rounded md:rounded-md font-[800] tracking-widest uppercase truncate max-w-full">${product.category}</span>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="flex items-end justify-between mt-4 pt-4 border-t-2 border-slate-50">
+                <div class="flex items-end justify-between mt-2 md:mt-4 pt-2 md:pt-4 border-t-2 border-slate-50">
                     <div>
-                        <span class="text-[8px] font-[800] text-emerald-500 uppercase tracking-widest block mb-0.5">Profit</span>
-                        <span class="product-profit text-sm font-[800] text-slate-700">$${parseFloat(product.profit || 0).toFixed(2)}</span>
+                        <span class="text-[6px] md:text-[8px] font-[800] text-emerald-500 uppercase tracking-widest block mb-0 md:mb-0.5">Profit</span>
+                        <span class="product-profit text-[10px] md:text-sm font-[800] text-slate-700">$${parseFloat(product.profit || 0).toFixed(2)}</span>
                     </div>
                     <div class="text-right">
-                        <span class="text-[8px] font-[800] text-slate-400 uppercase tracking-widest block mb-0.5">Price</span>
-                        <span class="product-price text-sm font-[800] text-orange-600">$${parseFloat(product.price_small).toFixed(2)}</span>
+                        <span class="text-[6px] md:text-[8px] font-[800] text-slate-400 uppercase tracking-widest block mb-0 md:mb-0.5">Price</span>
+                        <span class="product-price text-[10px] md:text-sm font-[800] text-orange-600">$${parseFloat(product.price_small).toFixed(2)}</span>
                     </div>
                 </div>
-
-                <div class="absolute top-2 right-2 flex flex-col gap-2  group-hover:opacity-100 transition-opacity">
-                    <button onclick="openEditModal('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price_small}', '${product.price_medium}', '${product.price_large}', '${product.category.replace(/'/g, "\\'")}', '${canH}', '${canI}', '${canF}')" 
-                            class="w-8 h-8 bg-white text-orange-500 rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm">
-                        <i class="bi bi-pencil-fill text-xs"></i>
+                <div class="absolute top-2 right-2 flex flex-col gap-1 md:gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="openEditModal('${product.id}', '${product.name.replace(/'/g, "\\'")}', '${product.price_small}', '${product.price_medium}', '${product.price_large}', '${product.category.replace(/'/g, "\\'")}', '${canH}', '${canI}', '${canF}')"
+                            class="w-6 h-6 md:w-8 md:h-8 bg-white text-orange-500 rounded-md md:rounded-lg flex items-center justify-center hover:bg-orange-50 border border-slate-200 shadow-sm transition-colors">
+                        <i class="bi bi-pencil-fill text-[8px] md:text-xs"></i>
                     </button>
-                    <button type="button" onclick="openDeleteModal('${product.id}', '${product.name.replace(/'/g, "\\'")}')" class="w-8 h-8 bg-white text-red-500 rounded-lg flex items-center justify-center hover:bg-red-50 border border-slate-200 shadow-sm">
-                        <i class="bi bi-trash3-fill text-xs"></i>
+                    <button type="button" onclick="openDeleteModal('${product.id}', '${product.name.replace(/'/g, "\\'")}')" class="w-6 h-6 md:w-8 md:h-8 bg-white text-red-500 rounded-md md:rounded-lg flex items-center justify-center hover:bg-red-50 border border-slate-200 shadow-sm transition-colors">
+                        <i class="bi bi-trash3-fill text-[8px] md:text-xs"></i>
                     </button>
                 </div>
             `;
-
-            // 3. PLACEMENT: Add to the start of the grid
             menuGrid.prepend(newCard);
-
-            // 4. ANIMATION: Smooth fade and scale in
             requestAnimationFrame(() => {
                 newCard.classList.remove('opacity-0', 'scale-95');
                 newCard.classList.add('opacity-100', 'scale-100');
             });
-
-            // Remove the orange "New" highlight after 2 seconds
             setTimeout(() => {
                 newCard.classList.remove('border-orange-500');
                 newCard.classList.add('border-slate-100');
             }, 2000);
         }
 
-        // --- 4. FORM HANDLERS ---
-        
-        // Add product Handler
+        // --- FORM HANDLERS ---
         document.getElementById('productForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
             const formData = new FormData(this);
             try {
-                const response = await fetch(this.action, { 
-                    method: 'POST', body: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
+                const response = await fetch(this.action, { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                 const data = await response.json();
                 if (data.status === 'success') {
                     toggleproductModal();
                     const canH = formData.get('can_be_hot') === 'on' ? 'True' : 'False';
                     const canI = formData.get('can_be_iced') === 'on' ? 'True' : 'False';
                     const canF = formData.get('can_be_frappe') === 'on' ? 'True' : 'False';
-                    
                     renderNewCard(data.product, canH, canI, canF);
                     stockChannel.postMessage({ type: 'add_product', product: data.product });
                 }
@@ -832,87 +881,57 @@
             e.preventDefault();
             const formData = new FormData(this);
             try {
-                const response = await fetch(this.action, { 
-                    method: 'POST', 
-                    body: formData,
-                    headers: { 
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
+                const response = await fetch(this.action, {
+                    method: 'POST', body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
                 });
                 const data = await response.json();
-
                 if (data.status === 'success') {
                     closeEditModal();
-
-                    // 1. Create the Cache-Buster URL
                     const timestampedUrl = data.product.image_url ? `${data.product.image_url}?t=${new Date().getTime()}` : null;
+                    stockChannel.postMessage({ type: 'update_product', product: { ...data.product, image_url: timestampedUrl } });
 
-                    // 2. Broadcast to Manager
-                    stockChannel.postMessage({
-                        type: 'update_product',
-                        product: { ...data.product, image_url: timestampedUrl }
-                    });
-
-                    // 3. Update Owner Card
                     const card = document.querySelector(`[data-product-id="${data.product.id}"]`);
                     if (card) {
-                        // ALWAYS update text fields
                         card.querySelector('.product-name').innerText = data.product.name;
                         card.querySelector('.product-price').innerText = `$${parseFloat(data.product.price_small).toFixed(2)}`;
                         card.querySelector('.product-category').innerText = data.product.category;
-                        
                         const profitEl = card.querySelector('.product-profit');
                         if (profitEl) profitEl.innerText = `$${parseFloat(data.product.profit).toFixed(2)}`;
 
-                        // Update image or replace placeholder
                         if (timestampedUrl) {
                             let img = card.querySelector('img');
                             if (img) {
                                 img.src = timestampedUrl;
                             } else {
-                                // If it was a placeholder icon, replace it with an img tag
                                 const placeholder = card.querySelector('.bi-cup')?.parentElement;
                                 if (placeholder) {
-                                    placeholder.outerHTML = `<img src="${timestampedUrl}" class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 shrink-0">`;
+                                    placeholder.outerHTML = `<img src="${timestampedUrl}" class="w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl object-cover border-2 border-slate-100 shrink-0">`;
                                 }
                             }
                         }
 
-                        // 4. Update onclick for next edit (Crucial for live sync)
                         const editBtn = card.querySelector('button[onclick^="openEditModal"]');
                         if (editBtn) {
                             const canH = formData.get('can_be_hot') === 'on' ? 'True' : 'False';
                             const canI = formData.get('can_be_iced') === 'on' ? 'True' : 'False';
                             const canF = formData.get('can_be_frappe') === 'on' ? 'True' : 'False';
-                            
                             editBtn.setAttribute('onclick', `openEditModal(
-                                '${data.product.id}', 
-                                '${data.product.name.replace(/'/g, "\\'")}', 
-                                '${data.product.price_small}', 
-                                '${data.product.price_medium}', 
-                                '${data.product.price_large}', 
-                                '${data.product.category.replace(/'/g, "\\'")}', 
-                                '${canH}', 
-                                '${canI}', 
-                                '${canF}'
+                                '${data.product.id}', '${data.product.name.replace(/'/g, "\\'")}',
+                                '${data.product.price_small}', '${data.product.price_medium}', '${data.product.price_large}',
+                                '${data.product.category.replace(/'/g, "\\'")}', '${canH}', '${canI}', '${canF}'
                             )`);
                         }
-
-                        // Visual Feedback
                         card.classList.add('border-orange-500', 'ring-2', 'ring-orange-200');
                         setTimeout(() => card.classList.remove('border-orange-500', 'ring-2', 'ring-orange-200'), 1000);
                     }
                 }
-            } catch (error) { 
-                console.error("Edit Error:", error); 
-            }
+            } catch (error) { console.error("Edit Error:", error); }
         });
 
-        // --- 5. TELEMETRY SYNC ---
+        // --- TELEMETRY SYNC ---
         stockChannel.onmessage = (event) => {
             if (event.data === 'refresh_data') {
-                console.log("Inventory update detected. Refreshing dashboard...");
                 refreshDashboardStats();
                 refreshRawMaterials();
             }
@@ -921,40 +940,32 @@
         async function refreshRawMaterials() {
             const grid = document.getElementById('rawMaterialsGrid');
             if (!grid) return;
-
             try {
                 const response = await fetch('/api/inventory/list/');
                 const data = await response.json();
-
                 if (data.ingredients) {
                     grid.innerHTML = data.ingredients.filter(ing => ing.packaging_type === 'NONE').map(ing => {
                         const isLow = ing.is_low_stock;
                         const barColor = isLow ? 'bg-red-500' : 'bg-emerald-500';
                         const textColor = isLow ? 'text-red-500' : 'text-emerald-500';
-                        
                         return `
-                            <div class="p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 hover:border-orange-200 transition-colors">
-                                <div class="flex justify-between items-start mb-2">
-                                    <p class="text-slate-500 text-[10px] font-[800] tracking-widest uppercase truncate pr-2">${ing.name}</p>
-                                    <span class="text-[10px] font-[800] ${textColor}">
-                                        ${Math.round(ing.stock_percent)}%
-                                    </span>
+                            <div class="p-2.5 md:p-5 bg-slate-50 rounded-xl md:rounded-2xl border-2 border-slate-100 hover:border-orange-200 transition-colors">
+                                <div class="flex justify-between items-start mb-1 md:mb-2 gap-1">
+                                    <p class="text-slate-500 text-[8px] md:text-[10px] font-[800] tracking-widest uppercase truncate">${ing.name}</p>
+                                    <span class="text-[8px] md:text-[10px] font-[800] ${textColor} shrink-0">${Math.round(ing.stock_percent)}%</span>
                                 </div>
                                 <div class="flex items-end gap-1">
-                                    <p class="text-2xl font-[800] text-slate-900">${Math.round(ing.stock_quantity)}</p>
-                                    <span class="text-[10px] font-[800] text-slate-400 uppercase pb-1">${ing.unit}</span>
+                                    <p class="text-sm md:text-2xl font-[800] text-slate-900 leading-none">${Math.round(ing.stock_quantity)}</p>
+                                    <span class="text-[7px] md:text-[10px] font-[800] text-slate-400 uppercase pb-0 md:pb-1">${ing.unit}</span>
                                 </div>
-                                <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden border border-slate-300">
-                                    <div class="h-full transition-all duration-500 ${barColor}" 
-                                        style="width: ${ing.stock_percent}%; min-width: 4px;"> </div>
+                                <div class="w-full bg-slate-200 h-1 md:h-2 rounded-full mt-1.5 md:mt-3 overflow-hidden border border-slate-300">
+                                    <div class="h-full transition-all duration-500 ${barColor}" style="width: ${ing.stock_percent}%; min-width: 4px;"> </div>
                                 </div>
                             </div>
                         `;
                     }).join('');
                 }
-            } catch (error) {
-                console.error("Failed to refresh raw materials:", error);
-            }
+            } catch (error) { console.error("Failed to refresh raw materials:", error); }
         }
 
         async function refreshDashboardStats() {
@@ -965,16 +976,14 @@
                 if (document.getElementById('incomeValue')) document.getElementById('incomeValue').innerText = `$${data.income.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
                 if (document.getElementById('profitValue')) document.getElementById('profitValue').innerText = `$${data.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
                 if (document.getElementById('orderCount')) document.getElementById('orderCount').innerText = data.orders;
-                
-                if (data.labels && data.sales_data) {
-                    updateChart(data.labels, data.sales_data);
-                }
+                if (data.labels && data.sales_data) { updateChart(data.labels, data.sales_data); }
             } catch (e) { }
         }
 
-        // Initialize on load
         window.addEventListener('DOMContentLoaded', () => {
-            updateChart({{ labels|safe }}, {{ sales_data|safe }});
+            if (typeof salesChart !== 'undefined' || typeof Chart !== 'undefined') {
+                updateChart({{ labels|safe|default:"[]" }}, {{ sales_data|safe|default:"[]" }});
+            }
             setInterval(refreshDashboardStats, 5000);
         });
     </script>
