@@ -115,6 +115,7 @@
           width: 100% !important;
           max-width: 100% !important;
           overflow-x: auto !important;
+          border-spacing: 0;
           -webkit-overflow-scrolling: touch;
         }
 
@@ -148,9 +149,9 @@
 
     <aside
       id="sidebar"
-      class="fixed inset-y-0 left-0 h-[100dvh] max-h-[100dvh] w-60 md:w-64 shrink-0 bg-white border-r border-slate-200 p-5 md:p-6 flex flex-col overflow-hidden transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[200] md:sticky md:top-0 md:h-screen"
+      class="fixed inset-y-0 left-0 h-full w-60 md:w-64 shrink-0 bg-white border-r border-slate-200 p-4 md:p-6 flex flex-col overflow-hidden transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-[200] md:sticky md:top-0 md:h-screen"
     >
-      <div class="mb-10 flex justify-between items-start">
+      <div class="mb-4 md:mb-10 flex justify-between items-start order-1">
         <div>
           <h1 class="text-2xl font-800 tracking-tighter text-orange-600">
             Error404
@@ -166,7 +167,7 @@
         </button>
       </div>
 
-      <nav class="space-y-1 flex-1 min-h-0 overflow-y-auto custom-scrollbar pb-4">
+      <nav class="space-y-0.5 md:space-y-1 flex-1 min-h-0 overflow-y-auto custom-scrollbar pb-2 md:pb-4 order-2">
         <a
           href="{% url dashboard_route %}"
           class="flex items-center gap-3 p-2.5 md:p-3 bg-orange-50 text-orange-600 rounded-xl font-bold border-2 border-orange-100"
@@ -196,12 +197,18 @@
         </a>
       </nav>
 
-      <div class="pt-4 md:pt-6 border-t border-slate-100 shrink-0 bg-white">
+      <div class="pt-2 md:pt-6 border-t border-slate-100 shrink-0 bg-white order-3">
+        <button 
+          onclick="openStaffModal()" 
+          class="w-full flex items-center gap-3 p-2 md:p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all text-xs md:text-sm font-bold uppercase tracking-tighter rounded-xl text-left"
+        >
+          <i class="bi bi-people"></i> Staff Management
+        </button>
 
         <button
           type="button"
           onclick="openSettingsModal()"
-          class="w-full flex items-center gap-3 p-2.5 md:p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all text-sm font-bold uppercase tracking-tighter rounded-xl"
+          class="w-full flex items-center gap-3 p-2 md:p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all text-xs md:text-sm font-bold uppercase tracking-tighter rounded-xl text-left"
         >
           <i class="bi bi-gear-fill"></i> Settings
         </button>
@@ -221,7 +228,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-0">
-          <div class="p-5 md:p-7 bg-slate-50/80 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-100">
+          <div class="p-5 md:p-7 bg-slate-50/80 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-100 flex flex-col">
             <div class="flex items-center gap-4">
               <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-2xl border-2 border-orange-200">
                 <i class="bi bi-person-fill"></i>
@@ -241,9 +248,11 @@
               </div>
             </div>
 
-            <a href="{% url 'logout' %}" class="mt-6 w-full flex items-center justify-center gap-2 rounded-2xl bg-red-50 border-2 border-red-100 text-red-600 py-3.5 font-[900] uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-white hover:border-red-500 transition-all">
-              <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
+            <div class="mt-auto pt-10">
+              <a href="{% url 'logout' %}" class="w-full flex items-center justify-center gap-2 rounded-2xl bg-red-50 border-2 border-red-100 text-red-600 py-3.5 font-[900] uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-white hover:border-red-500 transition-all">
+                <i class="bi bi-box-arrow-right"></i> Logout
+              </a>
+            </div>
           </div>
 
           <div class="p-5 md:p-7 space-y-5">
@@ -289,6 +298,105 @@
                 <input type="password" name="confirm_password" placeholder="Confirm password" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-2 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
               </div>
               <button type="submit" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-[900] uppercase tracking-widest hover:bg-slate-800 transition-all">Update Password</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="staffModal" class="hidden fixed inset-0 z-[260] bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4">
+      <div class="bg-white w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-[2rem] md:rounded-[2.5rem] border-2 border-slate-200 shadow-2xl relative">
+        <div class="p-5 md:p-7 border-b-2 border-slate-100 flex items-center justify-between gap-4 sticky top-0 bg-white/95 backdrop-blur z-10">
+          <div>
+            <h2 class="text-xl md:text-2xl font-[900] text-slate-900 uppercase tracking-tight">Staff Management</h2>
+            <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mt-1">Manage Cashiers & Baristas</p>
+          </div>
+          <button type="button" onclick="closeStaffModal()" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-0">
+          <div class="p-5 md:p-7 bg-slate-50/80 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-100 h-full flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+               <h3 class="text-sm font-[900] text-slate-900 uppercase tracking-tight">Staff Directory</h3>
+               <button type="button" onclick="clearStaffForm()" class="text-[10px] font-black bg-orange-100 text-orange-600 px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-orange-200 transition">
+                 + New
+               </button>
+            </div>
+            
+            <div class="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
+              {% for staff in staff_members %}
+              <div class="flex items-center justify-between p-3 bg-white rounded-2xl border-2 border-slate-100 hover:border-orange-200 cursor-pointer transition-all hover:shadow-sm"
+                   onclick="editStaffInfo('{{ staff.user.id }}', '{{ staff.user.username }}', '{{ staff.user.first_name }}', '{{ staff.user.last_name }}', '{{ staff.role }}', '{{ staff.user.email }}')">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center border border-slate-200">
+                    <i class="bi bi-person-badge text-lg"></i>
+                  </div>
+                  <div>
+                    <p class="font-[900] text-sm text-slate-900 leading-tight">{{ staff.user.username }}</p>
+                    <p class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest">{{ staff.get_role_display }}</p>
+                  </div>
+                </div>
+                <i class="bi bi-chevron-right text-slate-300"></i>
+              </div>
+              {% empty %}
+              <div class="text-center py-6 text-slate-400">
+                  <i class="bi bi-people text-3xl mb-2 block text-slate-300"></i>
+                  <p class="text-xs font-bold">No staff found.</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="p-5 md:p-7 space-y-5">
+            <h3 id="staffFormTitle" class="text-sm font-[900] text-slate-900 uppercase tracking-tight">Create New Account</h3>
+            <form id="staffAccountForm" method="POST" action="{% url 'manage_staff'|default:'#' %}" class="space-y-4">
+              {% csrf_token %}
+              <input type="hidden" name="staff_id" id="staff_id_input" value="">
+              
+              <div>
+                <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Username *</label>
+                <input type="text" id="staff_username" name="username" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" placeholder="e.g. barista_alex">
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Email Address *</label>
+                <input type="email" id="staff_email" name="email" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" placeholder="e.g. alex@cafeflow.com">
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">First Name</label>
+                  <input type="text" id="staff_first_name" name="first_name" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" placeholder="First Name">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Last Name</label>
+                  <input type="text" id="staff_last_name" name="last_name" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" placeholder="Last Name">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Role *</label>
+                <div class="relative">
+                  <select id="staff_role" name="role" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500 appearance-none cursor-pointer">
+                    <option value="CASHIER">Cashier / Barista</option>
+                    <option value="MANAGER">Manager</option>
+                  </select>
+                  <i class="bi bi-chevron-down absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"></i>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Password</label>
+                <input type="password" id="staff_password" name="password" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" placeholder="Enter password">
+                <p id="staff_password_hint" class="hidden text-[9px] font-bold text-orange-500 mt-1.5 ml-1">Leave blank to keep current password.</p>
+              </div>
+
+              <div class="pt-4 border-t-2 border-slate-100 flex gap-3">
+                <button type="submit" class="flex-1 px-5 py-3.5 rounded-2xl bg-orange-500 text-white text-[10px] font-[900] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-md hover:shadow-lg hover:shadow-orange-200 active:translate-y-[2px] active:shadow-none">Save Account</button>
+                <button type="button" id="deleteStaffBtn" onclick="deleteStaffAccount()" class="hidden px-5 py-3.5 rounded-2xl bg-red-50 text-red-600 border-2 border-red-100 text-[10px] font-[900] uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all">Delete</button>
+              </div>
             </form>
           </div>
         </div>
@@ -341,7 +449,6 @@
         </div>
       </div>
       <div class="space-y-8">
-        <!-- 1. Header Section -->
         <div
           class="flex flex-col md:flex-row md:items-center justify-between gap-6"
         >
@@ -392,7 +499,6 @@
             </div>
           </div>
 
-          <!-- Actions -->
           <div class="flex flex-col items-end gap-3 md:gap-4 w-full lg:w-auto">
             <div class="relative hidden md:inline-block text-left w-[46%] min-w-[9.5rem] sm:w-44">
               <select
@@ -402,7 +508,7 @@
               >
                   <option value="today" selected>Today</option>
                   <option value="week">This Week</option>
-                
+                 
                   <option value="month">This Month</option>
                   <option value="30days">Last 30 Days</option>
                   <option value="year">Year to Date</option>
@@ -452,7 +558,6 @@
           </div>
         </div>
 
-        <!-- 2. Bento Stat Cards -->
         <div
           class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 mt-6 md:mt-8"
         >
@@ -688,7 +793,6 @@
           </div>
         </div>
 
-        <!--Raw Material section-->
         <div class="bento-card rounded-[2.5rem] p-5 md:p-8 mt-6 md:mt-8 mb-6">
           <div class="flex justify-between items-center mb-6">
             <h3
@@ -805,7 +909,6 @@
           </div>
         </div>
 
-        <!-- 3. Menu Intelligence Table -->
         <div
           class="bento-card rounded-[2.5rem] overflow-hidden border-2 border-slate-100 bg-white shadow-sm mt-8"
         >
@@ -1129,7 +1232,7 @@
       <div class="bg-white w-full max-w-[28rem] rounded-[2.5rem] p-6 md:p-7 border-[3px] border-slate-900 shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] relative animate-in fade-in zoom-in duration-300 transition-all mx-auto max-h-[95vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
           <div>
-            <h2 id="productModalTitle" class="text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Create product</h2>
+            <h2 id="productModalTitle" class="text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Add New Drink</h2>
             <div class="h-1.5 w-12 bg-orange-500 mt-2 rounded-full"></div>
           </div>
           <button onclick="toggleproductModal()" class="w-11 h-11 bg-slate-50 rounded-2xl text-slate-900 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center border-2 border-slate-200 hover:border-red-600 shadow-sm">
@@ -1140,8 +1243,8 @@
         <form id="productForm" action="{% url 'add_product' %}" method="POST" enctype="multipart/form-data" class="space-y-5">
           {% csrf_token %}
           <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all shadow-sm">
-            <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">product Identity</label>
-            <input type="text" name="name" placeholder="e.g. Amber Latte" required class="w-full bg-transparent text-slate-900 text-lg outline-none placeholder-slate-300 font-[800]">
+            <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">Drink's Name</label>
+            <input type="text" name="name" placeholder="Latte" required class="w-full bg-transparent text-slate-900 text-lg outline-none placeholder-slate-300 font-[800]">
           </div>
 
           <div class="grid grid-cols-3 gap-3">
@@ -1243,8 +1346,8 @@
         <form id="editproductForm" method="POST" enctype="multipart/form-data" class="space-y-5 p-7">
           {% csrf_token %}
           <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all shadow-sm">
-            <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">product Identity</label>
-            <input type="text" name="name" placeholder="e.g. Amber Latte" required class="w-full bg-transparent text-slate-900 text-lg outline-none placeholder-slate-300 font-[800]">
+            <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">Drink's Name</label>
+            <input type="text" name="name" placeholder="Latte" required class="w-full bg-transparent text-slate-900 text-lg outline-none placeholder-slate-300 font-[800]">
           </div>
 
           <div class="grid grid-cols-3 gap-3">
@@ -1271,19 +1374,24 @@
             </div>
           </div>
 
-          <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
-            <label class="block text-[10px] font-[900] uppercase text-slate-400 mb-1.5 tracking-[0.15em]">Category</label>
-            <div class="relative">
-              <select name="category" required class="w-full bg-transparent text-slate-900 outline-none cursor-pointer appearance-none font-[800] text-base">
-                <option value="" disabled>Select Category...</option>
-                {% for category in categories %}
-                  {% if category.name != 'Matcha' %}
-                  <option value="{{ category.id }}">{{ category.name }}</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-              <i class="bi bi-chevron-down absolute right-0 top-0 text-slate-900 pointer-events-none"></i>
-            </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
+              <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
+                  <label class="block text-[8px] md:text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Category</label>
+                  <select id="editproductCategory" name="category" class="w-full bg-transparent outline-none font-[800] text-slate-900 cursor-pointer text-xs md:text-base appearance-none pr-4">
+                      {% for cat in categories %}
+                          {% if cat.name != 'Matcha' %}
+                          <option value="{{ cat.id }}">{{ cat.name }}</option>
+                          {% endif %}
+                      {% endfor %}
+                  </select>
+              </div>
+              <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 border-dashed border-slate-200 hover:border-orange-400 transition-all relative overflow-hidden">
+                  <label class="block text-[8px] md:text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Update Image</label>
+                  <input type="file" name="image" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10">
+                  <div class="flex items-center text-slate-400 text-[8px] md:text-[10px] font-bold">
+                      <i class="bi bi-cloud-arrow-up mr-1.5 md:mr-2 text-xs md:text-base"></i> Browse...
+                  </div>
+              </div>
           </div>
 
           <div>
@@ -1336,7 +1444,6 @@
             >
               Restock Item
             </h3>
-            <!-- This is where the ingredient name (e.g., "Whole Milk") appears -->
             <p
               id="modalIngName"
               class="text-orange-600 font-black uppercase tracking-widest text-[9px] mt-1"
@@ -1356,7 +1463,6 @@
           <input type="hidden" name="ingredient_id" id="modalIngId" />
 
           <div class="space-y-5">
-            <!-- Quantity Field -->
             <div>
               <label
                 class="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-1"
@@ -1371,7 +1477,6 @@
               />
             </div>
 
-            <!-- Batch Price Field -->
             <div>
               <label
                 class="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-1"
@@ -1392,7 +1497,6 @@
               </div>
             </div>
 
-            <!-- Unit Size Field (Crucial for bottleneck math) -->
             <div>
               <label
                 class="block text-[10px] font-black uppercase text-slate-500 mb-2 ml-1"
@@ -1890,14 +1994,77 @@
           modal.classList.remove('flex');
       }
 
+      // --- Staff Management Logic ---
+      function openStaffModal() {
+          const modal = document.getElementById('staffModal');
+          if (!modal) return;
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+          clearStaffForm();
+      }
+
+      function closeStaffModal() {
+          const modal = document.getElementById('staffModal');
+          if (!modal) return;
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+      }
+
+      function editStaffInfo(id, username, firstName, lastName, role, email) {
+          document.getElementById('staffFormTitle').innerText = "Edit Staff Account";
+          document.getElementById('staff_id_input').value = id;
+          document.getElementById('staff_username').value = username;
+          document.getElementById('staff_email').value = email || '';
+          document.getElementById('staff_first_name').value = firstName;
+          document.getElementById('staff_last_name').value = lastName;
+          document.getElementById('staff_role').value = role;
+
+          // Handle password requirement variation for edits
+          const pwdInput = document.getElementById('staff_password');
+          pwdInput.removeAttribute('required');
+          pwdInput.placeholder = "••••••••";
+          document.getElementById('staff_password_hint').classList.remove('hidden');
+          document.getElementById('deleteStaffBtn').classList.remove('hidden');
+      }
+
+      function clearStaffForm() {
+          document.getElementById('staffFormTitle').innerText = "Create New Account";
+          document.getElementById('staffAccountForm').reset();
+          document.getElementById('staff_id_input').value = "";
+
+          const pwdInput = document.getElementById('staff_password');
+          pwdInput.setAttribute('required', 'required');
+          pwdInput.placeholder = "Enter password";
+          document.getElementById('staff_password_hint').classList.add('hidden');
+          document.getElementById('deleteStaffBtn').classList.add('hidden');
+      }
+
+      function deleteStaffAccount() {
+          const staffId = document.getElementById('staff_id_input').value;
+          if (!staffId) return;
+          
+          if (confirm('Are you sure you want to delete this staff account?')) {
+              const form = document.getElementById('staffAccountForm');
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = 'action_delete';
+              input.value = 'true';
+              form.appendChild(input);
+              form.submit();
+          }
+      }
+
       // Modal dismiss logic (Clicking backdrop)
       window.onclick = function(event) {
           const delModal = document.getElementById('deleteModal');
           const updateModal = document.getElementById('updateStockModal');
           const settingsModal = document.getElementById('settingsModal');
+          const staffModal = document.getElementById('staffModal');
+          
           if (event.target == delModal) closeDeleteModal();
           if (event.target == updateModal) closeStockModal();
           if (event.target == settingsModal) closeSettingsModal();
+          if (event.target == staffModal) closeStaffModal();
       }
 
       // 6. ECOSYSTEM (TIME & THEME)
@@ -2091,9 +2258,9 @@
 
                       if (textElement) {
                           const stockValue = info.stock;
-                          textElement.innerText = stockValue <= 0 ? "SOLD OUT" : `${stockValue} Cups`;
+                          textElement.innerText = stockValue <= 0 ? "SOLD OUT" : `${stockValue} Cups Ready`;
 
-                          textElement.className = "potential-display font-black ";
+                          textElement.className = "text-[9px] md:text-[11px] font-[900] uppercase tracking-tighter ";
                           if (stockValue <= 0) {
                               textElement.classList.add('text-red-500', 'animate-pulse');
                           } else if (stockValue < 10) {
@@ -2174,9 +2341,6 @@
           // 4. Set form destination to the API view
           const form = document.getElementById('updateStockForm');
           if (form) {
-              /** * IMPORTANT: This path must match the one in urls.py linked to api_update_stock.
-              * Using the /inventory/update/ prefix ensures consistency across both pages.
-              */
               form.action = `/inventory/update/${id}/`;
           }
 

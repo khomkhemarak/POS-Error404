@@ -56,6 +56,7 @@ urlpatterns = [
 
     # --- Managerial Analytics ---
     path('manager/', views.manager_view, name='manager_display'),
+    path('manager/staff/', views.manage_staff, name='manage_staff'),
     path('orders/history/', views.order_history_view, name='order_history'),
     path('api/orders/history/', views.api_order_history, name='api_order_history'),
 

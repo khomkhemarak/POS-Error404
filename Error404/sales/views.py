@@ -19,6 +19,7 @@ from django.conf import settings
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
 from django.contrib.auth import password_validation
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError
@@ -31,6 +32,7 @@ from django.db.models.functions import ExtractHour, ExtractDay, ExtractMonth, Tr
 # Decorators
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.clickjacking import xframe_options_exempt
 from django.template.loader import render_to_string
 try:
     weasyprint = importlib.import_module('weasyprint')
@@ -53,6 +55,7 @@ from .models import (
     DrinkRequest,
     UserRole,
     PasswordResetOTP,
+    UserProfile,
 )
 
 ##############################################
@@ -1521,6 +1524,7 @@ def api_drink_requests(request):
     return JsonResponse({'status': 'success', 'count': requests.count(), 'requests': request_list})
 
 
+@xframe_options_exempt
 def generate_invoice(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     html_string = render_to_string('invoice_pdf.html', {
@@ -1663,7 +1667,7 @@ def manager_view(request):
         created_at__gte=today
     ).aggregate(total=Sum(F('amount') * F('ingredient__unit_cost'), output_field=DecimalField()))['total'] or Decimal('0.00')
 
-    # --- NEW: Annual Income Tax Calculation ---
+    # --- 3. Annual Income Tax Calculation ---
     income_val = float(total_income)
     if income_val <= 4000:
         annual_rate = 0
@@ -1681,10 +1685,13 @@ def manager_view(request):
 
     avg_profitability = (float(total_profit) / float(total_income) * 100) if total_income > 0 else 0
 
-    # --- 3. Initial Chart Data ---
+    # --- 4. Initial Chart Data ---
     sales_by_hour = todays_orders.annotate(hour=ExtractHour('created_at')).values('hour').annotate(total=Sum('total_amount')).order_by('hour')
     chart_labels = [f"{item['hour']}:00" for item in sales_by_hour]
     chart_data = [float(item['total']) for item in sales_by_hour]
+
+    # --- 5. Fetch Staff Data (FIXES THE "No Staff Found" TEMPLATE ISSUE) ---
+    staff_members = UserProfile.objects.filter(role__in=['CASHIER', 'MANAGER']).select_related('user')
 
     context = {
         'products': products,
@@ -1696,15 +1703,16 @@ def manager_view(request):
         'total_orders' : todays_orders.count(),
         'total_cups': total_cups,
         'total_tax': total_tax,
-        'annual_tax_amount': annual_tax_amount, # Pass to manager.html
-        'annual_tax_rate': int(annual_rate * 100), # Pass to manager.html
-        'net_income_after_tax': net_after_annual_tax, # Pass to manager.html
+        'annual_tax_amount': annual_tax_amount, 
+        'annual_tax_rate': int(annual_rate * 100), 
+        'net_income_after_tax': net_after_annual_tax, 
         'avg_profitability': round(avg_profitability, 1), 
         'chart_labels': chart_labels,
         'chart_data': chart_data,
         'popular_items': OrderItem.objects.filter(order__in=todays_orders).values('product__name').annotate(total_qty=Sum('quantity')).order_by('-total_qty')[:5],
         'top_customers': Customer.objects.order_by('-points')[:5],
         'all_ingredients': Ingredient.objects.filter(is_packaging=False),
+        'staff_members': staff_members,  # <-- Added context variable mapping to your template loop
         'dashboard_route': get_dashboard_route(request.user),
         'dashboard_label': get_dashboard_label(request.user),
     }
@@ -1926,6 +1934,110 @@ def api_dashboard_stats(request):
         'expense_data': [float(x['total_cost']) for x in expense_trend_query],
     })
 
+User = get_user_model()
+
+@login_required
+def manage_staff(request):
+    # Security Check: Ensure only Owners or Managers can change staff details
+    if not hasattr(request.user, 'profile') or request.user.profile.role not in ['OWNER', 'MANAGER']:
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('pos_home')
+
+    if request.method == 'POST':
+        staff_id = request.POST.get('staff_id')
+        action_type = request.POST.get('action_type', 'save') # Detects if saving or deleting
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password')
+        role = request.POST.get('role', 'CASHIER')
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+
+        try:
+            with transaction.atomic():
+                
+                # --- CASE 1: DELETE STAFF ACCOUNT ---
+                if action_type == 'delete' and staff_id:
+                    staff_user = User.objects.get(id=staff_id)
+                    
+                    # Prevent a manager/owner from accidentally deleting themselves
+                    if staff_user == request.user:
+                        messages.error(request, "You cannot delete your own account while logged in.")
+                        return redirect('manager_display')
+                        
+                    username_deleted = staff_user.username
+                    staff_user.delete() # Automatically deletes UserProfile due to models.CASCADE
+                    messages.success(request, f"Staff account '{username_deleted}' has been deleted.")
+                    return redirect('manager_display')
+
+                # --- VALIDATION FOR CREATION/UPDATE ---
+                if not username or not email:
+                    messages.error(request, "Username and Email are required fields.")
+                    return redirect('manager_display')
+
+                # --- CASE 2: UPDATE EXISTING ACCOUNT ---
+                if staff_id:  
+                    staff_user = User.objects.get(id=staff_id)
+                    
+                    # Check if the new username is already taken by someone else
+                    if User.objects.filter(username=username).exclude(id=staff_id).exists():
+                        messages.error(request, f"The username '{username}' is already taken.")
+                        return redirect('manager_display')
+                        
+                    # Check if the new email is already taken by someone else
+                    if User.objects.filter(email=email).exclude(id=staff_id).exists():
+                        messages.error(request, f"The email '{email}' is already in use by another account.")
+                        return redirect('manager_display')
+
+                    staff_user.username = username
+                    staff_user.email = email
+                    staff_user.first_name = first_name
+                    staff_user.last_name = last_name
+                    
+                    if password: # Only change password if one was typed
+                        staff_user.set_password(password)
+                    
+                    staff_user.save()
+                    
+                    profile, created = UserProfile.objects.get_or_create(user=staff_user)
+                    profile.role = role
+                    profile.save()
+                    
+                    messages.success(request, f"Staff account '{username}' updated successfully.")
+
+                # --- CASE 3: CREATE NEW ACCOUNT ---
+                else:  
+                    if User.objects.filter(username=username).exists():
+                        messages.error(request, f"The username '{username}' is already taken.")
+                        return redirect('manager_display')
+                        
+                    if User.objects.filter(email=email).exists():
+                        messages.error(request, f"The email '{email}' is already registered to another account.")
+                        return redirect('manager_display')
+                    
+                    if not password:
+                        messages.error(request, "Password is required for new accounts.")
+                        return redirect('manager_display')
+
+                    staff_user = User.objects.create_user(
+                        username=username,
+                        email=email,
+                        password=password,
+                        first_name=first_name,
+                        last_name=last_name
+                    )
+                    
+                    profile, created = UserProfile.objects.get_or_create(user=staff_user)
+                    profile.role = role
+                    profile.save()
+                    
+                    messages.success(request, f"New staff account '{username}' created successfully!")
+        
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+            
+    return redirect('manager_display')
+
 #############################
 ####### Kitchen View ########
 #############################
@@ -2036,3 +2148,7 @@ def kitchen_view(request):
         'dashboard_route': get_dashboard_route(request.user),
         'dashboard_label': get_dashboard_label(request.user),
     })
+
+def updated_function():
+    # This is a placeholder for any new function you want to add.
+    pass

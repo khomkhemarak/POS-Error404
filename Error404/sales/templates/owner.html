@@ -106,7 +106,7 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-0">
-                <div class="p-5 md:p-7 bg-slate-50/80 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-100">
+                <div class="p-5 md:p-7 bg-slate-50/80 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-100 flex flex-col">
                     <div class="flex items-center gap-4">
                         <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-2xl border-2 border-orange-200">
                             <i class="bi bi-person-fill"></i>
@@ -124,9 +124,11 @@
                         </p>
                     </div>
 
-                    <a href="{% url 'logout' %}" class="mt-6 w-full flex items-center justify-center gap-2 rounded-2xl bg-red-50 border-2 border-red-100 text-red-600 py-3.5 font-[900] uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-white hover:border-red-500 transition-all">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </a>
+                    <div class="mt-auto pt-10">
+                        <a href="{% url 'logout' %}" class="w-full flex items-center justify-center gap-2 rounded-2xl bg-red-50 border-2 border-red-100 text-red-600 py-3.5 font-[900] uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-white hover:border-red-500 transition-all">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </div>
                 </div>
 
                 <div class="p-5 md:p-7 space-y-5">
@@ -401,10 +403,10 @@
     </main>
 
     <div id="productModal" class="hidden fixed inset-0 z-[999] flex items-center justify-center p-3 md:p-4 bg-slate-900/70 backdrop-blur-md">
-        <div class="bg-white w-full max-w-[28rem] rounded-3xl md:rounded-[2.5rem] p-4 md:p-7 border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.15)] md:shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] relative animate-in fade-in zoom-in duration-300 transform transition-all mx-2 max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <div class="bg-white w-full max-w-[26rem] rounded-3xl md:rounded-[2.5rem] p-4 md:p-6 border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.15)] md:shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] relative animate-in fade-in zoom-in duration-300 transform transition-all mx-auto">
             <div class="flex justify-between items-center mb-4 md:mb-6">
                 <div>
-                    <h2 id="modalTitle" class="text-lg md:text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Create product</h2>
+                    <h2 id="modalTitle" class="text-lg md:text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Create Drink</h2>
                     <div class="h-1 md:h-1.5 w-8 md:w-12 bg-orange-500 mt-1 md:mt-2 rounded-full"></div>
                 </div>
                 <button onclick="toggleproductModal()" class="w-8 h-8 md:w-11 md:h-11 bg-slate-50 rounded-lg md:rounded-2xl text-slate-900 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center border-2 border-slate-200 hover:border-red-600 shadow-sm shrink-0">
@@ -412,28 +414,28 @@
                 </button>
             </div>
 
-            <form id="productForm" action="{% url 'add_product' %}" method="POST" enctype="multipart/form-data" class="space-y-3 md:space-y-5">
+            <form id="productForm" action="{% url 'add_product' %}" method="POST" enctype="multipart/form-data" class="space-y-2 md:space-y-3">
                 {% csrf_token %}
-                <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all shadow-sm">
-                    <label class="block text-[8px] md:text-[10px] font-[900] uppercase text-slate-400 mb-1 md:mb-1.5 tracking-[0.15em]">product Identity</label>
-                    <input type="text" name="name" placeholder="e.g. Amber Latte" required class="w-full bg-transparent text-slate-900 text-sm md:text-lg outline-none placeholder-slate-300 font-[800]">
+                <div class="bg-slate-50 p-2 md:p-3 rounded-xl md:rounded-[1.5rem] border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all shadow-sm">
+                    <label class="block text-[8px] md:text-[10px] font-[900] uppercase text-slate-400 mb-1 md:mb-1.5 tracking-[0.15em]">Drink's Name</label>
+                    <input type="text" name="name" placeholder="Latte" required class="w-full bg-transparent text-slate-900 text-sm md:text-lg outline-none placeholder-slate-300 font-[800]">
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
-                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm flex sm:block justify-between items-center">
+                    <div class="bg-slate-50 p-2 md:p-2.5 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm flex sm:block justify-between items-center">
                         <label class="block text-[7px] md:text-[8px] font-[900] uppercase text-slate-400 sm:mb-1 tracking-widest shrink-0">Small Price</label>
                         <div class="flex items-center w-24 sm:w-full justify-end sm:justify-start">
                             <span class="text-slate-900 font-black mr-1 text-[10px] md:text-xs">$</span>
                             <input type="number" step="0.01" name="price_small" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-xs md:text-sm outline-none font-[800] text-right sm:text-left">
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm flex sm:block justify-between items-center">
+                    <div class="bg-slate-50 p-2 md:p-2.5 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm flex sm:block justify-between items-center">
                         <label class="block text-[7px] md:text-[8px] font-[900] uppercase text-slate-400 sm:mb-1 tracking-widest shrink-0">Medium Price</label>
                         <div class="flex items-center w-24 sm:w-full justify-end sm:justify-start">
                             <span class="text-slate-900 font-black mr-1 text-[10px] md:text-xs">$</span>
                             <input type="number" step="0.01" name="price_medium" placeholder="0.00" required class="w-full bg-transparent text-slate-900 text-xs md:text-sm outline-none font-[800] text-right sm:text-left">
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm flex sm:block justify-between items-center">
+                    <div class="bg-slate-50 p-2 md:p-2.5 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm flex sm:block justify-between items-center">
                         <label class="block text-[7px] md:text-[8px] font-[900] uppercase text-slate-400 sm:mb-1 tracking-widest shrink-0">Large Price</label>
                         <div class="flex items-center w-24 sm:w-full justify-end sm:justify-start">
                             <span class="text-slate-900 font-black mr-1 text-[10px] md:text-xs">$</span>
@@ -441,7 +443,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-3xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+                <div class="bg-slate-50 p-2 md:p-3 rounded-xl md:rounded-[1.5rem] border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
                     <label class="block text-[8px] md:text-[10px] font-[900] uppercase text-slate-400 mb-1 md:mb-1.5 tracking-[0.15em]">Category</label>
                     <div class="relative">
                         <select name="category" required class="w-full bg-transparent text-slate-900 outline-none cursor-pointer appearance-none font-[800] text-xs md:text-base pr-8">
@@ -460,29 +462,29 @@
                     <div class="grid grid-cols-3 gap-1.5 md:gap-3">
                         <label class="cursor-pointer group">
                             <input type="checkbox" name="can_be_hot" class="hidden peer" checked>
-                            <div class="flex flex-col items-center justify-center py-2 md:py-4 rounded-lg md:rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all shadow-sm">
+                            <div class="flex flex-col items-center justify-center py-1.5 md:py-2.5 rounded-lg md:rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all shadow-sm">
                                 <i class="bi bi-thermometer-sun text-sm md:text-2xl mb-0.5 md:mb-1"></i>
                                 <span class="text-[7px] md:text-[9px] font-[900] uppercase tracking-wider">Hot</span>
                             </div>
                         </label>
                         <label class="cursor-pointer group">
                             <input type="checkbox" name="can_be_iced" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-2 md:py-4 rounded-lg md:rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all shadow-sm">
+                            <div class="flex flex-col items-center justify-center py-1.5 md:py-2.5 rounded-lg md:rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all shadow-sm">
                                 <i class="bi bi-snow text-sm md:text-2xl mb-0.5 md:mb-1"></i>
                                 <span class="text-[7px] md:text-[9px] font-[900] uppercase tracking-wider">Iced</span>
                             </div>
                         </label>
                         <label class="cursor-pointer group">
                             <input type="checkbox" name="can_be_frappe" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-2 md:py-4 rounded-lg md:rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all shadow-sm">
+                            <div class="flex flex-col items-center justify-center py-1.5 md:py-2.5 rounded-lg md:rounded-[1.5rem] border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all shadow-sm">
                                 <i class="bi bi-stars text-sm md:text-2xl mb-0.5 md:mb-1"></i>
                                 <span class="text-[7px] md:text-[9px] font-[900] uppercase tracking-wider">Frappe</span>
                             </div>
                         </label>
                     </div>
                 </div>
-                <div class="border-2 border-dashed border-slate-300 rounded-xl md:rounded-[1.5rem] p-3 md:p-5 bg-slate-50/50 hover:bg-slate-50 hover:border-orange-400 transition-all group">
-                    <label class="block text-[8px] md:text-[10px] font-[900] uppercase text-slate-400 mb-1.5 md:mb-2 tracking-widest">Visual Display</label>
+                <div class="border-2 border-dashed border-slate-300 rounded-xl md:rounded-[1.25rem] p-2 md:p-3 bg-slate-50/50 hover:bg-slate-50 hover:border-orange-400 transition-all group">
+                    <label class="block text-[8px] md:text-[10px] font-[900] uppercase text-slate-400 mb-1.5 md:mb-2 tracking-widest">Upload Image</label>
                     <div class="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-4">
                         <div class="bg-slate-200 h-8 w-8 md:h-12 md:w-12 rounded-lg md:rounded-xl flex items-center justify-center text-slate-400 group-hover:text-orange-500 transition-colors shrink-0 hidden sm:flex">
                             <i class="bi bi-image text-sm md:text-2xl"></i>
@@ -493,7 +495,7 @@
                 </div>
                 <div class="pt-1 md:pt-2">
                     <button id="modalSubmitBtn" type="submit"
-                            class="w-full bg-slate-900 text-white py-3 md:py-5 rounded-xl md:rounded-[1.5rem] font-[900] transition-all text-[10px] md:text-sm tracking-[0.1em] md:tracking-[0.15em] uppercase hover:bg-slate-800 shadow-[0px_4px_0px_0px_#0f172a] md:shadow-[0px_8px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none">
+                            class="w-full bg-slate-900 text-white py-2.5 md:py-3.5 rounded-xl md:rounded-[1.25rem] font-[900] transition-all text-[10px] md:text-sm tracking-[0.1em] md:tracking-[0.15em] uppercase hover:bg-slate-800 shadow-[0px_4px_0px_0px_#0f172a] md:shadow-[0px_6px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none">
                         Confirm & Save product
                     </button>
                 </div>
@@ -502,8 +504,8 @@
     </div>
 
     <div id="editModal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[999] flex items-center justify-center p-3 md:p-4">
-        <div class="bg-white rounded-3xl md:rounded-[2.5rem] w-full max-w-lg border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.15)] md:shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] overflow-hidden animate-in fade-in zoom-in duration-300 mx-2 max-h-[90vh] flex flex-col">
-            <div class="p-4 md:p-7 bg-slate-50 border-b-[3px] border-slate-900 flex justify-between items-center shrink-0">
+        <div class="bg-white rounded-3xl md:rounded-[2.5rem] w-full max-w-lg border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.15)] md:shadow-[12px_12px_0px_0px_rgba(15,23,42,0.15)] overflow-hidden animate-in fade-in zoom-in duration-300 mx-auto flex flex-col">
+            <div class="p-4 md:p-5 bg-slate-50 border-b-[3px] border-slate-900 flex justify-between items-center shrink-0">
                 <div>
                     <h3 id="editModalTitle" class="text-lg md:text-2xl font-[900] text-slate-900 uppercase tracking-tight leading-none">Edit Drink Detail</h3>
                     <div class="h-1 md:h-1.5 w-6 md:w-10 bg-orange-500 mt-1 md:mt-2 rounded-full"></div>
@@ -512,28 +514,28 @@
                     <i class="bi bi-x-lg text-sm md:text-lg"></i>
                 </button>
             </div>
-            <form id="editproductForm" method="POST" enctype="multipart/form-data" class="p-4 md:p-7 space-y-3 md:space-y-5 overflow-y-auto custom-scrollbar">
+            <form id="editproductForm" method="POST" enctype="multipart/form-data" class="p-4 md:p-6 space-y-2 md:space-y-3">
                 {% csrf_token %}
-                <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all">
-                    <label class="block text-[8px] md:text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Product Name</label>
+                <div class="bg-slate-50 p-2 md:p-3 rounded-xl md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all">
+                    <label class="block text-[8px] md:text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Drink's Name</label>
                     <input type="text" id="editproductName" name="name" required class="w-full bg-transparent outline-none text-slate-900 font-[800] text-sm md:text-lg placeholder-slate-300">
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
-                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all flex sm:block justify-between items-center">
+                    <div class="bg-slate-50 p-2 md:p-2.5 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all flex sm:block justify-between items-center">
                         <label class="block text-[7px] md:text-[9px] font-[900] text-slate-400 uppercase tracking-widest sm:mb-1 shrink-0">Small</label>
                         <div class="flex items-center text-slate-900 font-[900] w-24 sm:w-full justify-end sm:justify-start">
                             <span class="mr-1 text-[10px] md:text-base">$</span>
                             <input type="number" step="0.01" id="editPriceSmall" name="price_small" required class="w-full bg-transparent outline-none text-right sm:text-left text-xs md:text-sm">
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all flex sm:block justify-between items-center">
+                    <div class="bg-slate-50 p-2 md:p-2.5 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all flex sm:block justify-between items-center">
                         <label class="block text-[7px] md:text-[9px] font-[900] text-slate-400 uppercase tracking-widest sm:mb-1 shrink-0">Medium</label>
                         <div class="flex items-center text-slate-900 font-[900] w-24 sm:w-full justify-end sm:justify-start">
                             <span class="mr-1 text-[10px] md:text-base">$</span>
                             <input type="number" step="0.01" id="editPriceMedium" name="price_medium" required class="w-full bg-transparent outline-none text-right sm:text-left text-xs md:text-sm">
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-2.5 md:p-3 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all flex sm:block justify-between items-center">
+                    <div class="bg-slate-50 p-2 md:p-2.5 rounded-lg md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all flex sm:block justify-between items-center">
                         <label class="block text-[7px] md:text-[9px] font-[900] text-slate-400 uppercase tracking-widest sm:mb-1 shrink-0">Large</label>
                         <div class="flex items-center text-slate-900 font-[900] w-24 sm:w-full justify-end sm:justify-start">
                             <span class="mr-1 text-[10px] md:text-base">$</span>
@@ -542,7 +544,7 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
-                    <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
+                    <div class="bg-slate-50 p-2 md:p-3 rounded-xl md:rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all">
                         <label class="block text-[8px] md:text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Category</label>
                         <select id="editproductCategory" name="category" class="w-full bg-transparent outline-none font-[800] text-slate-900 cursor-pointer text-xs md:text-base appearance-none pr-4">
                             {% for cat in categories %}
@@ -552,7 +554,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 border-dashed border-slate-200 hover:border-orange-400 transition-all relative overflow-hidden">
+                    <div class="bg-slate-50 p-2 md:p-3 rounded-xl md:rounded-2xl border-2 border-dashed border-slate-200 hover:border-orange-400 transition-all relative overflow-hidden">
                         <label class="block text-[8px] md:text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-1">Update Image</label>
                         <input type="file" name="image" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10">
                         <div class="flex items-center text-slate-400 text-[8px] md:text-[10px] font-bold">
@@ -565,21 +567,21 @@
                     <div class="flex gap-1.5 md:gap-3">
                         <label class="flex-1 cursor-pointer group">
                             <input type="checkbox" name="can_be_hot" id="editCanHot" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-2 md:py-3 rounded-lg md:rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">
+                            <div class="flex flex-col items-center justify-center py-1.5 md:py-2 rounded-lg md:rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-orange-500 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">
                                 <i class="bi bi-thermometer-sun text-sm md:text-xl mb-0.5 md:mb-1"></i>
                                 <span class="text-[7px] md:text-[9px] font-[900] uppercase">Hot</span>
                             </div>
                         </label>
                         <label class="flex-1 cursor-pointer group">
                             <input type="checkbox" name="can_be_iced" id="editCanIced" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-2 md:py-3 rounded-lg md:rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all">
+                            <div class="flex flex-col items-center justify-center py-1.5 md:py-2 rounded-lg md:rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition-all">
                                 <i class="bi bi-snow text-sm md:text-xl mb-0.5 md:mb-1"></i>
                                 <span class="text-[7px] md:text-[9px] font-[900] uppercase">Iced</span>
                             </div>
                         </label>
                         <label class="flex-1 cursor-pointer group">
                             <input type="checkbox" name="can_be_frappe" id="editCanFrappe" class="hidden peer">
-                            <div class="flex flex-col items-center justify-center py-2 md:py-3 rounded-lg md:rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all">
+                            <div class="flex flex-col items-center justify-center py-1.5 md:py-2 rounded-lg md:rounded-2xl border-2 border-slate-100 bg-white peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition-all">
                                 <i class="bi bi-stars text-sm md:text-xl mb-0.5 md:mb-1"></i>
                                 <span class="text-[7px] md:text-[9px] font-[900] uppercase">Frappe</span>
                             </div>
@@ -588,11 +590,11 @@
                 </div>
                 <div class="flex gap-2 md:gap-4 pt-1 md:pt-2">
                     <button type="button" onclick="closeEditModal()"
-                            class="flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-[900] text-[9px] md:text-xs uppercase border-2 border-slate-200 text-slate-400 hover:bg-slate-50 transition-all">
+                            class="flex-1 py-2.5 md:py-3.5 rounded-xl md:rounded-2xl font-[900] text-[9px] md:text-xs uppercase border-2 border-slate-200 text-slate-400 hover:bg-slate-50 transition-all">
                         Cancel
                     </button>
                     <button type="submit"
-                            class="flex-[1.5] py-3 md:py-4 bg-slate-900 text-white rounded-xl md:rounded-2xl font-[900] text-[9px] md:text-xs uppercase shadow-[0px_4px_0px_0px_#1e293b] md:shadow-[0px_6px_0px_0px_#1e293b] hover:bg-orange-600 active:translate-y-1 active:shadow-none transition-all tracking-wider">
+                            class="flex-[1.5] py-2.5 md:py-3.5 bg-slate-900 text-white rounded-xl md:rounded-2xl font-[900] text-[9px] md:text-xs uppercase shadow-[0px_4px_0px_0px_#1e293b] md:shadow-[0px_6px_0px_0px_#1e293b] hover:bg-orange-600 active:translate-y-1 active:shadow-none transition-all tracking-wider">
                         Update
                     </button>
                 </div>
@@ -601,7 +603,7 @@
     </div>
 
     <div id="deleteproductModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[250] flex items-center justify-center p-3 md:p-4">
-        <div class="bg-white rounded-3xl md:rounded-[2.5rem] border-[3px] border-slate-900 shadow-[6px_6px_0px_0px_rgba(239,68,68,0.2)] md:shadow-[8px_8px_0px_0px_rgba(239,68,68,0.2)] w-full max-w-sm overflow-hidden p-6 md:p-8 text-center relative mx-2">
+        <div class="bg-white rounded-3xl md:rounded-[2.5rem] border-[3px] border-slate-900 shadow-[6px_6px_0px_0px_rgba(239,68,68,0.2)] md:shadow-[8px_8px_0px_0px_rgba(239,68,68,0.2)] w-full max-w-sm overflow-hidden p-6 md:p-8 text-center relative mx-auto">
             <div class="w-12 h-12 md:w-24 md:h-24 bg-red-50 border-2 border-red-100 text-red-500 rounded-xl md:rounded-[2rem] flex items-center justify-center mx-auto mb-3 md:mb-6 transform -rotate-6 shadow-sm">
                 <i class="bi bi-trash3 text-2xl md:text-4xl"></i>
             </div>
@@ -713,7 +715,6 @@
         function toggleproductModal() {
             const modal = document.getElementById('productModal');
             modal.classList.toggle('hidden');
-            modal.classList.toggle('flex');
         }
 
         function openAddModal() {

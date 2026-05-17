@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en" class="overflow-y-scroll">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +9,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        html {
+        scrollbar-gutter: stable;
+        }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -530,16 +536,16 @@
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div id="payment-modal-grid" class="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <!-- Left Side (Transaction Details) -->
-                <div class="space-y-6">
-                    <div class="flex justify-between items-end bg-slate-50 p-6 rounded-[2.5rem] border-2 border-slate-100">
+                <div id="payment-left-col" class="space-y-6">
+                    <div id="total-pay-box" class="flex justify-between items-end bg-slate-50 p-6 rounded-[2.5rem] border-2 border-slate-100">
                         <span class="text-slate-500 text-[10px] font-[800] uppercase tracking-widest mb-1">Total Pay</span>
                         <span id="modal-total-price" class="text-4xl font-[900] text-slate-900 tracking-tight">$0.00</span>
                     </div>
 
                     <div id="payment-methods-wrapper">
-                        <p class="text-slate-400 text-[10px] font-[800] uppercase tracking-widest mb-3 ml-2">Select Payment Method</p>
+                        <p id="payment-method-label" class="text-slate-400 text-[10px] font-[800] uppercase tracking-widest mb-3 ml-2">Select Payment Method</p>
                         <div class="grid grid-cols-3 gap-3">
                             <button id="modal-payment-cash" onclick="selectPayment('Cash')" class="payment-btn bg-white text-slate-500 py-4 rounded-2xl transition-all font-[800] text-xs border-2 border-slate-200 hover:border-orange-500 hover:bg-orange-50 flex flex-col items-center gap-2">
                                 <i class="bi bi-cash-stack text-xl"></i> Cash
@@ -575,7 +581,7 @@
                 </div>
 
                 <!-- Right Side (Keyboard & Action) -->
-                <div class="flex flex-col h-full">
+                <div id="payment-right-col" class="flex flex-col h-full">
                     <div id="modal-cash-input-display" class="bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 space-y-4 mb-6 hidden animate-in fade-in slide-in-from-right-4 duration-300">
                         <div class="flex justify-between items-center">
                             <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Received</span>
@@ -1529,6 +1535,14 @@
             const cashInputDisplay = document.getElementById('modal-cash-input-display');
             const cashKeyboard = document.getElementById('modal-cash-input-group');
             const epayQrDisplay = document.getElementById('modal-epay-qr-display');
+            
+            // Layout elements
+            const grid = document.getElementById('payment-modal-grid');
+            const leftCol = document.getElementById('payment-left-col');
+            const rightCol = document.getElementById('payment-right-col');
+            const totalBox = document.getElementById('total-pay-box');
+            const methodLabel = document.getElementById('payment-method-label');
+            const payBtn = document.getElementById('confirm-payment-btn');
 
             // Hide all specialized sections first
             cashCurrencyToggle?.classList.add('hidden');
@@ -1537,12 +1551,30 @@
             cashKeyboard?.classList.add('hidden');
             epayQrDisplay?.classList.add('hidden');
 
+            // Reset layout to defaults
+            grid.className = "grid grid-cols-1 md:grid-cols-2 gap-10";
+            leftCol.className = "space-y-6";
+            rightCol.classList.remove('hidden');
+            totalBox.className = "flex justify-between items-end bg-slate-50 p-6 rounded-[2.5rem] border-2 border-slate-100";
+            methodLabel.className = "text-slate-400 text-[10px] font-[800] uppercase tracking-widest mb-3 ml-2";
+            payBtn.classList.remove('mt-auto');
+            payBtn.classList.add('mt-6');
             if (method === 'Cash') {
+                const spacer = document.createElement('div');
+                spacer.id = 'cash-payment-spacer'; // Add an ID for easy removal
+                spacer.classList.add('flex-grow');
+                leftCol.insertBefore(spacer, payBtn);
+
                 cashCurrencyToggle?.classList.remove('hidden');
                 cashInputDisplay?.classList.remove('hidden');
                 cashKeyboard?.classList.remove('hidden');
                 setCashCurrency(cashCurrency || 'USD');
                 renderPaymentKeypad();
+
+                // Align button to bottom left
+                leftCol.className = "flex flex-col space-y-6 h-full";
+                payBtn.classList.remove('mt-6'); // Remove fixed margin
+                payBtn.classList.add('mt-auto'); // Add auto margin to push to bottom
             } else if (method === 'E-Payment') {
                 epayDetails?.classList.remove('hidden');
                 epayQrDisplay?.classList.remove('hidden');
@@ -1550,6 +1582,14 @@
                 const totalKHR = Math.round(totalUSD * EXCHANGE_RATE / 100) * 100;
                 const epayRielDisplay = document.getElementById('modal-epay-total-riel');
                 if (epayRielDisplay) epayRielDisplay.innerText = `${totalKHR.toLocaleString()} ៛`;
+            } else if (method === 'Card') {
+                // Center alignment for Card method
+                grid.className = "grid grid-cols-1 max-w-md mx-auto";
+                leftCol.className = "space-y-8 text-center flex flex-col items-center";
+                rightCol.classList.add('hidden');
+                totalBox.className = "w-full flex flex-col items-center bg-slate-50 p-8 rounded-[2.5rem] border-2 border-slate-100";
+                methodLabel.className = "text-slate-400 text-[10px] font-[800] uppercase tracking-widest mb-3 text-center w-full";
+                document.getElementById('payment-methods-wrapper').className = "w-full";
             }
 
             document.querySelectorAll('#payment-modal .payment-btn').forEach(btn => {
@@ -1946,7 +1986,9 @@
             const invoiceNumber = orderNumber || orderId;
             document.getElementById('success-order-display').innerText = `Invoice ID: #${invoiceNumber}`;
             const previewContainer = document.getElementById('soft-invoice-container');
-            previewContainer.innerHTML = '<div class="flex items-center justify-center h-full text-slate-300 italic text-sm"><i class="bi bi-arrow-repeat animate-spin mr-2"></i>Generating soft invoice...</div>';
+            
+            // Fix: Use an iframe to isolate the invoice styles and prevent the main POS UI from shrinking
+            previewContainer.innerHTML = `<iframe id="invoice-preview-iframe" src="/invoice/${orderId}/?format=html" class="w-full h-full border-0 rounded-2xl shadow-inner"></iframe>`;
 
             // Set up the PDF link for the "Open PDF" button
             document.getElementById('view-invoice-link').href = `/invoice/${orderId}/`;
@@ -1955,8 +1997,6 @@
             fetch(`/invoice/${orderId}/?format=html`)
                 .then(response => response.text())
                 .then(html => {
-                    previewContainer.innerHTML = html;
-                    
                     // Setup the Print Button to print the preview content without opening a new tab
                     document.getElementById('print-invoice-btn').onclick = () => {
                         const printFrame = document.createElement('iframe');
