@@ -18,8 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from sales import views
 
 urlpatterns = [
+    path('login/', views.login_view, name='login'),
+    path('login/verify/', views.mfa_verify_view, name='mfa_verify'),
     path('admin/', admin.site.urls),
     path('', include('sales.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

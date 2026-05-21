@@ -194,23 +194,29 @@ def login_view(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
+        
         if user is not None:
-            # Invalidate any existing session to prevent cross-role access in multiple tabs
+            # Clean session to avoid cross-contamination
             request.session.flush()
-            login(request, user)
-            # Redirect based on user role or fallback to Django groups
-            user_role = None
-            if hasattr(user, 'profile'):
-                user_role = user.profile.role
-
-            if user.is_superuser or user_role == UserRole.OWNER or user.groups.filter(name='Admin').exists():
-                return redirect('owner')
-            elif user_role == UserRole.MANAGER or user.groups.filter(name__in=['Manager', 'Managers']).exists():
-                return redirect('manager_display')
-            else:
-                return redirect('pos_home')
+            
+            # 1. Generate 6-digit code
+            mfa_code = f"{random.randint(100000, 999999):06d}"
+            
+            # 2. Store user ID and code in temporary session variables
+            request.session['pre_mfa_user_id'] = user.id
+            request.session['mfa_code'] = mfa_code
+            
+            # 3. Print verification code directly to terminal console command line
+            print("\n" + "="*60)
+            print(f" 🛡️  SECURITY 2-STEP VERIFICATION CODE FOR: {user.username}")
+            print(f" 👉 VERIFICATION CODE: {mfa_code}")
+            print("="*60 + "\n")
+            
+            # 4. Redirect to the verification screen
+            return redirect('mfa_verify')
         else:
             messages.error(request, 'Invalid username or password.')
+            
     return render(request, 'login.html')
 
 def send_password_reset_email(user, otp_code):
@@ -283,6 +289,49 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
+def mfa_verify_view(request):
+    # Ensure there is a pre-verified user session tracking info
+    user_id = request.session.get('pre_mfa_user_id')
+    saved_code = request.session.get('mfa_code')
+    
+    if not user_id or not saved_code:
+        messages.error(request, 'Session expired. Please sign in again.')
+        return redirect('login')
+        
+    if request.method == 'POST':
+        entered_code = request.POST.get('code', '').strip()
+        
+        if entered_code == saved_code:
+            # Retrieve user record safely
+            user_model = get_user_model()
+            try:
+                user = user_model.objects.get(pk=user_id)
+            except user_model.DoesNotExist:
+                messages.error(request, 'User account configuration error.')
+                return redirect('login')
+            
+            # Log user into Django session context fully
+            login(request, user)
+            
+            # Clear temporary MFA session items
+            del request.session['pre_mfa_user_id']
+            del request.session['mfa_code']
+            
+            # Role-based landing redirection logic
+            user_role = None
+            if hasattr(user, 'profile'):
+                user_role = user.profile.role
+
+            if user.is_superuser or user_role == UserRole.OWNER or user.groups.filter(name='Admin').exists():
+                return redirect('owner')
+            elif user_role == UserRole.MANAGER or user.groups.filter(name__in=['Manager', 'Managers']).exists():
+                return redirect('manager_display')
+            else:
+                return redirect('pos_home')
+        else:
+            messages.error(request, 'Invalid or expired 6-digit code. Please check your command console.')
+            
+    return render(request, 'mfa_verify.html')
 
 @login_required
 def account_settings(request):

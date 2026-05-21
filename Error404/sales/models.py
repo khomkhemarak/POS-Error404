@@ -71,7 +71,7 @@ class Product(models.Model):
     )
 
     name = models.CharField(max_length=100)
-    category = models.CharField(max_length=20, choices=CATEGORIES, default='Coffee')
+    category = models.CharField(max_length=100, choices=CATEGORIES, default='Coffee')
     price_small = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Price for Small (Tax Inclusive)")
     price_medium = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Price for Medium (Tax Inclusive)")
     price_large = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Price for Large (Tax Inclusive)")

@@ -125,7 +125,7 @@
                     </div>
 
                     <div class="mt-auto pt-10">
-                        <a href="{% url 'logout' %}" class="w-full flex items-center justify-center gap-2 rounded-2xl bg-red-50 border-2 border-red-100 text-red-600 py-3.5 font-[900] uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-white hover:border-red-500 transition-all">
+                        <a href="javascript:void(0)" onclick="openLogoutModal()" class="...">
                             <i class="bi bi-box-arrow-right"></i> Logout
                         </a>
                     </div>
@@ -626,6 +626,30 @@
         </div>
     </div>
 
+    <div id="logoutModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeLogoutModal()"></div>
+        
+        <div class="relative bg-white border-2 border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl transform scale-95 transition-all duration-200 ease-out">
+            <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-rose-50 text-rose-500 mb-4 border border-rose-100">
+                <i class="bi bi-box-arrow-right text-xl"></i>
+            </div>
+            
+            <h3 class="text-xl font-extrabold text-slate-900 tracking-tight mb-2">Are you sure to logout?</h3>
+            {% comment %} <p class="text-sm text-slate-500 mb-6">You will need to re-verify your 2-step authentication code next time you sign in.</p> {% endcomment %}
+            </div>
+            
+            <div class="flex gap-3">
+            <button type="button" onclick="closeLogoutModal()" class="flex-1 py-3 px-4 border-2 border-slate-200 hover:bg-slate-50 text-slate-600 rounded-2xl font-bold text-sm transition-all tracking-wide uppercase">
+                Cancel
+            </button>
+            <a href="{% url 'logout' %}" class="flex-1 py-3 px-4 bg-rose-500 hover:bg-rose-600 text-white text-center rounded-2xl font-bold text-sm transition-all tracking-wide uppercase shadow-lg shadow-rose-500/20">
+                Confirm
+            </a>
+            </div>
+        </div>
+    </div>
+
     <script>
         const stockChannel = new BroadcastChannel('stock_updates');
         let productToDeleteId = null;
@@ -986,6 +1010,32 @@
                 updateChart({{ labels|safe|default:"[]" }}, {{ sales_data|safe|default:"[]" }});
             }
             setInterval(refreshDashboardStats, 5000);
+        });
+
+        function openLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            modal.classList.remove('hidden');
+            // Force browser reflow for entry scale animation
+            setTimeout(() => {
+                modal.querySelector('.transform').classList.remove('scale-95');
+                modal.querySelector('.transform').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            modal.querySelector('.transform').classList.remove('scale-100');
+            modal.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 150);
+        }
+
+        // Optional: Close modal if user hits the 'Escape' key
+        window.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeLogoutModal();
+            }
         });
     </script>
 </body>
