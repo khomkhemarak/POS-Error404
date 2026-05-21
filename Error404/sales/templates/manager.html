@@ -885,9 +885,9 @@
                 <span class="hidden md:inline">Customers Loyalty</span>
                 <i class="bi bi-star-fill text-amber-400 text-[9px] md:text-base"></i>
               </h3>
-              <div class="divide-y-2 divide-slate-100 flex-grow">
-                {% for customer in top_customers|slice:":3" %}
-                <div class="flex justify-between items-center gap-1 py-1.5 md:py-3">
+              <div class="divide-y-2 divide-slate-100 flex-grow overflow-y-auto max-h-[300px] md:max-h-[400px] pr-2 custom-scrollbar">
+                {% for customer in top_customers %}
+                <div class="flex justify-between items-center gap-1 py-1.5 md:py-3 group/cust">
                   <div class="flex items-center gap-1 md:gap-3 min-w-0">
                     <div class="w-4 h-4 md:w-8 md:h-8 rounded-md md:rounded-lg bg-slate-50 border md:border-2 border-slate-100 text-slate-500 flex items-center justify-center text-[7px] md:text-xs font-[800] shrink-0">
                       #{{ forloop.counter }}
@@ -897,8 +897,14 @@
                       <p class="text-[6px] md:text-[9px] text-slate-400 font-[800] tracking-widest uppercase truncate">{{ customer.phone }}</p>
                     </div>
                   </div>
-                  <div class="text-right shrink-0">
-                    <p class="font-[800] text-[9px] md:text-base text-amber-500">{{ customer.points }} <span class="text-[5px] md:text-[8px] text-slate-400 uppercase tracking-widest">pts</span></p>
+                  <div class="flex items-center gap-3">
+                    <div class="text-right shrink-0">
+                      <p class="font-[800] text-[9px] md:text-base text-amber-500">{{ customer.points }} <span class="text-[5px] md:text-[8px] text-slate-400 uppercase tracking-widest">pts</span></p>
+                    </div>
+                    <div class="flex items-center gap-1 opacity-100 md:opacity-0 group-hover/cust:opacity-100 transition-opacity">
+                      <button onclick="openEditCustomerModal('{{ customer.id }}', '{{ customer.name|escapejs }}', '{{ customer.phone }}', '{{ customer.points }}')" class="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center border border-blue-100 shadow-sm" title="Edit Info"><i class="bi bi-pencil-square text-[10px] md:text-xs"></i></button>
+                      <button onclick="openDeleteCustomerModal('{{ customer.id }}', '{{ customer.name|escapejs }}')" class="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border border-rose-100 shadow-sm" title="Delete"><i class="bi bi-trash3 text-[10px] md:text-xs"></i></button>
+                    </div>
                   </div>
                 </div>
                 {% empty %}
@@ -1325,7 +1331,7 @@
 
           <div class="pt-2">
             <button id="productModalSubmitBtn" type="submit" class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-[900] transition-all text-sm tracking-[0.15em] uppercase hover:bg-slate-800 shadow-[0px_8px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none">
-              Confirm & Save product
+              Confirm & Save Drink
             </button>
           </div>
         </form>
@@ -1566,6 +1572,61 @@
           >
             Cancel
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Customer Modal -->
+    <div id="customerModal" class="hidden fixed inset-0 z-[260] bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4">
+      <div class="bg-white w-full max-w-md rounded-[2.5rem] border-2 border-slate-200 shadow-2xl overflow-hidden">
+        <div class="p-5 md:p-7 border-b-2 border-slate-100 flex items-center justify-between">
+          <div>
+            <h2 class="text-xl md:text-2xl font-[900] text-slate-900 uppercase tracking-tight">Edit Customer</h2>
+            <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mt-1">Loyalty Profile</p>
+          </div>
+          <button type="button" onclick="closeEditCustomerModal()" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <form id="customerForm" method="POST" action="{% url 'manage_customer' %}" class="p-5 md:p-7 space-y-4">
+          {% csrf_token %}
+          <input type="hidden" name="customer_id" id="customer_id_input" value="">
+          <input type="hidden" name="action_type" value="save">
+          <div>
+            <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Full Name</label>
+            <input type="text" id="customer_name" name="name" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Phone Number</label>
+            <input type="text" id="customer_phone" name="phone" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Points</label>
+            <input type="number" id="customer_points" name="points" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500">
+          </div>
+          <div class="pt-4">
+            <button type="submit" class="w-full px-5 py-4 rounded-2xl bg-orange-500 text-white text-[10px] font-[900] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-md hover:shadow-lg hover:shadow-orange-200">Save Customer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Customer Modal -->
+    <div id="deleteCustomerModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[250] hidden items-center justify-center p-4">
+      <div class="bg-white rounded-[2.5rem] border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(239,68,68,0.2)] max-w-sm w-full p-6 md:p-8 text-center relative">
+        <div class="w-20 h-20 bg-red-50 border-2 border-red-100 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6 transform -rotate-3">
+          <i class="bi bi-person-x-fill text-3xl"></i>
+        </div>
+        <h2 class="text-xl md:text-2xl font-[800] text-slate-900 mb-2 uppercase tracking-tight">Delete Customer?</h2>
+        <p class="text-slate-500 font-medium text-sm mb-8 leading-relaxed">Are you sure you want to remove <span id="deleteCustomerName" class="font-[800] text-red-500 bg-red-50 px-2 py-0.5 rounded-md"></span>?<br>This action cannot be undone.</p>
+        <div class="flex flex-col gap-3">
+          <form id="deleteCustomerForm" method="POST" action="{% url 'manage_customer' %}">
+            {% csrf_token %}
+            <input type="hidden" name="customer_id" id="delete_customer_id_input" value="">
+            <input type="hidden" name="action_type" value="delete">
+            <button type="submit" class="w-full py-4 rounded-xl bg-red-500 text-white font-[800] hover:bg-red-600 transition-all uppercase tracking-widest text-[10px] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-y-1 active:shadow-none border-2 border-red-500">Confirm Delete</button>
+          </form>
+          <button onclick="closeDeleteCustomerModal()" class="w-full py-4 rounded-xl text-slate-400 font-[800] hover:text-slate-900 transition-all uppercase tracking-widest text-[10px]">Cancel</button>
         </div>
       </div>
     </div>
@@ -1945,7 +2006,7 @@
           if (!form) return;
           form.reset();
           document.getElementById('productModalTitle').innerText = 'Create Drink';
-          document.getElementById('productModalSubmitBtn').innerText = 'Confirm & Save product';
+          document.getElementById('productModalSubmitBtn').innerText = 'Confirm & Save Drink';
           form.action = "{% url 'add_product' %}";
           toggleproductModal();
       }
@@ -2084,11 +2145,15 @@
           const updateModal = document.getElementById('updateStockModal');
           const settingsModal = document.getElementById('settingsModal');
           const staffModal = document.getElementById('staffModal');
+          const customerModal = document.getElementById('customerModal');
+          const deleteCustomerModal = document.getElementById('deleteCustomerModal');
           
           if (event.target == delModal) closeDeleteModal();
           if (event.target == updateModal) closeStockModal();
           if (event.target == settingsModal) closeSettingsModal();
           if (event.target == staffModal) closeStaffModal();
+          if (event.target == customerModal) closeEditCustomerModal();
+          if (event.target == deleteCustomerModal) closeDeleteCustomerModal();
       }
 
       // 6. ECOSYSTEM (TIME & THEME)
@@ -2478,6 +2543,34 @@
           updateRequestReportBadge();
           setInterval(updateRequestReportBadge, 15000);
       });
+
+      // --- Customer Management Logic ---
+      function openEditCustomerModal(id, name, phone, points) {
+          const modal = document.getElementById('customerModal');
+          if (!modal) return;
+          document.getElementById('customer_id_input').value = id;
+          document.getElementById('customer_name').value = name;
+          document.getElementById('customer_phone').value = phone;
+          document.getElementById('customer_points').value = points;
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+      }
+      function closeEditCustomerModal() {
+          const modal = document.getElementById('customerModal');
+          if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+      }
+      function openDeleteCustomerModal(id, name) {
+          const modal = document.getElementById('deleteCustomerModal');
+          if (!modal) return;
+          document.getElementById('delete_customer_id_input').value = id;
+          document.getElementById('deleteCustomerName').innerText = name;
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+      }
+      function closeDeleteCustomerModal() {
+          const modal = document.getElementById('deleteCustomerModal');
+          if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+      }
 
       function filterproducts() {
           let input = document.getElementById('productSearch').value.toLowerCase();

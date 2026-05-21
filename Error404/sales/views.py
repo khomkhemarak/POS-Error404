@@ -1306,7 +1306,7 @@ def process_payment(request):
                     for recipe in recipe_items:
                         ingredient = Ingredient.objects.select_for_update().get(id=recipe.ingredient.id)
                         usage = Decimal(str(recipe.quantity)) * qty
-                        if "sugar" in ingredient.name.lower() or "syrup" in ingredient.name.lower():
+                        if "sugar" in ingredient.name.lower() or "monin syrup" in ingredient.name.lower():
                             usage = usage * multiplier
                             
                         # Extra Shot Stock Deduction (Coffee Bean only)
@@ -1759,7 +1759,7 @@ def manager_view(request):
         'chart_labels': chart_labels,
         'chart_data': chart_data,
         'popular_items': OrderItem.objects.filter(order__in=todays_orders).values('product__name').annotate(total_qty=Sum('quantity')).order_by('-total_qty')[:5],
-        'top_customers': Customer.objects.order_by('-points')[:5],
+        'top_customers': Customer.objects.order_by('-points'),
         'all_ingredients': Ingredient.objects.filter(is_packaging=False),
         'staff_members': staff_members,  # <-- Added context variable mapping to your template loop
         'dashboard_route': get_dashboard_route(request.user),
@@ -2198,6 +2198,46 @@ def kitchen_view(request):
         'dashboard_label': get_dashboard_label(request.user),
     })
 
-def updated_function():
-    # This is a placeholder for any new function you want to add.
-    pass
+@login_required
+def manage_customer(request):
+
+    if not hasattr(request.user, 'profile') or request.user.profile.role not in ['OWNER', 'MANAGER']:
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('pos_home')
+
+    if request.method == 'POST':
+        customer_id = request.POST.get('customer_id')
+        action_type = request.POST.get('action_type', 'save')
+        name = request.POST.get('name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        points = request.POST.get('points', 0)
+
+        try:
+            with transaction.atomic():
+                # --- CASE 1: DELETE CUSTOMER ---
+                if action_type == 'delete' and customer_id:
+                    customer = get_object_or_404(Customer, id=customer_id)
+                    name_deleted = customer.name
+                    customer.delete()
+                    messages.success(request, f"Customer '{name_deleted}' deleted.")
+                    return redirect('manager_display')
+
+                # --- CASE 2: UPDATE CUSTOMER ---
+                if customer_id:
+                    customer = get_object_or_404(Customer, id=customer_id)
+                    
+                    # Check if the new phone is already taken by someone else
+                    if Customer.objects.filter(phone=phone).exclude(id=customer_id).exists():
+                        messages.error(request, f"Phone number '{phone}' is already in use.")
+                        return redirect('manager_display')
+
+                    customer.name = name
+                    customer.phone = phone
+                    customer.points = int(points)
+                    customer.save()
+                    messages.success(request, f"Customer '{name}' updated successfully.")
+
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+            
+    return redirect('manager_display')

@@ -35,6 +35,7 @@ urlpatterns = [
     path('delete-product/<int:product_id>/', views.delete_product, name='delete_product'),
     path('generate-daily-report/', views.generate_daily_report, name='generate_daily_report'),
     path('recipe-builder/', views.recipe_builder, name='recipe_builder'),
+    path('manage-customer/', views.manage_customer, name='manage_customer'),
     
     # --- Inventory Management ---
     path('inventory/', views.inventory_list, name='inventory_list'),

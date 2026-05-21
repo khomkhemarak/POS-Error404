@@ -482,7 +482,29 @@
         </div>
     </div>
 
-    <div id="register-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-6">
+    <!-- Customer Not Found Modal -->
+    <div id="customer-not-found-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[250] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(15,23,42,0.1)] text-center animate-in fade-in zoom-in duration-300">
+            <div class="w-20 h-20 bg-orange-50 border-2 border-orange-100 text-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-6 transform -rotate-3">
+                <i class="bi bi-person-plus-fill text-4xl"></i>
+            </div>
+            <h2 class="text-2xl font-[900] text-slate-900 mb-2 uppercase tracking-tight leading-tight">New Face?</h2>
+            <p class="text-slate-500 font-medium text-sm mb-8 leading-relaxed">
+                We couldn't find a loyalty profile for <span id="not-found-phone-display" class="font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md"></span>.
+                <br>Would you like to register them now?
+            </p>
+            <div class="flex flex-col gap-3">
+                <button onclick="confirmToRegister()" class="w-full py-4 rounded-2xl bg-slate-900 text-white font-[800] hover:bg-orange-600 transition-all uppercase tracking-widest text-[10px] shadow-[4px_4px_0px_0px_rgba(15,23,42,0.2)] active:translate-y-1 active:shadow-none">
+                    Register Now
+                </button>
+                <button onclick="closeNotFoundModal()" class="w-full py-2 text-slate-400 font-[800] hover:text-slate-900 transition-colors uppercase tracking-widest text-[10px]">
+                    Maybe Later
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="register-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[260] flex items-center justify-center p-6">
         <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.1)]">
                 <h2 class="text-2xl font-[900] mb-6 text-slate-900 tracking-tight uppercase">New Regular</h2>
                 
@@ -1169,10 +1191,9 @@
                     closeLoyaltySearch();
                     renderCart(); 
                 } else {
-                    if(confirm("Customer not found. Register them now?")) {
-                        document.getElementById('reg-phone').value = phone;
-                        toggleRegisterModal();
-                    }
+                    document.getElementById('not-found-phone-display').innerText = phone;
+                    closeLoyaltySearch();
+                    document.getElementById('customer-not-found-modal').classList.remove('hidden');
                 }
             } catch (error) { console.error("Search failed", error); }
         }
@@ -1202,6 +1223,22 @@
             const points = parseInt(document.getElementById('customer-points-label').innerText);
             updateLoyaltyButtons(points);
             renderCart();
+        }
+
+        function closeNotFoundModal() {
+            document.getElementById('customer-not-found-modal').classList.add('hidden');
+        }
+
+        function confirmToRegister() {
+            const phone = document.getElementById('not-found-phone-display').innerText;
+            closeNotFoundModal();
+            
+            // Pre-fill and open registration modal
+            const modal = document.getElementById('register-modal');
+            modal.classList.remove('hidden');
+            document.getElementById('reg-name').value = '';
+            document.getElementById('reg-phone').value = phone;
+            setActiveInput('reg-name', 'abc');
         }
 
         function removeCustomer() {
@@ -1236,8 +1273,6 @@
                 nameContainer.className = id === 'reg-name' ? 'bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm transition-all' : 'bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all';
                 phoneContainer.className = id === 'reg-phone' ? 'bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm transition-all' : 'bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all';
             }
-            
-            renderKeyboard(mode);
         }
 
         function renderKeyboard(mode) {
@@ -1304,6 +1339,7 @@
         function openGlobalKeyboard(inputId, mode) {
             const wrapper = document.getElementById('keyboard-wrapper');
             setActiveInput(inputId, mode);
+            renderKeyboard(mode);
             wrapper.classList.add('keyboard-visible');
         }
 
@@ -1312,7 +1348,7 @@
             wrapper.classList.remove('keyboard-visible');
         }
 
-        function openLoyaltySearch() {
+        {% comment %} function openLoyaltySearch() {
             const container = document.getElementById('loyalty-container');
             const backdrop = document.getElementById('loyalty-backdrop');
             const label = document.getElementById('loyalty-label');
@@ -1321,8 +1357,7 @@
             backdrop.classList.remove('hidden');
             container.classList.add('loyalty-centered');
             if (label) label.innerText = "Phone Number";
-            openGlobalKeyboard('customer-phone', 'num');
-        }
+        } {% endcomment %}
 
         function closeLoyaltySearch() {
             const container = document.getElementById('loyalty-container');
@@ -1335,7 +1370,6 @@
                 backdrop.classList.add('hidden');
                 container.classList.remove('loyalty-centered');
                 if (label) label.innerText = "Customer Loyalty";
-                closeGlobalKeyboard();
             }
         }
 
@@ -1346,10 +1380,8 @@
                 modal.classList.remove('hidden');
                 document.getElementById('reg-name').value = '';
                 document.getElementById('reg-phone').value = '';
-                openGlobalKeyboard('reg-name', 'abc');
             } else {
                 modal.classList.add('hidden');
-                closeGlobalKeyboard();
             }
         }
 
@@ -2107,6 +2139,28 @@
             // Force browser reflow for entry scale animation
             setTimeout(() => {
                 modal.querySelector('.transform').classList.remove('scale-95');
+                modal.querySelector('.transform').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            modal.querySelector('.transform').classList.remove('scale-100');
+            modal.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 150);
+        }
+
+        // Optional: Close modal if user hits the 'Escape' key
+        window.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeLogoutModal();
+            }
+        });
+    </script>
+</body>
+</html>         modal.querySelector('.transform').classList.remove('scale-95');
                 modal.querySelector('.transform').classList.add('scale-100');
             }, 10);
         }
