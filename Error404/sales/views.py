@@ -500,17 +500,19 @@ def delete_product(request, product_id):
         product = get_object_or_404(Product, id=product_id)
         prod_id = product.id # Save ID before deleting
         name = product.name
-        product.delete()
-        
-        # Broadcast to channel group for real-time syncing
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            "cafe_sync_group",
-            {
-                "type": "product_deleted_event",
-                "product_id": str(prod_id)
-            }
-        )
+
+        with transaction.atomic():
+            product.delete()
+
+            # Broadcast to channel group for real-time syncing
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "cafe_sync_group",
+                {
+                    "type": "product_deleted_event",
+                    "product_id": str(prod_id)
+                }
+            )
 
         # Check if this is an AJAX request from owner page
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -557,14 +559,7 @@ def edit_product(request, product_id):
             
         product.save()
 
-        # Broadcast to channel group for real-time syncing (Global)
-        try:
-            prod_profit = float(product.get_profit())
-            prod_cost = float(product.get_product_cost())
-        except:
-            prod_profit = 0.0
-            prod_cost = 0.0
-
+        # WebSocket Broadcast: Notify all dashboards that a product was modified
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             "cafe_sync_group",
@@ -574,17 +569,14 @@ def edit_product(request, product_id):
                     "id": str(product.id),
                     "name": product.name,
                     "category": product.category,
-                    "price_small": f"{product.price_small:.2f}",
-                    "price_medium": f"{product.price_medium:.2f}",
-                    "price_large": f"{product.price_large:.2f}",
-                    "ice_upcharge": "0.25",
-                    "frappe_upcharge": "0.50",
-                    "cost": f"{prod_cost:.3f}",
-                    "profit": f"{prod_profit:.3f}",
-                    "image_url": product.image.url if product.image else None,
+                    "price_small": str(product.price_small),
+                    "price_medium": str(product.price_medium),
+                    "price_large": str(product.price_large),
+                    "profit": str(product.get_profit()) if hasattr(product, "get_profit") else "0.00",
                     "can_be_hot": "True" if product.can_be_hot else "False",
                     "can_be_iced": "True" if product.can_be_iced else "False",
                     "can_be_frappe": "True" if product.can_be_frappe else "False",
+                    "image_url": product.image.url if product.image else None,
                 }
             }
         )
@@ -598,7 +590,7 @@ def edit_product(request, product_id):
                 'status': 'success',
                 'message': f'Updated "{product.name}"',
                 'product': {
-                    'id': product.id,
+                    'id': str(product.id),
                     'name': product.name,
                     'price_small': str(product.price_small),
                     'price_medium': str(product.price_medium),

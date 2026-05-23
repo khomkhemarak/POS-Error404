@@ -2191,6 +2191,15 @@
                     p.can_be_iced = p.can_be_iced === true || p.can_be_iced === 'True';
                     p.can_be_frappe = p.can_be_frappe === true || p.can_be_frappe === 'True';
                     updateproductCard(p);
+                } else if (data.type === 'product.deleted') {
+                    const card = document.querySelector(`[data-product-id="${data.product_id}"]`);
+                    if (card) {
+                        card.classList.add('opacity-0', 'scale-95');
+                        setTimeout(() => {
+                            card.remove();
+                            searchMenu();
+                        }, 300);
+                    }
                 }
             };
 

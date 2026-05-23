@@ -1010,6 +1010,7 @@
               <tbody id="productTableBody" class="divide-y-2 divide-slate-50">
                 {% for product in products %}
                 <tr
+                  data-product-id="{{ product.id }}"
                   onclick="toggleRowExpansion(event, this)"
                   class="product-row group hover:bg-slate-50/50 transition-colors cursor-pointer"
                 >
@@ -1840,10 +1841,54 @@
                   const p = data.product;
                   const row = document.querySelector(`[data-product-id="${p.id}"]`);
                   if (row) {
-                      row.querySelector('h3').innerText = p.name;
-                      row.querySelector('p').innerText = p.category;
+                      // 1. Update Name & Category
+                      const nameEl = document.getElementById(`prod-name-${p.id}`);
+                      const categoryEl = document.getElementById(`prod-category-${p.id}`);
+                      if (nameEl) {
+                          nameEl.innerHTML = `${p.name} <i class="bi bi-chevron-down text-[10px] text-slate-300 transition-transform row-chevron"></i>`;
+                      }
+                      if (categoryEl) categoryEl.innerText = p.category;
+
+                      // 2. Update Image with cache buster
+                      const imgEl = document.getElementById(`prod-img-${p.id}`);
+                      if (imgEl && p.image_url) {
+                          imgEl.src = p.image_url.includes('?') ? p.image_url : `${p.image_url}?t=${new Date().getTime()}`;
+                      }
+
+                      // 3. Update Available Variation Tags
+                      const tagsEl = document.getElementById(`prod-tags-${p.id}`);
+                      if (tagsEl) {
+                          tagsEl.innerHTML = '';
+                          if (p.can_be_hot === 'True') tagsEl.innerHTML += `<span class="w-4 h-4 md:w-5 md:h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-[8px] md:text-[9px] font-black shadow-sm" title="Hot Available">H</span>`;
+                          if (p.can_be_iced === 'True') tagsEl.innerHTML += `<span class="w-4 h-4 md:w-5 md:h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[8px] md:text-[9px] font-black shadow-sm" title="Iced Available">I</span>`;
+                          if (p.can_be_frappe === 'True') tagsEl.innerHTML += `<span class="w-4 h-4 md:w-5 md:h-5 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-[8px] md:text-[9px] font-black shadow-sm" title="Frappe Available">F</span>`;
+                      }
+
+                      // 4. Update Prices (All Sizes)
+                      const pSEl = document.getElementById(`prod-price-s-${p.id}`);
+                      const pMEl = document.getElementById(`prod-price-m-${p.id}`);
+                      const pLEl = document.getElementById(`prod-price-l-${p.id}`);
+                      if (pSEl) pSEl.innerText = `$${parseFloat(p.price_small).toFixed(2)}`;
+                      if (pMEl) pMEl.innerText = `$${parseFloat(p.price_medium).toFixed(2)}`;
+                      if (pLEl) pLEl.innerText = `$${parseFloat(p.price_large).toFixed(2)}`;
+
+                      // 5. Update Action Buttons Trigger Parameters
+                      const editBtn = row.querySelector('button[onclick^="openEditModal"]');
+                      if (editBtn) {
+                          const newOnClick = `openEditModal('${p.id}', '${p.name.replace(/'/g, "\\'")}', '${p.price_small}', '${p.price_medium}', '${p.price_large}', '${p.category.replace(/'/g, "\\'")}', '${p.can_be_hot}', '${p.can_be_iced}', '${p.can_be_frappe}')`;
+                          editBtn.setAttribute('onclick', newOnClick);
+                      }
+
+                      // 6. Visual highlight and trigger recalculations for Profit/Cost/Stock
                       row.classList.add('bg-orange-50');
                       setTimeout(() => row.classList.remove('bg-orange-50'), 1500);
+                      if (typeof updateDashboardData === 'function') updateDashboardData();
+                  }
+              } else if (data.type === 'product.deleted') {
+                  const row = document.querySelector(`[data-product-id="${data.product_id}"]`);
+                  if (row) {
+                      row.classList.add('opacity-0', 'scale-95');
+                      setTimeout(() => row.remove(), 300);
                   }
               }
           };
