@@ -1086,6 +1086,14 @@
                         card.classList.add('ring-2', 'ring-orange-500');
                         setTimeout(() => card.classList.remove('ring-2', 'ring-orange-500'), 1500);
                     }
+                } else if (data.type === 'product.deleted') {
+                    const card = document.querySelector(`[data-product-id="${data.product_id}"]`);
+                    if (card) {
+                        card.classList.add('opacity-0', 'scale-95', 'transition-all', 'duration-300');
+                        setTimeout(() => {
+                            card.remove();
+                        }, 300);
+                    }
                 }
             };
 

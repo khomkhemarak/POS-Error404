@@ -443,7 +443,7 @@
         <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.1)]">
             <div class="text-center mb-6">
                 <h2 class="text-2xl font-[900] text-slate-900 tracking-tight uppercase">Extra Sweetness</h2>
-                <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mt-1">Enter percentage (> 100%)</p>
+                <p id="extra-sugar-help-text" class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mt-1">Enter percentage (> 100%)</p>
             </div>
 
             <div class="bg-slate-50 p-6 rounded-3xl border-2 border-slate-200 mb-6 text-center">
@@ -1728,8 +1728,24 @@
             const modal = document.getElementById('extra-sugar-modal');
             const input = document.getElementById('extra-sugar-input');
             const keypad = document.getElementById('sugar-keypad');
+            const helpEl = document.getElementById('extra-sugar-help-text');
+
+            const updateHelpText = (val) => {
+                const percent = parseInt(val);
+                if (!val || isNaN(percent) || percent <= 100) {
+                    helpEl.innerText = "Enter percentage (> 100%)";
+                    helpEl.className = "text-[10px] font-[800] text-slate-400 uppercase tracking-widest mt-1";
+                } else if (percent < 200) {
+                    helpEl.innerText = "ឈើច្រត់បងពណ៌អី?";
+                    helpEl.className = "text-xs font-bold text-orange-500 mt-1 animate-pulse";
+                } else {
+                    helpEl.innerText = "លីហ្សា! ហែងមានឃើញឈើច្រត់ខ្ញុំហេស?";
+                    helpEl.className = "text-xs font-bold text-red-500 mt-1 animate-bounce";
+                }
+            };
             
             input.value = ""; // Default
+            updateHelpText("");
             modal.classList.remove('hidden');
             
             // Build the keypad if empty
@@ -1752,6 +1768,7 @@
                         if (key === 'CLR') input.value = '';
                         else if (key === 'DEL') input.value = input.value.slice(0, -1);
                         else if (input.value.length < 3) input.value += key;
+                        updateHelpText(input.value);
                     };
                     keypad.appendChild(btn);
                 });
