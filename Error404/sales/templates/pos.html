@@ -2159,6 +2159,46 @@
                 closeLogoutModal();
             }
         });
+
+        // --- REAL-TIME PRODUCT SYNC (Django Channels) ---
+        let realTimeSocket;
+        function connectWebSocket() {
+            const socketUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws/cafe-sync/';
+            realTimeSocket = new WebSocket(socketUrl);
+
+            realTimeSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                
+                // Message Type Routing: Intercept 'product.created' events
+                if (data.type === 'product.created') {
+                    const p = data.product;
+                    
+                    // Strict Client-Side De-duplication: Targeting the unique data wrapper ID
+                    if (!document.querySelector('[data-product-id="' + p.id + '"]')) {
+                        
+                        // Data Properties Normalization: Map backend strings/bools to strictly boolean flags
+                        p.can_be_hot = p.can_be_hot === true || p.can_be_hot === 'True';
+                        p.can_be_iced = p.can_be_iced === true || p.can_be_iced === 'True';
+                        p.can_be_frappe = p.can_be_frappe === true || p.can_be_frappe === 'True';
+
+                        // Invoke Card Engine & Visibility Re-evaluation
+                        // Note: renderproductCard(p) calls searchMenu() internally to handle filters
+                        renderproductCard(p);
+                    }
+                } else if (data.type === 'product.updated') {
+                    const p = data.product;
+                    p.can_be_hot = p.can_be_hot === true || p.can_be_hot === 'True';
+                    p.can_be_iced = p.can_be_iced === true || p.can_be_iced === 'True';
+                    p.can_be_frappe = p.can_be_frappe === true || p.can_be_frappe === 'True';
+                    updateproductCard(p);
+                }
+            };
+
+            realTimeSocket.onclose = function() {
+                setTimeout(connectWebSocket, 3000); // Auto-reconnect fallback
+            };
+        }
+        connectWebSocket();
     </script>
 </body>
 </html>
