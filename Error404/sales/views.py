@@ -10,6 +10,8 @@ from os import name
 from urllib import request
 
 # Django Core
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
@@ -432,21 +434,41 @@ def add_product(request):
             category=category_obj.name
         )
 
-        # Check if this is an AJAX request from owner page
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        
-        if is_ajax:
-            # Return JSON for owner page AJAX requests
-            try:
-                prod_cost = float(product.get_product_cost())
-            except:
-                prod_cost = 0.0
-                
-            try:
-                prod_profit = float(product.get_profit())
-            except:
-                prod_profit = float(price) / 1.1
+        # Unified Broadcast to channel group for real-time syncing
+        try:
+            prod_profit = float(product.get_profit())
+            prod_cost = float(product.get_product_cost())
+        except:
+            prod_profit = float(price) / 1.1
+            prod_cost = 0.0
 
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "cafe_sync_group",
+            {
+                "type": "product_created_event",
+                "product": {
+                    "id": str(product.id),
+                    "name": product.name,
+                    "category": product.category,
+                    "price_small": f"{product.price_small:.2f}",
+                    "price_medium": f"{product.price_medium:.2f}",
+                    "price_large": f"{product.price_large:.2f}",
+                    "ice_upcharge": "0.25", # Default metadata for POS
+                    "frappe_upcharge": "0.50",
+                    "cost": f"{prod_cost:.3f}",
+                    "profit": f"{prod_profit:.3f}",
+                    "image_url": product.image.url if product.image else None,
+                    "can_be_hot": "True" if product.can_be_hot else "False",
+                    "can_be_iced": "True" if product.can_be_iced else "False",
+                    "can_be_frappe": "True" if product.can_be_frappe else "False",
+                }
+            }
+        )
+
+        # Check if this is an AJAX request from owner/manager page
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
             return JsonResponse({
                 'status': 'success',
                 'message': f'Product "{name}" added successfully!',
@@ -480,6 +502,16 @@ def delete_product(request, product_id):
         name = product.name
         product.delete()
         
+        # Broadcast to channel group for real-time syncing
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "cafe_sync_group",
+            {
+                "type": "product_deleted_event",
+                "product_id": str(prod_id)
+            }
+        )
+
         # Check if this is an AJAX request from owner page
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         
@@ -524,6 +556,38 @@ def edit_product(request, product_id):
             product.image = request.FILES.get('image')
             
         product.save()
+
+        # Broadcast to channel group for real-time syncing (Global)
+        try:
+            prod_profit = float(product.get_profit())
+            prod_cost = float(product.get_product_cost())
+        except:
+            prod_profit = 0.0
+            prod_cost = 0.0
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "cafe_sync_group",
+            {
+                "type": "product_updated_event",
+                "product": {
+                    "id": str(product.id),
+                    "name": product.name,
+                    "category": product.category,
+                    "price_small": f"{product.price_small:.2f}",
+                    "price_medium": f"{product.price_medium:.2f}",
+                    "price_large": f"{product.price_large:.2f}",
+                    "ice_upcharge": "0.25",
+                    "frappe_upcharge": "0.50",
+                    "cost": f"{prod_cost:.3f}",
+                    "profit": f"{prod_profit:.3f}",
+                    "image_url": product.image.url if product.image else None,
+                    "can_be_hot": "True" if product.can_be_hot else "False",
+                    "can_be_iced": "True" if product.can_be_iced else "False",
+                    "can_be_frappe": "True" if product.can_be_frappe else "False",
+                }
+            }
+        )
 
         # Check if this is an AJAX request from owner page
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'

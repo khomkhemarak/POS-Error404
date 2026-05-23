@@ -31,12 +31,14 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'sales',
 ]
 
@@ -67,8 +69,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'Error404.wsgi.application'
-
+ASGI_APPLICATION = 'Error404.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
@@ -138,3 +139,9 @@ if os.name == 'nt' and os.path.exists(GTK_PATH):
     os.add_dll_directory(GTK_PATH)
     # Also add to environment path for older versions/compatibility
     os.environ['PATH'] = GTK_PATH + os.pathsep + os.environ.get('PATH', '')
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}

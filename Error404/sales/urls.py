@@ -64,4 +64,6 @@ urlpatterns = [
     # --- Invoice & Document Exports ---
     path('invoice/<int:order_id>/', views.generate_invoice, name='generate_invoice'),
     path('export-recipes/', views.export_recipes_pdf, name='export_recipes_pdf'),
+
+    path('kitchen/', views.kitchen_view, name='kitchen'),
 ]

@@ -177,47 +177,54 @@
 
     <div class="flex h-screen w-full">
         
-        <div class="w-3/4 flex flex-col p-6 space-y-6">
+        <div class="w-3/4 flex flex-col p-6 space-y-6 h-full overflow-hidden">
             
-            <div class="flex justify-between items-center">
-                <h1 class="text-3xl font-bold text-orange-600 tracking-tighter flex items-center gap-3">
-                    <span class="type">Error404</span>
-                </h1>
-                <div class="flex items-center gap-4">
-                    <div class="relative w-1/3">
-                        <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="menu-search" onfocus="openGlobalKeyboard('menu-search', 'abc')" oninput="searchMenu()" placeholder="Search menu..." class="w-full bg-white border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 focus:border-orange-500 focus:bg-orange-50/30 text-slate-900 font-bold transition-all outline-none placeholder-slate-400">
-                    </div>
-                    <button onclick="openRequestDrinkModal()" class="flex items-center gap-2 px-4 py-3 bg-blue-50 border-2 border-blue-200 text-blue-600 rounded-2xl font-bold hover:bg-blue-100 transition-all">
-                        <i class="bi bi-exclamation-circle"></i> Request Drink
-                    </button>
-                    <button onclick="openRefundOrdersModal()" class="relative flex items-center gap-2 px-4 py-3 bg-green-50 border-2 border-green-200 text-green-600 rounded-2xl font-bold hover:bg-green-100 transition-all">
-                        <i class="bi bi-arrow-counterclockwise"></i> Refund Orders
-                        <span id="refund-badge" class="hidden absolute -top-2 -right-2 bg-green-500 text-white text-xs font-black rounded-full h-5 w-5 flex items-center justify-center">0</span>
-                    </button>
-                    <a href="javascript:void(0)" onclick="openLogoutModal()" class="...">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </a>
-                </div>
+    <div class="flex justify-between items-center shrink-0">
+        <h1 class="text-3xl font-bold text-orange-600 tracking-tighter flex items-center gap-3">
+            <span class="type">Error404</span>
+        </h1>
+        <div class="flex items-center gap-4">
+            <div class="relative w-1/3">
+                <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="menu-search" onfocus="openGlobalKeyboard('menu-search', 'abc')" oninput="searchMenu()" placeholder="Search menu..." class="w-full bg-white border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 focus:border-orange-500 focus:bg-orange-50/30 text-slate-900 font-bold transition-all outline-none placeholder-slate-400">
             </div>
+            
+            <button onclick="openRequestDrinkModal()" class="flex items-center gap-2 px-3.5 py-2 text-sm bg-blue-50 border-2 border-blue-200 text-blue-600 rounded-xl font-bold hover:bg-blue-100 transition-all shadow-sm">
+                <i class="bi bi-exclamation-circle text-base"></i> Request Drink
+            </button>
+            
+            <button onclick="openRefundOrdersModal()" class="relative flex items-center gap-2 px-3.5 py-2 text-sm bg-green-50 border-2 border-green-200 text-green-600 rounded-xl font-bold hover:bg-green-100 transition-all shadow-sm">
+                <i class="bi bi-arrow-counterclockwise text-base"></i> Refund Orders
+                <span id="refund-badge" class="hidden absolute -top-1.5 -right-1.5 bg-green-500 text-white text-[10px] font-black rounded-full h-4 w-4 flex items-center justify-center border border-white">0</span>
+            </button>
+            
+            <a href="{% url 'kitchen' %}" class="flex items-center gap-2 px-3.5 py-2 text-sm bg-orange-50 border-2 border-orange-200 text-orange-600 rounded-xl font-bold hover:bg-orange-100 transition-all shadow-sm">
+                <i class="bi bi-display-fill text-base"></i> Kitchen
+            </a>
+            
+            <a href="javascript:void(0)" onclick="openLogoutModal()" class="flex items-center gap-2 px-3.5 py-2 text-sm bg-rose-50 border-2 border-rose-200 text-rose-600 rounded-xl font-bold hover:bg-rose-100 transition-all shadow-sm">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    </div>
 
-            <div class="flex space-x-3 no-scrollbar overflow-x-auto pb-2">
+            <div class="flex items-center space-x-3 no-scrollbar overflow-x-auto pb-2 shrink-0">
                 <button onclick="filterCategory('All')" 
-                        class="cat-btn px-6 py-3 bg-orange-50 border-2 border-orange-200 text-orange-600 rounded-2xl font-bold whitespace-nowrap transition-all shadow-sm">
-                    All Items
+                        class="cat-btn flex items-center justify-center px-6 py-3 bg-orange-50 border-2 border-orange-200 text-orange-600 rounded-2xl font-bold whitespace-nowrap transition-all shadow-sm">
+                    All
                 </button>
 
                 {% for category in categories %}
                 {% if category.name != 'Matcha' %}
                 <button onclick="filterCategory('{{ category.name }}')" 
-                        class="cat-btn px-6 py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-500 rounded-2xl font-semibold transition-all whitespace-nowrap">
+                        class="cat-btn flex items-center justify-center px-6 py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-500 rounded-2xl font-bold transition-all whitespace-nowrap shadow-sm">
                     {{ category.name }}
                 </button>
                 {% endif %}
                 {% endfor %}
             </div>
 
-            <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 overflow-y-auto pr-2 pb-6 no-scrollbar content-start">
+            <div id="product-grid" class="flex-1 min-h-0 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 overflow-y-auto pr-2 pb-6 no-scrollbar content-start">
                 {% for product in products %}
                 {% if product.category != 'Matcha' %}
                 <div class="product-item" data-product-id="{{ product.id }}" data-category="{{ product.category }}">
@@ -241,8 +248,8 @@
                         {% endif %}
                         
                         <div class="relative z-10">
-                            <div class="flex justify-between items-start">
-                                <span class="product-category text-[9px] font-bold uppercase tracking-widest text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+                            <div class="flex justify-between items-center">
+                                <span class="product-category inline-flex items-center text-[9px] font-bold uppercase tracking-widest text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 leading-tight">
                                     {{ product.category }}
                                 </span>
                                 <div class="flex gap-1.5 bg-white p-1.5 rounded-full border border-slate-100 shadow-sm opacity-80 group-hover:opacity-100 transition">
@@ -483,44 +490,38 @@
     </div>
 
     <!-- Customer Not Found Modal -->
-    <div id="customer-not-found-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[250] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(15,23,42,0.1)] text-center animate-in fade-in zoom-in duration-300">
-            <div class="w-20 h-20 bg-orange-50 border-2 border-orange-100 text-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-6 transform -rotate-3">
+    <div id="customer-not-found-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[210] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.1)] text-center">
+            <div class="w-20 h-20 bg-orange-50 border-2 border-orange-100 text-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
                 <i class="bi bi-person-plus-fill text-4xl"></i>
             </div>
-            <h2 class="text-2xl font-[900] text-slate-900 mb-2 uppercase tracking-tight leading-tight">New Face?</h2>
-            <p class="text-slate-500 font-medium text-sm mb-8 leading-relaxed">
-                We couldn't find a loyalty profile for <span id="not-found-phone-display" class="font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md"></span>.
-                <br>Would you like to register them now?
-            </p>
-            <div class="flex flex-col gap-3">
-                <button onclick="confirmToRegister()" class="w-full py-4 rounded-2xl bg-slate-900 text-white font-[800] hover:bg-orange-600 transition-all uppercase tracking-widest text-[10px] shadow-[4px_4px_0px_0px_rgba(15,23,42,0.2)] active:translate-y-1 active:shadow-none">
+            <h2 class="text-2xl font-[900] text-slate-900 mb-2 uppercase tracking-tight">Not Found</h2>
+            <p class="text-sm text-slate-500 mb-8">This customer isn't in our system. Would you like to register them as a regular now?</p>
+            
+            <div class="flex gap-3">
+                <button onclick="closeCustomerNotFoundModal()" class="flex-1 py-4 text-slate-400 font-[800] text-[10px] uppercase tracking-widest hover:text-slate-900 transition-colors">Maybe Later</button>
+                <button onclick="confirmCustomerRegistration()" class="flex-[2] bg-slate-900 text-white py-4 rounded-2xl font-[800] text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-[4px_4px_0px_0px_rgba(15,23,42,0.2)] active:translate-y-1 active:shadow-none">
                     Register Now
-                </button>
-                <button onclick="closeNotFoundModal()" class="w-full py-2 text-slate-400 font-[800] hover:text-slate-900 transition-colors uppercase tracking-widest text-[10px]">
-                    Maybe Later
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="register-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[260] flex items-center justify-center p-6">
+    <div id="register-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-6">
         <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 border-[3px] border-slate-900 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.1)]">
                 <h2 class="text-2xl font-[900] mb-6 text-slate-900 tracking-tight uppercase">New Regular</h2>
                 
                 <div class="space-y-4">
-                    <div id="container-name" class="bg-slate-50 p-4 rounded-2xl border-2 border-orange-500 transition-all cursor-pointer">
+                    <div id="container-name" class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all cursor-pointer">
                         <label class="block text-[10px] font-[800] uppercase text-slate-400 mb-1 tracking-widest">Full Name</label>
                         <input type="text" id="reg-name" placeholder="Enter Name" 
-                            onfocus="setActiveInput('reg-name', 'abc')"
                             oninput="formatInput(this, 'abc')"
                             class="w-full bg-transparent text-slate-900 font-bold outline-none">
                     </div>
                     
-                    <div id="container-phone" class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all cursor-pointer">
+                    <div id="container-phone" class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 focus-within:bg-white transition-all cursor-pointer">
                         <label class="block text-[10px] font-[800] uppercase text-slate-400 mb-1 tracking-widest">Phone Number</label>
                         <input type="text" id="reg-phone" placeholder="Enter Phone" 
-                            onfocus="setActiveInput('reg-phone', 'num')"
                             oninput="formatInput(this, 'num')"
                             class="w-full bg-transparent text-slate-900 font-bold outline-none">
                     </div>
@@ -1191,9 +1192,7 @@
                     closeLoyaltySearch();
                     renderCart(); 
                 } else {
-                    document.getElementById('not-found-phone-display').innerText = phone;
-                    closeLoyaltySearch();
-                    document.getElementById('customer-not-found-modal').classList.remove('hidden');
+                    openCustomerNotFoundModal(phone);
                 }
             } catch (error) { console.error("Search failed", error); }
         }
@@ -1225,22 +1224,6 @@
             renderCart();
         }
 
-        function closeNotFoundModal() {
-            document.getElementById('customer-not-found-modal').classList.add('hidden');
-        }
-
-        function confirmToRegister() {
-            const phone = document.getElementById('not-found-phone-display').innerText;
-            closeNotFoundModal();
-            
-            // Pre-fill and open registration modal
-            const modal = document.getElementById('register-modal');
-            modal.classList.remove('hidden');
-            document.getElementById('reg-name').value = '';
-            document.getElementById('reg-phone').value = phone;
-            setActiveInput('reg-name', 'abc');
-        }
-
         function removeCustomer() {
             selectedCustomerId = null;
             isRedemptionActive = false;
@@ -1265,14 +1248,7 @@
         function setActiveInput(id, mode) {
             activeInputId = id;
             
-            // Highlight the container UI if it exists (for Register Modal)
-            const nameContainer = document.getElementById('container-name');
-            const phoneContainer = document.getElementById('container-phone');
-            
-            if (nameContainer && phoneContainer) {
-                nameContainer.className = id === 'reg-name' ? 'bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm transition-all' : 'bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all';
-                phoneContainer.className = id === 'reg-phone' ? 'bg-white p-4 rounded-2xl border-2 border-orange-500 shadow-sm transition-all' : 'bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 transition-all';
-            }
+            renderKeyboard(mode);
         }
 
         function renderKeyboard(mode) {
@@ -1357,6 +1333,7 @@
             backdrop.classList.remove('hidden');
             container.classList.add('loyalty-centered');
             if (label) label.innerText = "Phone Number";
+            openGlobalKeyboard('customer-phone', 'num');
         } {% endcomment %}
 
         function closeLoyaltySearch() {
@@ -1370,16 +1347,40 @@
                 backdrop.classList.add('hidden');
                 container.classList.remove('loyalty-centered');
                 if (label) label.innerText = "Customer Loyalty";
+                closeGlobalKeyboard();
             }
         }
 
-        function toggleRegisterModal() {
+        function openCustomerNotFoundModal(phone) {
+            window._pendingCustomerPhone = phone;
+            const modal = document.getElementById('customer-not-found-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCustomerNotFoundModal() {
+            const modal = document.getElementById('customer-not-found-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmCustomerRegistration() {
+            const phone = window._pendingCustomerPhone;
+            closeCustomerNotFoundModal();
+            toggleRegisterModal(phone);
+        }
+
+        function toggleRegisterModal(phone = '') {
             const modal = document.getElementById('register-modal');
             
             if (modal.classList.contains('hidden')) {
                 modal.classList.remove('hidden');
                 document.getElementById('reg-name').value = '';
-                document.getElementById('reg-phone').value = '';
+                document.getElementById('reg-phone').value = phone;
+                // Set focus for physical keyboard usage without opening virtual keyboard
+                setTimeout(() => {
+                    document.getElementById('reg-name').focus();
+                }, 100);
             } else {
                 modal.classList.add('hidden');
             }
@@ -2139,28 +2140,6 @@
             // Force browser reflow for entry scale animation
             setTimeout(() => {
                 modal.querySelector('.transform').classList.remove('scale-95');
-                modal.querySelector('.transform').classList.add('scale-100');
-            }, 10);
-        }
-
-        function closeLogoutModal() {
-            const modal = document.getElementById('logoutModal');
-            modal.querySelector('.transform').classList.remove('scale-100');
-            modal.querySelector('.transform').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 150);
-        }
-
-        // Optional: Close modal if user hits the 'Escape' key
-        window.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeLogoutModal();
-            }
-        });
-    </script>
-</body>
-</html>         modal.querySelector('.transform').classList.remove('scale-95');
                 modal.querySelector('.transform').classList.add('scale-100');
             }, 10);
         }

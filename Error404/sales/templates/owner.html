@@ -893,11 +893,8 @@
                 const data = await response.json();
                 if (data.status === 'success') {
                     toggleproductModal();
-                    const canH = formData.get('can_be_hot') === 'on' ? 'True' : 'False';
-                    const canI = formData.get('can_be_iced') === 'on' ? 'True' : 'False';
-                    const canF = formData.get('can_be_frappe') === 'on' ? 'True' : 'False';
-                    renderNewCard(data.product, canH, canI, canF);
-                    stockChannel.postMessage({ type: 'add_product', product: data.product });
+                    // Rely on realTimeSocket.onmessage to render the card for everyone (including this sender)
+                    // This prevents the race condition duplication.
                 }
             } catch (error) { console.error(error); }
         });
@@ -1037,6 +1034,66 @@
                 closeLogoutModal();
             }
         });
+
+        // --- REAL-TIME PRODUCT SYNC (Django Channels) ---
+        let realTimeSocket;
+        function connectWebSocket() {
+            const socketUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws/cafe-sync/';
+            realTimeSocket = new WebSocket(socketUrl);
+
+            realTimeSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                if (data.type === 'product.created') {
+                    const p = data.product;
+                    // Enforce robust de-duplication targeting the data wrapper ID
+                    if (!document.querySelector('[data-product-id="' + p.id + '"]')) {
+                        renderNewCard(p, p.can_be_hot, p.can_be_iced, p.can_be_frappe);
+                    }
+                } else if (data.type === 'product.updated') {
+                    const p = data.product;
+                    const card = document.querySelector(`[data-product-id="${p.id}"]`);
+                    if (card) {
+                        // Update standard elements
+                        card.querySelector('.product-name').innerText = p.name;
+                        card.querySelector('.product-category').innerText = p.category;
+                        card.querySelector('.product-price').innerText = `$${parseFloat(p.price_small).toFixed(2)}`;
+                        const profitEl = card.querySelector('.product-profit');
+                        if (profitEl) profitEl.innerText = `$${parseFloat(p.profit).toFixed(2)}`;
+                        
+                        // Update Image
+                        if (p.image_url) {
+                            let img = card.querySelector('img');
+                            const timestampedUrl = `${p.image_url}?t=${new Date().getTime()}`;
+                            if (img) {
+                                img.src = timestampedUrl;
+                            } else {
+                                const placeholder = card.querySelector('.bi-cup')?.parentElement;
+                                if (placeholder) {
+                                    placeholder.outerHTML = `<img src="${timestampedUrl}" class="w-8 h-8 md:w-14 md:h-14 rounded-md md:rounded-xl object-cover border border-slate-100 shrink-0">`;
+                                }
+                            }
+                        }
+
+                        // Update Edit Button parameters
+                        const editBtn = card.querySelector('button[onclick^="openEditModal"]');
+                        if (editBtn) {
+                            editBtn.setAttribute('onclick', `openEditModal(
+                                '${p.id}', '${p.name.replace(/'/g, "\\'")}', 
+                                '${p.price_small}', '${p.price_medium}', '${p.price_large}', 
+                                '${p.category.replace(/'/g, "\\'")}', '${p.can_be_hot}', '${p.can_be_iced}', '${p.can_be_frappe}'
+                            )`);
+                        }
+                        card.classList.add('ring-2', 'ring-orange-500');
+                        setTimeout(() => card.classList.remove('ring-2', 'ring-orange-500'), 1500);
+                    }
+                }
+            };
+
+            realTimeSocket.onclose = function() {
+                setTimeout(connectWebSocket, 3000); // Auto-reconnect fallback
+            };
+        }
+        connectWebSocket();
     </script>
 </body>
 </html>
