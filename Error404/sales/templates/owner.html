@@ -80,18 +80,104 @@
                 <i class="bi bi-journal-text"></i> Recipe Builder
             </a>
 
-            <a href="{% url 'kitchen_view' %}" class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
+            {% comment %} <a href="{% url 'kitchen_view' %}" class="flex items-center gap-3 p-2.5 md:p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all font-semibold">
                 <i class="bi bi-cup-hot"></i> Kitchen
-            </a>
+            </a> {% endcomment %}
 
         </nav>
 
         <div class="pt-6 border-t border-slate-100">
+            <button type="button" onclick="openStaffModal()" class="w-full flex items-center gap-3 p-2.5 md:p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all text-sm font-bold uppercase tracking-tighter rounded-xl">
+                <i class="bi bi-people-fill"></i> Staff Management
+            </button>
             <button type="button" onclick="openSettingsModal()" class="w-full flex items-center gap-3 p-2.5 md:p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all text-sm font-bold uppercase tracking-tighter rounded-xl">
               <i class="bi bi-gear-fill"></i> Settings
             </button>
         </div>
     </aside>
+
+    <!-- Staff Management Modal -->
+    <div id="staffModal" class="hidden fixed inset-0 z-[260] bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-[2rem] md:rounded-[2.5rem] border-2 border-slate-200 shadow-2xl relative">
+            <div class="p-5 md:p-7 border-b-2 border-slate-100 flex items-center justify-between gap-4 sticky top-0 bg-white/95 backdrop-blur z-10">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-[900] text-slate-900 uppercase tracking-tight">Staff Management</h2>
+                    <p class="text-[10px] font-[800] text-slate-400 uppercase tracking-widest mt-1">Manage Cashiers & Baristas</p>
+                </div>
+                <button type="button" onclick="closeStaffModal()" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-0">
+                <div class="p-5 md:p-7 bg-slate-50/80 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-100 h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-[900] text-slate-900 uppercase tracking-tight">Staff Directory</h3>
+                        <button type="button" onclick="clearStaffForm()" class="text-[10px] font-black bg-orange-100 text-orange-600 px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-orange-200 transition">
+                            + New
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
+                        {% for staff in staff_members %}
+                        <div class="flex items-center justify-between p-3 bg-white rounded-2xl border-2 border-slate-100 hover:border-orange-200 cursor-pointer transition-all hover:shadow-sm"
+                             onclick="editStaffInfo('{{ staff.user.id }}', '{{ staff.user.username }}', '{{ staff.user.first_name }}', '{{ staff.user.last_name }}', '{{ staff.role }}', '{{ staff.user.email }}')">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center border border-slate-200">
+                                    <i class="bi bi-person-badge text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="font-[900] text-sm text-slate-900 leading-tight">{{ staff.user.username }}</p>
+                                    <p class="text-[9px] font-[800] text-slate-400 uppercase tracking-widest">{{ staff.get_role_display }}</p>
+                                </div>
+                            </div>
+                            <i class="bi bi-pencil text-slate-300"></i>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-6 text-slate-400">
+                            <i class="bi bi-people text-3xl mb-2 block text-slate-300"></i>
+                            <p class="text-xs font-bold">No staff found.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="p-5 md:p-7 space-y-5">
+                    <h3 id="staffFormTitle" class="text-sm font-[900] text-slate-900 uppercase tracking-tight">Create New Account</h3>
+                    <form id="staffAccountForm" method="POST" action="{% url 'manage_staff' %}" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="staff_id" id="staff_id_input" value="">
+                        <input type="hidden" name="action_type" id="staff_action_type" value="save">
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Username *</label>
+                                <input type="text" id="staff_username" name="username" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" placeholder="e.g. barista_alex">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-[900] uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Role *</label>
+                                <select id="staff_role" name="role" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500">
+                                    <option value="CASHIER">Cashier / Barista</option>
+                                    <option value="MANAGER">Manager</option>
+                                </select>
+                            </div>
+                        </div>
+                        <input type="email" id="staff_email" name="email" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" placeholder="Email Address">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" id="staff_first_name" name="first_name" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" placeholder="First Name">
+                            <input type="text" id="staff_last_name" name="last_name" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" placeholder="Last Name">
+                        </div>
+                        <input type="password" id="staff_password" name="password" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500" placeholder="Password (leave blank to keep current)">
+                        
+                        <div class="pt-4 border-t-2 border-slate-100 flex gap-3">
+                            <button type="submit" class="flex-1 px-5 py-3.5 rounded-2xl bg-slate-900 text-white text-[10px] font-[900] uppercase tracking-widest hover:bg-slate-800 transition-all">Save Account</button>
+                            <button type="button" id="deleteStaffBtn" onclick="deleteStaffAccount()" class="hidden px-5 py-3.5 rounded-2xl bg-red-50 text-red-600 border-2 border-red-100 text-[10px] font-[900] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Delete</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="settingsModal" class="hidden fixed inset-0 z-[260] bg-slate-900/50 backdrop-blur-sm items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-[2rem] md:rounded-[2.5rem] border-2 border-slate-200 shadow-2xl">
@@ -1009,6 +1095,73 @@
             setInterval(refreshDashboardStats, 5000);
         });
 
+        // --- STAFF MANAGEMENT LOGIC ---
+        function openStaffModal() {
+            const modal = document.getElementById('staffModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            clearStaffForm();
+        }
+
+        function closeStaffModal() {
+            const modal = document.getElementById('staffModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function editStaffInfo(id, username, firstName, lastName, role, email) {
+            document.getElementById('staffFormTitle').innerText = "Edit Staff Account";
+            document.getElementById('staff_id_input').value = id;
+            document.getElementById('staff_username').value = username;
+            document.getElementById('staff_email').value = email || '';
+            document.getElementById('staff_first_name').value = firstName;
+            document.getElementById('staff_last_name').value = lastName;
+            document.getElementById('staff_role').value = role;
+            document.getElementById('staff_password').required = false;
+            document.getElementById('deleteStaffBtn').classList.remove('hidden');
+        }
+
+        function clearStaffForm() {
+            document.getElementById('staffFormTitle').innerText = "Create New Account";
+            document.getElementById('staffAccountForm').reset();
+            document.getElementById('staff_id_input').value = "";
+            document.getElementById('staff_action_type').value = "save";
+            document.getElementById('staff_password').required = true;
+            document.getElementById('deleteStaffBtn').classList.add('hidden');
+        }
+
+        function deleteStaffAccount() {
+            if (confirm('Are you sure you want to delete this staff account?')) {
+                document.getElementById('staff_action_type').value = "delete";
+                document.getElementById('staffAccountForm').requestSubmit();
+            }
+        }
+
+        // AJAX Handler for Staff Form
+        document.getElementById('staffAccountForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            // Add action_type explicitly for deletion check if not already set
+            if (!formData.get('action_type')) formData.append('action_type', 'save');
+
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                
+                // Since manage_staff view redirects on success, we reload to refresh directory list
+                if (response.ok) {
+                    window.location.reload(); 
+                } else {
+                    const data = await response.json();
+                    alert(data.message || "Error processing staff account.");
+                }
+            } catch (error) { console.error(error); }
+        });
+
         function openLogoutModal() {
             const modal = document.getElementById('logoutModal');
             modal.classList.remove('hidden');
@@ -1029,11 +1182,29 @@
         }
 
         // Optional: Close modal if user hits the 'Escape' key
+        // Global Modal Closure Logic (Escape Key Integration)
         window.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
-                closeLogoutModal();
+
+                const activeModals = [
+                    { id: 'productModal', close: toggleproductModal },
+                    { id: 'editModal', close: closeEditModal },
+                    { id: 'deleteproductModal', close: closeDeleteproductModal },
+                    { id: 'staffModal', close: closeStaffModal },
+                    { id: 'settingsModal', close: closeSettingsModal },
+                    { id: 'logoutModal', close: closeLogoutModal }
+                ];
+
+                for (const modalInfo of activeModals) {
+                    const modal = document.getElementById(modalInfo.id);
+                    // Check if the modal exists and is currently visible
+                    if (modal && !modal.classList.contains('hidden')) {
+                        modalInfo.close();
+                        break; // Close the topmost visible modal and stop
+                    }
+                }
             }
-        });
+        })
 
         // --- REAL-TIME PRODUCT SYNC (Django Channels) ---
         let realTimeSocket;

@@ -112,14 +112,27 @@
                     <form id="recipeForm" method="POST" class="space-y-4 md:space-y-5">
                         {% csrf_token %}
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="col-span-2">
+                            <div class="col-span-2 relative" id="product-search-container">
                                 <label class="block text-[10px] font-800 uppercase text-slate-400 mb-2 ml-1 tracking-widest">Target product</label>
-                                <select name="product" required class="w-full bg-slate-50 border-2 border-slate-100 p-3 md:p-4 rounded-xl md:rounded-2xl outline-none focus:border-orange-500 transition-all font-bold appearance-none text-sm">
-                                    <option value="" disabled selected>Select product...</option>
+                                <div class="relative">
+                                    <input type="text" id="productSearchInput" placeholder="Search and select product..." autocomplete="off"
+                                           class="w-full bg-slate-50 border-2 border-slate-100 pl-11 pr-10 py-3 md:py-4 rounded-xl md:rounded-2xl outline-none focus:border-orange-500 focus:bg-white transition-all font-bold text-sm">
+                                    <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold"></i>
+                                    <input type="hidden" name="product" id="productSelect" required>
+                                    <button type="button" id="clearProductBtn" class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                                        <i class="bi bi-x-circle-fill"></i>
+                                    </button>
+                                </div>
+                                
+                                <div id="productDropdown" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto custom-scrollbar">
                                     {% for p in products %}
-                                        <option value="{{ p.id }}">{{ p.name }}</option>
+                                        <div class="prod-option p-4 hover:bg-orange-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
+                                             data-id="{{ p.id }}" data-name="{{ p.name }}">
+                                            <div class="font-bold text-sm text-slate-700">{{ p.name }}</div>
+                                        </div>
                                     {% endfor %}
-                                </select>
+                                    <div id="noProductMatchFound" class="hidden p-3 text-sm text-slate-400">No matching products found</div>
+                                </div>
                             </div>
 
                             <div class="col-span-2 relative" id="smart-search-container">
@@ -403,12 +416,16 @@
             const recipeForm = document.getElementById('recipeForm');
             if (!recipeForm) return;
 
-            const productSelect = recipeForm.querySelector('select[name="product"]');
+            const productSelect = recipeForm.querySelector('[name="product"]');
             const ingredientSelect = recipeForm.querySelector('[name="ingredient"]');
             const sizeSelect = recipeForm.querySelector('select[name="size"]');
             const packageSelect = recipeForm.querySelector('select[name="package_item"]');
 
-            if (productSelect) localStorage.setItem('recipe_form_product', productSelect.value);
+            if (productSelect) {
+                localStorage.setItem('recipe_form_product', productSelect.value);
+                const productSearch = document.getElementById('productSearchInput');
+                if (productSearch) localStorage.setItem('recipe_form_product_name', productSearch.value);
+            }
             if (ingredientSelect) {
                 localStorage.setItem('recipe_form_ingredient', ingredientSelect.value);
                 const searchTxt = document.getElementById('ingredientSearchInput');
@@ -443,12 +460,17 @@
                 const savedFormSize = localStorage.getItem('recipe_form_size');
                 const savedPackageItem = localStorage.getItem('recipe_form_package_item');
 
-                const productSelect = recipeForm.querySelector('select[name="product"]');
+                const productSelect = recipeForm.querySelector('[name="product"]');
                 const ingredientSelect = recipeForm.querySelector('[name="ingredient"]');
                 const sizeSelect = recipeForm.querySelector('select[name="size"]');
                 const packageSelect = recipeForm.querySelector('select[name="package_item"]');
 
-                if (productSelect && savedproduct) productSelect.value = savedproduct;
+                if (productSelect && savedproduct) {
+                    productSelect.value = savedproduct;
+                    const savedName = localStorage.getItem('recipe_form_product_name');
+                    const searchTxt = document.getElementById('productSearchInput');
+                    if (searchTxt && savedName) searchTxt.value = savedName;
+                }
                 if (ingredientSelect && savedIngredient) {
                     ingredientSelect.value = savedIngredient;
                     const savedName = localStorage.getItem('recipe_form_ingredient_name');
@@ -490,17 +512,43 @@
             const searchInput = document.getElementById('ingredientSearchInput');
             const hiddenInput = document.getElementById('ingredientSelect');
             const dropdown = document.getElementById('smartDropdown');
-            const options = document.querySelectorAll('.ing-option');
+            const options = Array.from(document.querySelectorAll('.ing-option'));
             const noMatch = document.getElementById('noMatchFound');
             const clearBtn = document.getElementById('clearIngredientBtn');
 
             if (!searchInput || !dropdown) return;
 
+            let activeIngredientIndex = -1;
+
+            const getVisibleOptions = () => options.filter(opt => !opt.classList.contains('hidden'));
+
+            const updateHighlight = (visibleOptions) => {
+                options.forEach(opt => opt.classList.remove('bg-orange-50'));
+                if (activeIngredientIndex >= 0 && activeIngredientIndex < visibleOptions.length) {
+                    const activeOpt = visibleOptions[activeIngredientIndex];
+                    activeOpt.classList.add('bg-orange-50');
+                    activeOpt.scrollIntoView({ block: 'nearest' });
+                }
+            };
+
+            const selectOption = (opt) => {
+                searchInput.value = opt.dataset.name;
+                hiddenInput.value = opt.dataset.id;
+                toggleClearBtn();
+                dropdown.classList.add('hidden');
+                activeIngredientIndex = -1;
+                if (typeof saveRecipeFormState === 'function') saveRecipeFormState();
+            };
+
             const toggleClearBtn = () => {
                 if (clearBtn) clearBtn.classList.toggle('hidden', searchInput.value === "");
             };
 
-            searchInput.addEventListener('focus', () => { dropdown.classList.remove('hidden'); });
+            searchInput.addEventListener('focus', () => { 
+                dropdown.classList.remove('hidden'); 
+                activeIngredientIndex = -1;
+                updateHighlight(getVisibleOptions());
+            });
 
             document.addEventListener('click', (e) => {
                 if (container && !container.contains(e.target)) dropdown.classList.add('hidden');
@@ -514,6 +562,7 @@
                     dropdown.classList.add('hidden');
                     options.forEach(opt => opt.classList.remove('hidden'));
                     if (noMatch) noMatch.classList.add('hidden');
+                    activeIngredientIndex = -1;
                     if (typeof saveRecipeFormState === 'function') saveRecipeFormState();
                 });
             }
@@ -533,18 +582,149 @@
                 if (noMatch) noMatch.classList.toggle('hidden', matchCount === 0);
                 dropdown.classList.remove('hidden');
                 if (filter === "") hiddenInput.value = "";
+                activeIngredientIndex = -1;
+                updateHighlight(getVisibleOptions());
+            });
+
+            searchInput.addEventListener('keydown', (e) => {
+                if (dropdown.classList.contains('hidden')) return;
+                const visibleOptions = getVisibleOptions();
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (visibleOptions.length > 0) {
+                        activeIngredientIndex = (activeIngredientIndex + 1) % visibleOptions.length;
+                        updateHighlight(visibleOptions);
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (visibleOptions.length > 0) {
+                        activeIngredientIndex = activeIngredientIndex <= 0 ? visibleOptions.length - 1 : activeIngredientIndex - 1;
+                        updateHighlight(visibleOptions);
+                    }
+                } else if (e.key === 'Enter') {
+                    if (activeIngredientIndex >= 0 && activeIngredientIndex < visibleOptions.length) {
+                        e.preventDefault();
+                        selectOption(visibleOptions[activeIngredientIndex]);
+                    }
+                } else if (e.key === 'Escape') {
+                    dropdown.classList.add('hidden');
+                    activeIngredientIndex = -1;
+                }
             });
 
             options.forEach(opt => {
-                opt.addEventListener('click', () => {
-                    searchInput.value = opt.dataset.name;
-                    hiddenInput.value = opt.dataset.id;
-                    toggleClearBtn();
-                    dropdown.classList.add('hidden');
-                    if (typeof saveRecipeFormState === 'function') saveRecipeFormState();
-                });
+                opt.addEventListener('click', () => selectOption(opt));
             });
 
+            toggleClearBtn();
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('product-search-container');
+            const searchInput = document.getElementById('productSearchInput');
+            const hiddenInput = document.getElementById('productSelect');
+            const dropdown = document.getElementById('productDropdown');
+            const options = Array.from(document.querySelectorAll('.prod-option'));
+            const noMatch = document.getElementById('noProductMatchFound');
+            const clearBtn = document.getElementById('clearProductBtn');
+
+            if (!searchInput || !dropdown) return;
+
+            let activeIndex = -1;
+
+            const getVisibleOptions = () => options.filter(opt => !opt.classList.contains('hidden'));
+
+            const updateHighlight = (visibleOptions) => {
+                options.forEach(opt => opt.classList.remove('bg-orange-50'));
+                if (activeIndex >= 0 && activeIndex < visibleOptions.length) {
+                    const activeOpt = visibleOptions[activeIndex];
+                    activeOpt.classList.add('bg-orange-50');
+                    activeOpt.scrollIntoView({ block: 'nearest' });
+                }
+            };
+
+            const selectOption = (opt) => {
+                searchInput.value = opt.dataset.name;
+                hiddenInput.value = opt.dataset.id;
+                toggleClearBtn();
+                dropdown.classList.add('hidden');
+                activeIndex = -1;
+                if (typeof saveRecipeFormState === 'function') saveRecipeFormState();
+            };
+
+            const toggleClearBtn = () => {
+                if (clearBtn) clearBtn.classList.toggle('hidden', searchInput.value === "");
+            };
+
+            searchInput.addEventListener('focus', () => { 
+                dropdown.classList.remove('hidden'); 
+                activeIndex = -1;
+                updateHighlight(getVisibleOptions());
+            });
+
+            document.addEventListener('click', (e) => {
+                if (container && !container.contains(e.target)) dropdown.classList.add('hidden');
+            });
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    searchInput.value = "";
+                    hiddenInput.value = "";
+                    toggleClearBtn();
+                    dropdown.classList.add('hidden');
+                    options.forEach(opt => opt.classList.remove('hidden'));
+                    if (noMatch) noMatch.classList.add('hidden');
+                    activeIndex = -1;
+                    if (typeof saveRecipeFormState === 'function') saveRecipeFormState();
+                });
+            }
+
+            searchInput.addEventListener('input', () => {
+                const filter = searchInput.value.toLowerCase();
+                let matchCount = 0;
+                options.forEach(opt => {
+                    const isMatch = opt.dataset.name.toLowerCase().includes(filter);
+                    opt.classList.toggle('hidden', !isMatch);
+                    if (isMatch) matchCount++;
+                });
+                toggleClearBtn();
+                if (noMatch) noMatch.classList.toggle('hidden', matchCount > 0);
+                dropdown.classList.remove('hidden');
+                if (filter === "") hiddenInput.value = "";
+                activeIndex = -1;
+                updateHighlight(getVisibleOptions());
+            });
+
+            searchInput.addEventListener('keydown', (e) => {
+                if (dropdown.classList.contains('hidden')) return;
+                const visibleOptions = getVisibleOptions();
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (visibleOptions.length > 0) {
+                        activeIndex = (activeIndex + 1) % visibleOptions.length;
+                        updateHighlight(visibleOptions);
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (visibleOptions.length > 0) {
+                        activeIndex = activeIndex <= 0 ? visibleOptions.length - 1 : activeIndex - 1;
+                        updateHighlight(visibleOptions);
+                    }
+                } else if (e.key === 'Enter') {
+                    if (activeIndex >= 0 && activeIndex < visibleOptions.length) {
+                        e.preventDefault();
+                        selectOption(visibleOptions[activeIndex]);
+                    }
+                } else if (e.key === 'Escape') {
+                    dropdown.classList.add('hidden');
+                    activeIndex = -1;
+                }
+            });
+
+            options.forEach(opt => {
+                opt.addEventListener('click', () => selectOption(opt));
+            });
             toggleClearBtn();
         });
     </script>

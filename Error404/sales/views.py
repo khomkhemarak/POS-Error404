@@ -187,7 +187,8 @@ def owner_view(request):
         'categories': Category.objects.all(),
         'top_customers': Customer.objects.order_by('-points')[:5],
         'low_stock_products': Product.objects.filter(stock__lt=10),
-        'low_stock_ingredients': Ingredient.objects.filter(stock_quantity__lt=500), 
+        'low_stock_ingredients': Ingredient.objects.filter(stock_quantity__lt=500),
+        'staff_members': UserProfile.objects.filter(role__in=['CASHIER', 'MANAGER']).select_related('user'),
     }
     return render(request, 'owner.html', context)
 
@@ -210,8 +211,8 @@ def login_view(request):
             
             # 3. Print verification code directly to terminal console command line
             print("\n" + "="*60)
-            print(f" 🛡️  SECURITY 2-STEP VERIFICATION CODE FOR: {user.username}")
-            print(f" 👉 VERIFICATION CODE: {mfa_code}")
+            print(f"SECURITY 2-STEP VERIFICATION CODE FOR: {user.username}")
+            print(f"VERIFICATION CODE: {mfa_code}")
             print("="*60 + "\n")
             
             # 4. Redirect to the verification screen
@@ -246,6 +247,7 @@ def password_reset_request(request):
                     except Exception:
                         pass
         messages.success(request, 'If an account exists for that email, a reset code has been sent.')
+        request.session['reset_email'] = email
         return redirect('password_reset_confirm')
 
     return render(request, 'forgot_password.html')
@@ -253,7 +255,7 @@ def password_reset_request(request):
 
 def password_reset_confirm(request):
     if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
+        email = request.POST.get('email', '').strip() or request.session.get('reset_email', '')
         code = request.POST.get('code', '').strip()
         password = request.POST.get('password', '')
         confirm_password = request.POST.get('confirm_password', '')

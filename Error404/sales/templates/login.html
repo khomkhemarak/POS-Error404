@@ -187,6 +187,17 @@
         background: rgba(255, 255, 255, 0.12);
       }
 
+      .success-message {
+        background: rgba(74, 222, 128, 0.15);
+        border: 1px solid rgba(74, 222, 128, 0.3);
+        color: #4ade80;
+        padding: 10px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 0.9rem;
+      }
+
       .sign-in-btn {
         width: 100%; 
         padding: 15px; 
@@ -232,11 +243,11 @@
       <h2>Welcome</h2>
       
       {% if messages %}
-        <div class="error-message">
-          {% for message in messages %}
+        {% for message in messages %}
+          <div class="{% if 'success' in message.tags %}success-message{% else %}error-message{% endif %}">
             {{ message }}
-          {% endfor %}
-        </div>
+          </div>
+        {% endfor %}
       {% endif %}
 
       <form method="POST">

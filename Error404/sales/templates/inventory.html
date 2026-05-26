@@ -2038,6 +2038,29 @@
         if (event.target.id === "packaging-modal") togglePackagingModal();
         if (event.target.id === "rename-modal") closeRenameModal();
       };
+
+      // Global Modal Closure Logic (Escape Key Integration)
+      window.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' || event.keyCode === 27) {
+          const modals = [
+            { id: 'sidebarOverlay', close: toggleSidebar },
+            { id: 'ingredient-modal', close: toggleModal },
+            { id: 'packaging-modal', close: togglePackagingModal },
+            { id: 'rename-modal', close: closeRenameModal },
+            { id: 'updateStockModal', close: closeStockModal },
+            { id: 'deductStockModal', close: closeDeductModal },
+            { id: 'deleteModal', close: closeDeleteModal }
+          ];
+
+          for (const modalInfo of modals) {
+            const modal = document.getElementById(modalInfo.id);
+            if (modal && !modal.classList.contains('hidden')) {
+              modalInfo.close();
+              break; // Close the topmost visible modal and stop
+            }
+          }
+        }
+      });
     </script>
   </body>
 </html>
