@@ -11,11 +11,20 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
         #sidebar { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        @media (min-width: 768px) {
-            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9; /* slate-100 track background */
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; /* visible slate-300 scrollbar handle */
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; /* darker hover handle */
+        }
 
         /* Flat 2.0 Light Theme Shadows */
         .bento-card {
@@ -339,10 +348,10 @@
 
                 <div id="stockAlertCard" class="col-span-1 md:col-span-4 bento-card p-3 md:p-6 rounded-[1.25rem] md:rounded-[2.5rem] flex flex-row items-center gap-2 sm:gap-5 transition-colors duration-500 min-h-0">
                     <div id="stockIcon" class="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl flex items-center justify-center text-sm md:text-xl shrink-0 bg-red-50 text-red-500">
-                        <i class="bi bi-exclamation-triangle"></i>
+                        <i class="bi-cup-hot"></i>
                     </div>
                     <div>
-                        <p id="stockAlertLabel" class="text-[8px] md:text-[10px] font-[800] uppercase tracking-widest text-slate-400 leading-none mb-1">Stock Alerts</p>
+                        <p id="stockAlertLabel" class="text-[8px] md:text-[10px] font-[800] uppercase tracking-widest text-slate-400 leading-none mb-1">Drinks Menu</p>
                         <h2 id="stockAlertValue" class="text-lg md:text-2xl font-[800] text-red-600 leading-none">
                             {{ low_stock_products.count|add:low_stock_ingredients.count }}
                         </h2>
@@ -380,11 +389,17 @@
 
                     <div class="bento-card rounded-2xl md:rounded-[2.5rem] p-3 md:p-6 lg:p-8 flex flex-col flex-1 min-h-0">
                         <h3 class="text-[10px] md:text-lg font-[800] mb-2 md:mb-4 text-slate-900 tracking-tight uppercase flex justify-between items-center">
-                            Loyalty <i class="bi bi-star-fill text-amber-400 text-[9px] md:text-base"></i>
+                            Customers Loyalty <i class="bi bi-star-fill text-amber-400 text-[9px] md:text-base"></i>
                         </h3>
-                        <div class="divide-y-2 divide-slate-100 flex-grow">
-                            {% for customer in top_customers|slice:":3" %}
-                            <div class="flex justify-between items-center py-1.5 md:py-3">
+                        <!-- Customer Search Input -->
+                        <div class="mb-3 md:mb-4 relative w-full">
+                            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs md:text-sm"></i>
+                            <input type="text" id="customerSearchInput" oninput="filterTopCustomers()" placeholder="Search top customers..."
+                                   class="w-full py-1.5 md:py-2 pl-9 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-xs md:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400/20 focus:border-amber-500 transition-all">
+                        </div>
+                        <div id="loyaltyList" class="divide-y-2 divide-slate-100 overflow-y-auto h-[280px] md:h-[360px] pr-2 custom-scrollbar transition-all duration-500 rounded-2xl">
+                            {% for customer in top_customers %}
+                             <div class="flex justify-between items-center py-1.5 md:py-3 group/cust">
                                 <div class="flex items-center gap-1 md:gap-3 min-w-0 flex-1">
                                     <div class="w-4 h-4 md:w-8 md:h-8 rounded-md md:rounded-lg bg-slate-50 border border-slate-100 text-slate-500 flex items-center justify-center text-[7px] md:text-xs font-[800] shrink-0">
                                         #{{ forloop.counter }}
@@ -394,8 +409,14 @@
                                         <p class="text-[6px] md:text-[9px] text-slate-400 font-[800] tracking-widest uppercase truncate">{{ customer.phone }}</p>
                                     </div>
                                 </div>
-                                <div class="text-right shrink-0 pl-1">
-                                    <p class="text-[9px] md:text-sm font-[800] text-amber-500">{{ customer.points }} <span class="text-[5px] md:text-[8px] text-slate-400 uppercase tracking-widest">pts</span></p>
+                                <div class="flex items-center gap-3">
+                                    <div class="text-right shrink-0">
+                                        <p class="text-[9px] md:text-sm font-[800] text-amber-500">{{ customer.points }} <span class="text-[5px] md:text-[8px] text-slate-400 uppercase tracking-widest">pts</span></p>
+                                    </div>
+                                    <div class="flex items-center gap-1 opacity-100 md:opacity-0 group-hover/cust:opacity-100 transition-opacity">
+                                        <button onclick="openEditCustomerModal('{{ customer.id }}', '{{ customer.name|escapejs }}', '{{ customer.phone|escapejs }}', '{{ customer.points }}')" class="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center border border-blue-100 shadow-sm"><i class="bi bi-pencil-square text-[10px] md:text-xs"></i></button>
+                                        <button onclick="openDeleteCustomerModal('{{ customer.id }}', '{{ customer.name|escapejs }}')" class="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border border-rose-100 shadow-sm"><i class="bi bi-trash3 text-[10px] md:text-xs"></i></button>
+                                    </div>
                                 </div>
                             </div>
                             {% empty %}
@@ -544,7 +565,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[8px] md:text-[10px] font-[900] uppercase text-slate-500 mb-1.5 md:mb-3 ml-1 tracking-widest text-center">Available Variations</label>
+                    <label class="block text-[8px] md:text-[10px] font-[900] uppercase text-slate-500 mb-1.5 md:mb-3 ml-1 tracking-widest text-center">Type of Drink</label>
                     <div class="grid grid-cols-3 gap-1.5 md:gap-3">
                         <label class="cursor-pointer group">
                             <input type="checkbox" name="can_be_hot" class="hidden peer" checked>
@@ -582,7 +603,7 @@
                 <div class="pt-1 md:pt-2">
                     <button id="modalSubmitBtn" type="submit"
                             class="w-full bg-slate-900 text-white py-2.5 md:py-3.5 rounded-xl md:rounded-[1.25rem] font-[900] transition-all text-[10px] md:text-sm tracking-[0.1em] md:tracking-[0.15em] uppercase hover:bg-slate-800 shadow-[0px_4px_0px_0px_#0f172a] md:shadow-[0px_6px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none">
-                        Confirm & Save Drink
+                        Confirm & Save
                     </button>
                 </div>
             </form>
@@ -649,7 +670,7 @@
                     </div>
                 </div>
                 <div class="space-y-1.5 md:space-y-3">
-                    <label class="block text-[8px] md:text-[10px] font-[900] text-slate-500 uppercase tracking-widest text-center">Available Variations</label>
+                    <label class="block text-[8px] md:text-[10px] font-[900] text-slate-500 uppercase tracking-widest text-center">Type of Drink</label>
                     <div class="flex gap-1.5 md:gap-3">
                         <label class="flex-1 cursor-pointer group">
                             <input type="checkbox" name="can_be_hot" id="editCanHot" class="hidden peer">
@@ -712,6 +733,112 @@
         </div>
     </div>
 
+    <!-- Edit Customer Modal -->
+    <div id="customerModal" class="hidden fixed inset-0 z-[260] bg-slate-900/40 backdrop-blur-sm items-center justify-center p-4">
+        <div class="absolute inset-0" onclick="closeEditCustomerModal()"></div>
+        <div class="relative bg-white w-full max-w-lg rounded-[2rem] md:rounded-[2.5rem] border-2 border-slate-200 shadow-2xl overflow-hidden">
+            <div class="px-5 py-4 md:px-7 md:py-5 border-b-2 border-slate-100 flex items-center justify-between gap-4">
+                <div>
+                    <p class="text-[9px] font-[900] text-orange-500 uppercase tracking-[0.25em] mb-1">Loyalty Profile</p>
+                    <h2 class="text-xl md:text-2xl font-[900] text-slate-900 uppercase tracking-tight">Edit Customer</h2>
+                </div>
+                <button type="button" onclick="closeEditCustomerModal()" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center shrink-0">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <form id="customerForm" method="POST" action="{% url 'manage_customer' %}" class="p-5 md:p-7 space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="customer_id" id="customer_id_input" value="">
+                <input type="hidden" name="action_type" value="save">
+
+                <div>
+                    <label for="customer_name" class="block text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-2">Customer Name</label>
+                    <input type="text" id="customer_name" name="name" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500 transition-colors">
+                </div>
+
+                <div>
+                    <label for="customer_phone" class="block text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-2">Phone Number</label>
+                    <input type="text" id="customer_phone" name="phone" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500 transition-colors">
+                </div>
+
+                <div>
+                    <label for="customer_points" class="block text-[10px] font-[900] text-slate-400 uppercase tracking-widest mb-2">Loyalty Points</label>
+                    <input type="number" id="customer_points" name="points" min="0" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-orange-500 transition-colors">
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button type="button" onclick="closeEditCustomerModal()" class="sm:flex-1 py-3.5 px-4 border-2 border-slate-200 hover:bg-slate-50 text-slate-600 rounded-2xl font-[900] text-xs transition-all uppercase tracking-widest">
+                        Cancel
+                    </button>
+                    <button type="submit" class="sm:flex-1 py-3.5 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-[900] text-xs transition-all uppercase tracking-widest shadow-lg shadow-orange-500/20 active:scale-[0.98]">
+                        Save Customer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Customer Modal -->
+    <div id="deleteCustomerModal" class="hidden fixed inset-0 z-[260] bg-slate-900/40 backdrop-blur-sm items-center justify-center p-4">
+        <div class="absolute inset-0" onclick="closeDeleteCustomerModal()"></div>
+        <div class="relative bg-white w-full max-w-md rounded-[2rem] md:rounded-[2.5rem] border-2 border-slate-200 shadow-2xl overflow-hidden">
+            <div class="p-5 md:p-7 text-center">
+                <div class="w-16 h-16 rounded-full bg-rose-50 border-2 border-rose-100 text-rose-500 flex items-center justify-center mx-auto mb-4 md:mb-6 text-3xl">
+                    <i class="bi bi-trash3"></i>
+                </div>
+                <h2 class="text-xl md:text-2xl font-[900] text-slate-900 mb-2 uppercase tracking-tight">Delete Customer?</h2>
+                <p class="text-slate-500 font-medium text-sm mb-7 leading-relaxed">
+                    Are you sure you want to delete <span id="deleteCustomerName" class="font-[800] text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md"></span>?
+                    This action cannot be undone.
+                </p>
+
+                <form id="deleteCustomerForm" method="POST" action="{% url 'manage_customer' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="customer_id" id="delete_customer_id_input" value="">
+                    <input type="hidden" name="action_type" value="delete">
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeDeleteCustomerModal()" class="flex-1 py-3 px-4 border-2 border-slate-200 hover:bg-slate-50 text-slate-600 rounded-2xl font-bold text-sm transition-all tracking-wide uppercase">
+                            Cancel
+                        </button>
+                        <button type="submit" class="flex-1 py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-bold text-sm transition-all tracking-wide uppercase shadow-lg shadow-rose-500/20 active:scale-[0.98]">
+                            Confirm Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Staff Confirmation Modal -->
+    <div id="deleteStaffModal" class="hidden fixed inset-0 z-[260] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2rem] md:rounded-[2.5rem] border-2 border-slate-200 shadow-2xl relative animate-in fade-in zoom-in duration-300 transform scale-95 opacity-0">
+            <div class="p-5 md:p-7 text-center">
+                <div class="w-16 h-16 rounded-full bg-rose-50 border-2 border-rose-100 text-rose-500 flex items-center justify-center mx-auto mb-4 md:mb-6 text-3xl">
+                    <i class="bi bi-trash3"></i>
+                </div>
+                <h3 class="text-xl md:text-2xl font-[900] text-slate-900 uppercase tracking-tight mb-2">Delete Staff Account?</h3>
+                <p class="text-slate-500 text-sm mb-6 md:mb-8">
+                    Are you sure you want to delete <span id="staff_name_to_delete_span" class="font-bold text-rose-600"></span>'s account?
+                    This action cannot be undone, and they will immediately lose system access.
+                </p>
+                <form id="deleteStaffAccountForm" method="POST" action="{% url 'manage_staff' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="staff_id" id="staff_id_to_delete" value="">
+                    <input type="hidden" name="action_type" value="delete">
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeDeleteStaffModal()" class="flex-1 py-3 px-4 border-2 border-slate-200 hover:bg-slate-50 text-slate-600 rounded-2xl font-bold text-sm transition-all tracking-wide uppercase">
+                            Cancel
+                        </button>
+                        <button type="submit" class="flex-1 py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-bold text-sm transition-all tracking-wide uppercase shadow-lg shadow-rose-500/20 active:scale-[0.98]">
+                            Confirm Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div id="logoutModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeLogoutModal()"></div>
         
@@ -740,6 +867,20 @@
         const stockChannel = new BroadcastChannel('stock_updates');
         let productToDeleteId = null;
         let salesChart;
+
+        // --- HELPER FUNCTIONS FOR SAFE STRING HANDLING ---
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function escapeJsArg(value) {
+            return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/</g, '\\x3C').replace(/>/g, '\\x3E').replace(/&/g, '\\x26');
+        }
 
         // --- CHART INITIALIZATION ---
         function updateChart(labels, salesData) {
@@ -833,7 +974,7 @@
             form.reset();
             form.querySelector('select[name="category"]').value = currentCategory;
             document.getElementById('modalTitle').innerText = "Create Drink";
-            document.getElementById('modalSubmitBtn').innerText = "Confirm & Save Drink";
+            document.getElementById('modalSubmitBtn').innerText = "Confirm & Save";
             form.action = "{% url 'add_product' %}";
             toggleproductModal();
         }
@@ -1119,22 +1260,111 @@
             document.getElementById('staff_role').value = role;
             document.getElementById('staff_password').required = false;
             document.getElementById('deleteStaffBtn').classList.remove('hidden');
+
+            // Update the delete button's onclick to open the new confirmation modal
+            const deleteBtn = document.getElementById('deleteStaffBtn');
+            deleteBtn.onclick = () => openDeleteStaffModal(id, username);
         }
 
         function clearStaffForm() {
             document.getElementById('staffFormTitle').innerText = "Create New Account";
             document.getElementById('staffAccountForm').reset();
             document.getElementById('staff_id_input').value = "";
-            document.getElementById('staff_action_type').value = "save";
+            // Ensure action_type is 'save' for this form
+            document.getElementById('staff_action_type').value = "save"; 
             document.getElementById('staff_password').required = true;
             document.getElementById('deleteStaffBtn').classList.add('hidden');
         }
 
+        // --- STAFF DELETION MODAL LOGIC ---
+        function openDeleteStaffModal(staffId, staffName) {
+            const modal = document.getElementById('deleteStaffModal');
+            document.getElementById('staff_id_to_delete').value = staffId;
+            document.getElementById('staff_name_to_delete_span').innerText = staffName;
+            modal.classList.remove('hidden');
+            // Force browser reflow for entry scale animation
+            setTimeout(() => {
+                modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
+                modal.querySelector('.transform').classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeDeleteStaffModal() {
+            const modal = document.getElementById('deleteStaffModal');
+            modal.querySelector('.transform').classList.remove('scale-100', 'opacity-100');
+            modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200); // Match CSS transition duration
+        }
+
+        // Modify the existing deleteStaffAccount function to use the new modal
         function deleteStaffAccount() {
-            if (confirm('Are you sure you want to delete this staff account?')) {
-                document.getElementById('staff_action_type').value = "delete";
-                document.getElementById('staffAccountForm').requestSubmit();
+            const staffId = document.getElementById('staff_id_input').value;
+            const staffName = document.getElementById('staff_username').value;
+            if (staffId) {
+                openDeleteStaffModal(staffId, staffName);
             }
+        }
+
+        // --- CUSTOMER MANAGEMENT LOGIC ---
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function escapeJsArg(value) {
+            return String(value ?? '')
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '&quot;')
+                .replace(/\r/g, '\\r')
+                .replace(/\n/g, '\\n')
+                .replace(/</g, '\\x3C')
+                .replace(/>/g, '\\x3E')
+                .replace(/&/g, '\\x26');
+        }
+
+        function openEditCustomerModal(id, name, phone, points) {
+            const modal = document.getElementById('customerModal');
+            if (!modal) return;
+
+            document.getElementById('customer_id_input').value = id ?? '';
+            document.getElementById('customer_name').value = name ?? '';
+            document.getElementById('customer_phone').value = phone ?? '';
+            document.getElementById('customer_points').value = points ?? 0;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEditCustomerModal() {
+            const modal = document.getElementById('customerModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function openDeleteCustomerModal(id, name) {
+            const modal = document.getElementById('deleteCustomerModal');
+            if (!modal) return;
+
+            document.getElementById('delete_customer_id_input').value = id ?? '';
+            document.getElementById('deleteCustomerName').innerText = name ?? '';
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDeleteCustomerModal() {
+            const modal = document.getElementById('deleteCustomerModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
 
         // AJAX Handler for Staff Form
@@ -1162,6 +1392,29 @@
             } catch (error) { console.error(error); }
         });
 
+        // AJAX Handler for Delete Staff Account Form
+        document.getElementById('deleteStaffAccountForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const data = await response.json();
+                    alert(data.message || "Error processing staff account deletion.");
+                }
+            } catch (error) {
+                console.error("Error deleting staff account:", error);
+                alert("An unexpected error occurred during deletion.");
+            }
+        });
+
         function openLogoutModal() {
             const modal = document.getElementById('logoutModal');
             modal.classList.remove('hidden');
@@ -1181,6 +1434,26 @@
             }, 150);
         }
 
+        // --- CUSTOMER LOYALTY SEARCH FILTER ---
+        function filterTopCustomers() {
+            const searchTerm = document.getElementById('customerSearchInput').value.toLowerCase();
+            const loyaltyList = document.getElementById('loyaltyList');
+            if (!loyaltyList) return;
+
+            const customerRows = loyaltyList.querySelectorAll('.group\\/cust'); // Escape '/' for querySelectorAll
+
+            customerRows.forEach(row => {
+                const customerName = row.querySelector('.font-bold.text-slate-800')?.innerText.toLowerCase() || '';
+                const customerPhone = row.querySelector('.text-slate-400.uppercase')?.innerText.toLowerCase() || '';
+
+                if (customerName.includes(searchTerm) || customerPhone.includes(searchTerm)) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+        }
+
         // Optional: Close modal if user hits the 'Escape' key
         // Global Modal Closure Logic (Escape Key Integration)
         window.addEventListener('keydown', function(event) {
@@ -1192,7 +1465,10 @@
                     { id: 'deleteproductModal', close: closeDeleteproductModal },
                     { id: 'staffModal', close: closeStaffModal },
                     { id: 'settingsModal', close: closeSettingsModal },
-                    { id: 'logoutModal', close: closeLogoutModal }
+                    { id: 'logoutModal', close: closeLogoutModal },
+                    { id: 'deleteStaffModal', close: closeDeleteStaffModal },
+                    { id: 'customerModal', close: closeEditCustomerModal },
+                    { id: 'deleteCustomerModal', close: closeDeleteCustomerModal }
                 ];
 
                 for (const modalInfo of activeModals) {
@@ -1266,7 +1542,53 @@
                         }, 300);
                     }
                 }
+                else if (data.type === 'customer.loyalty_updated') {
+                    // Trigger loyalty section refresh
+                    refreshLoyaltySection();
+                }
             };
+
+            async function refreshLoyaltySection() {
+                try {
+                    const response = await fetch('/api/customers/top/');
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        const container = document.getElementById('loyaltyList');
+                        if (!container) return;
+                        
+                        container.innerHTML = result.customers.map((c, i) => `
+                            <div class="flex justify-between items-center py-1.5 md:py-3 group/cust">
+                                <div class="flex items-center gap-1 md:gap-3 min-w-0 flex-1"> 
+                                    <div class="w-4 h-4 md:w-8 md:h-8 rounded-md md:rounded-lg bg-slate-50 border border-slate-100 text-slate-500 flex items-center justify-center text-[7px] md:text-xs font-[800] shrink-0">
+                                        #${i + 1}
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="font-bold text-slate-800 text-[9px] md:text-sm leading-tight truncate">${escapeHtml(c.name)}</p>
+                                        <p class="text-[6px] md:text-[9px] text-slate-400 font-[800] tracking-widest uppercase truncate">${escapeHtml(c.phone)}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="text-right shrink-0">
+                                        <p class="text-[9px] md:text-sm font-[800] text-amber-500">${escapeHtml(c.points)} <span class="text-[5px] md:text-[8px] text-slate-400 uppercase tracking-widest">pts</span></p>
+                                    </div>
+                                    <div class="flex items-center gap-1 opacity-100 md:opacity-0 group-hover/cust:opacity-100 transition-opacity">
+                                        <button onclick="openEditCustomerModal('${escapeJsArg(c.id)}', '${escapeJsArg(c.name)}', '${escapeJsArg(c.phone)}', '${escapeJsArg(c.points)}')" class="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center border border-blue-100 shadow-sm"><i class="bi bi-pencil-square text-[10px] md:text-xs"></i></button>
+                                        <button onclick="openDeleteCustomerModal('${escapeJsArg(c.id)}', '${escapeJsArg(c.name)}')" class="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border border-rose-100 shadow-sm"><i class="bi bi-trash3 text-[10px] md:text-xs"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+
+                        // Re-apply the filter if there's an active search term
+                        const searchInput = document.getElementById('customerSearchInput');
+                        if (searchInput && searchInput.value) {
+                            filterTopCustomers();
+                        }
+                        container.classList.add('ring-2', 'ring-amber-400', 'bg-amber-50/50');
+                        setTimeout(() => container.classList.remove('ring-2', 'ring-amber-400', 'bg-amber-50/50'), 1500);
+                    }
+                } catch (e) { console.error("Loyalty update error:", e); }
+            }
 
             realTimeSocket.onclose = function() {
                 setTimeout(connectWebSocket, 3000); // Auto-reconnect fallback

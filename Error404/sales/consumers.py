@@ -45,3 +45,9 @@ class CafeSyncConsumer(WebsocketConsumer):
             'type': 'product.deleted',
             'product_id': product_id
         }))
+
+    def customer_loyalty_updated_event(self, event):
+        # Send message to WebSocket client
+        self.send(text_data=json.dumps({
+            'type': 'customer.loyalty_updated'
+        }))

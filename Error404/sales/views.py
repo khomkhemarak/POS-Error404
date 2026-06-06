@@ -97,7 +97,7 @@ def manager_required(view_func):
     @login_required
     def wrapper(request, *args, **kwargs):
         profile = getattr(request.user, 'profile', None)
-        if profile and profile.is_manager:
+        if request.user.is_superuser or (profile and (profile.is_manager or profile.is_owner)):
             return view_func(request, *args, **kwargs)
         raise PermissionDenied
     return wrapper
@@ -144,18 +144,30 @@ def owner_view(request):
     
     # Define today's completed orders
     orders = Order.objects.filter(created_at__gte=start_date)
-    order_count = orders.count()
 
-    # --- 2. income (Pulling from Order total_amount - Fixed) ---
-    total_income = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    # --- 2. GROSS INCOME (Paid cash + Points value) ---
+    # --- 2. GROSS INCOME (Cash + Points Value - Excluding Refunds) ---
+    # We sum price_at_sale (what was paid) and discount_amount (waived points value)
+    # This captures the true business volume even when items are free.
+    aggregates = OrderItem.objects.filter(order__in=orders, is_refund=False).aggregate(
+        total_gross=Sum(F('price_at_sale') * F('quantity'), output_field=DecimalField()),
+        order_count=Sum(Case(When(is_refund=False, then=1), output_field=IntegerField())),
+        # Count non-refunded items as productivity markers
+        item_count=Sum('quantity')
+    )
+    total_income = aggregates['total_gross'] or Decimal('0.00')
+    order_count = orders.count()
     
     # --- 3. FROZEN PROFIT CALCULATION ---
     total_profit = Decimal('0.00')
     items = OrderItem.objects.filter(order__in=orders).select_related('product')
+    items = OrderItem.objects.filter(order__in=orders, is_refund=False).select_related('product')
 
     for item in items:
-        # Use Snapshot data if it exists (>0), otherwise fallback to current product data
-        price = item.price_at_sale if item.price_at_sale > 0 else item.product.price_small
+        if item.is_points_redeemed:
+            continue
+        # Use Snapshot data (paid), otherwise fallback to current product data
+        price = item.price_at_sale
         cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_product_cost(item.size)
 
         # Performance Math (Net income after 10% tax)
@@ -167,9 +179,12 @@ def owner_view(request):
         total_qty=Sum('quantity')
     ).order_by('-total_qty')[:5]
 
-    sales_by_hour = orders.annotate(
-        hour=ExtractHour('created_at')
-    ).values('hour').annotate(total=Sum('total_amount')).order_by('hour')
+    # Ensure the chart reflects Gross Value (including points)
+    sales_by_hour = OrderItem.objects.filter(order__in=orders, is_refund=False).annotate(
+        hour=ExtractHour('order__created_at')
+    ).values('hour').annotate(
+        total=Sum(F('price_at_sale') + F('discount_amount'))
+    ).order_by('hour')
     
     labels = [f"{item['hour']}:00" for item in sales_by_hour]
     sales_data = [float(item['total']) for item in sales_by_hour]
@@ -653,7 +668,10 @@ def generate_daily_report(request):
     orders = Order.objects.filter(created_at__gte=start_date)
     order_count = orders.count()
 
-    total_income = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    # Gross Income Refactor
+    total_income = OrderItem.objects.filter(order__in=orders, is_refund=False).aggregate(
+        total=Sum(F('price_at_sale') * F('quantity'), output_field=DecimalField())
+    )['total'] or Decimal('0.00')
     
     total_profit = Decimal('0.00')
     total_expense = Decimal('0.00')
@@ -661,12 +679,16 @@ def generate_daily_report(request):
     total_tax = Decimal('0.00')
 
     items = OrderItem.objects.filter(order__in=orders).select_related('product')
+    items = OrderItem.objects.filter(order__in=orders, is_refund=False).select_related('product')
     for item in items:
-        price = item.price_at_sale if item.price_at_sale > 0 else item.product.price_small
+        gross_val = item.price_at_sale + item.discount_amount
+        price = gross_val if gross_val > 0 else item.product.price_small
         cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_product_cost(item.size)
         
-        net_income_per_unit = price / Decimal('1.10')
-        total_profit += (net_income_per_unit - cost) * item.quantity
+        if not item.is_points_redeemed:
+            net_income_per_unit = price / Decimal('1.10')
+            total_profit += (net_income_per_unit - cost) * item.quantity
+            
         total_expense += cost * item.quantity
         total_cups += item.quantity
 
@@ -1278,6 +1300,13 @@ def register_customer(request):
                 phone=data.get('phone'),
                 email=data.get('email', '')
             )
+            # BROADCAST: Notify dashboards to refresh loyalty leaderboard
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "cafe_sync_group",
+                {"type": "customer_loyalty_updated_event"}
+            )
+            
             return JsonResponse({
                 'status': 'success', 
                 'id': new_cust.id, 
@@ -1303,6 +1332,7 @@ def process_payment(request):
         service_type = data.get('service_type', 'Dine-in')
         redeem_free_drink = data.get('redeem_free_drink', False)
         payment_method = data.get('payment_method', 'Cash')
+        customer_updated = False
         cash_received = data.get('cash_received', 0)
         cash_change = data.get('cash_change', 0)
 
@@ -1324,6 +1354,7 @@ def process_payment(request):
                 if redeem_free_drink:
                     customer.points = max(0, customer.points - 50)
                     customer.save()
+                    customer_updated = True
 
             free_drink_applied = False
             total_earned_points = 0
@@ -1438,14 +1469,18 @@ def process_payment(request):
                 if extra_shots > 0:
                     price_at_sale += Decimal('0.50') * Decimal(str(extra_shots))
 
+                discount_amount = Decimal('0.00')
+                is_points_redeemed = False
+
                 # Handle refunds: free items that still deduct stock
                 if is_refund:
                     price_at_sale = Decimal('0.00')
-                    # Mark the drink request as processed (could add a processed field later)
 
                 # Loyalty Logic: Apply free drink and calculate points
                 elif redeem_free_drink and not free_drink_applied and target_size == 'Medium':
+                    discount_amount = price_at_sale # Store original value before waiving
                     price_at_sale = Decimal('0.00')
+                    is_points_redeemed = True
                     free_drink_applied = True
                 else:
                     total_earned_points += point_map.get(target_size, 0) * qty
@@ -1459,6 +1494,8 @@ def process_payment(request):
                     product_type=product_type,
                     # LOCK THE DATA: This makes your owner_view reports "Fixed"
                     price_at_sale=price_at_sale,
+                    discount_amount=discount_amount,
+                    is_points_redeemed=is_points_redeemed,
                     cost_at_sale=product.get_product_cost(target_size, product_type),
                     is_refund=is_refund
                 )
@@ -1466,11 +1503,35 @@ def process_payment(request):
             if customer:
                 customer.points += total_earned_points
                 customer.save()
+                customer_updated = True
+
+        # BROADCAST: Update loyalty leaderboard if customer points changed
+        if customer_updated:
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "cafe_sync_group",
+                {"type": "customer_loyalty_updated_event"}
+            )
 
         return JsonResponse({'status': 'success', 'order_id': new_order.id, 'order_number': new_order.display_order_number})
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@login_required
+def api_top_customers(request):
+    """API for real-time loyalty leaderboard updates"""
+    customers = Customer.objects.order_by('-points')[:10]
+    customer_data = [
+        {
+            'id': str(c.id),
+            'name': c.name,
+            'phone': c.phone,
+            'points': c.points,
+        }
+        for c in customers
+    ]
+    return JsonResponse({'status': 'success', 'customers': customer_data})
 
 @login_required
 def api_order_items(request):
@@ -1746,19 +1807,24 @@ def manager_view(request):
     today = timezone.localtime(timezone.now()).replace(hour=0, minute=0, second=0, microsecond=0)
     todays_orders = Order.objects.filter(created_at__gte=today)
     
-    total_income = todays_orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    # Manager Dashboard Gross Income Fix
+    total_income = OrderItem.objects.filter(order__in=todays_orders, is_refund=False).aggregate(
+        total=Sum(F('price_at_sale') * F('quantity'), output_field=DecimalField())
+    )['total'] or Decimal('0.00')
     total_profit = Decimal('0.00')
     total_expense = Decimal('0.00')
     total_cups = 0
     total_tax = Decimal('0.00') # This is order-based tax (VAT)
     
     items = OrderItem.objects.filter(order__in=todays_orders).select_related('product')
+    items = OrderItem.objects.filter(order__in=todays_orders, is_refund=False).select_related('product')
     for item in items:
         cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_product_cost(item.size)
-        price = item.price_at_sale if item.price_at_sale > 0 else item.product.price_small
+        price = item.price_at_sale
         
         total_expense += (cost * item.quantity)
-        total_profit += ((price / Decimal('1.10')) - cost) * item.quantity
+        if not item.is_points_redeemed:
+            total_profit += ((price / Decimal('1.10')) - cost) * item.quantity
         total_cups += item.quantity
 
     for order in todays_orders:
@@ -1793,7 +1859,11 @@ def manager_view(request):
     avg_profitability = (float(total_profit) / float(total_income) * 100) if total_income > 0 else 0
 
     # --- 4. Initial Chart Data ---
-    sales_by_hour = todays_orders.annotate(hour=ExtractHour('created_at')).values('hour').annotate(total=Sum('total_amount')).order_by('hour')
+    sales_by_hour = OrderItem.objects.filter(order__in=todays_orders, is_refund=False).annotate(
+        hour=ExtractHour('order__created_at')
+    ).values('hour').annotate(
+        total=Sum(F('price_at_sale') * F('quantity'))
+    ).order_by('hour')
     chart_labels = [f"{item['hour']}:00" for item in sales_by_hour]
     chart_data = [float(item['total']) for item in sales_by_hour]
 
@@ -1899,7 +1969,10 @@ def api_dashboard_stats(request):
 
     # --- 2. FINANCIAL CALCULATIONS ---
     orders = Order.objects.filter(created_at__gte=start_date)
-    total_rev = orders.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    # API Gross Revenue Fix (Used for real-time dashboard sync)
+    total_rev = OrderItem.objects.filter(order__in=orders, is_refund=False).aggregate(
+        total=Sum(F('price_at_sale') * F('quantity'), output_field=DecimalField())
+    )['total'] or Decimal('0.00')
     
     # --- NEW: Annual Income Tax Logic for API ---
     income_val = float(total_rev)
@@ -1923,13 +1996,16 @@ def api_dashboard_stats(request):
     total_tax = Decimal('0.00')
     
     items = OrderItem.objects.filter(order__in=orders).select_related('product')
+    items = OrderItem.objects.filter(order__in=orders, is_refund=False).select_related('product')
     for item in items:
-        price = item.price_at_sale if item.price_at_sale > 0 else item.product.price_small
+        price = item.price_at_sale
         cost = item.cost_at_sale if item.cost_at_sale > 0 else item.product.get_product_cost(item.size)
         
         # Net income after 10% tax
-        net_income_per_unit = price / Decimal('1.10')
-        total_profit += (net_income_per_unit - cost) * item.quantity
+        if not item.is_points_redeemed:
+            net_income_per_unit = price / Decimal('1.10')
+            total_profit += (net_income_per_unit - cost) * item.quantity
+            
         total_expense += cost * item.quantity
         total_cups += item.quantity
 
@@ -1950,10 +2026,10 @@ def api_dashboard_stats(request):
     profit_margin_ratio = (float(total_profit) / float(total_rev)) if total_rev > 0 else 0
 
     # --- 3. EXPENSE TREND DATA ---
-    revenue_trend_query = orders.annotate(
-        unit=date_func('created_at')
+    revenue_trend_query = OrderItem.objects.filter(order__in=orders, is_refund=False).annotate(
+        unit=date_func('order__created_at')
     ).values('unit').annotate(
-        total_rev=Sum('total_amount')
+        total_rev=Sum(F('price_at_sale') * F('quantity'), output_field=DecimalField())
     ).order_by('unit')
 
     expense_trend_query = OrderItem.objects.filter(
@@ -2263,6 +2339,8 @@ def manage_customer(request):
         messages.error(request, "You do not have permission to perform this action.")
         return redirect('pos_home')
 
+    redirect_route = get_dashboard_route(request.user)
+
     if request.method == 'POST':
         customer_id = request.POST.get('customer_id')
         action_type = request.POST.get('action_type', 'save')
@@ -2277,8 +2355,13 @@ def manage_customer(request):
                     customer = get_object_or_404(Customer, id=customer_id)
                     name_deleted = customer.name
                     customer.delete()
+                    channel_layer = get_channel_layer()
+                    async_to_sync(channel_layer.group_send)(
+                        "cafe_sync_group",
+                        {"type": "customer_loyalty_updated_event"}
+                    )
                     messages.success(request, f"Customer '{name_deleted}' deleted.")
-                    return redirect('manager_display')
+                    return redirect(redirect_route)
 
                 # --- CASE 2: UPDATE CUSTOMER ---
                 if customer_id:
@@ -2287,15 +2370,20 @@ def manage_customer(request):
                     # Check if the new phone is already taken by someone else
                     if Customer.objects.filter(phone=phone).exclude(id=customer_id).exists():
                         messages.error(request, f"Phone number '{phone}' is already in use.")
-                        return redirect('manager_display')
+                        return redirect(redirect_route)
 
                     customer.name = name
                     customer.phone = phone
                     customer.points = int(points)
                     customer.save()
+                    channel_layer = get_channel_layer()
+                    async_to_sync(channel_layer.group_send)(
+                        "cafe_sync_group",
+                        {"type": "customer_loyalty_updated_event"}
+                    )
                     messages.success(request, f"Customer '{name}' updated successfully.")
 
         except Exception as e:
             messages.error(request, f"An error occurred: {str(e)}")
             
-    return redirect('manager_display')
+    return redirect(redirect_route)

@@ -1,7 +1,7 @@
 from django.db import models
 from decimal import Decimal
 from django.conf import settings
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 import random
@@ -219,7 +219,7 @@ class ProductVariant(models.Model):
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     order_date = models.DateField(auto_now_add=True)  # Track the date for daily reset
-    order_number = models.PositiveIntegerField(default=0)  # Daily sequence number (resets each day)
+    order_number = models.CharField(max_length=10, default="0")  # Daily sequence number
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_completed = models.BooleanField(default=False)
     service_type = models.CharField(max_length=20, default='Dine-in')
@@ -229,20 +229,6 @@ class Order(models.Model):
     cash_received = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     cash_change = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     cashier_name = models.CharField(max_length=100, blank=True, null=True)
-
-    @classmethod
-    def get_next_order_number(cls):
-        """Get the next order number for today (resets daily)"""
-        from django.utils import timezone
-        today = timezone.now().date()
-        
-        # Get the highest order_number for today
-        latest_order = cls.objects.filter(order_date=today).order_by('-order_number').first()
-        
-        if latest_order:
-            return latest_order.order_number + 1
-        else:
-            return 1
 
     @property
     def tax_amount(self):
@@ -263,7 +249,7 @@ class Order(models.Model):
     @property
     def display_order_number(self):
         """Returns a formatted daily order number (resets each day)"""
-        return f"{self.order_number:04d}"
+        return self.order_number
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
@@ -277,6 +263,8 @@ class OrderItem(models.Model):
     # This freezes the math so future menu changes don't ruin your past reports
     price_at_sale = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     cost_at_sale = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    is_points_redeemed = models.BooleanField(default=False)
     is_refund = models.BooleanField(default=False)
     # --------------------------------
 
@@ -455,11 +443,26 @@ class Customer(models.Model):
 
 
 # Signal to automatically set the daily order number when creating an order
-@receiver(post_save, sender=Order)
-def set_daily_order_number(sender, instance, created, **kwargs):
-    """Automatically assign the daily order number when an order is created"""
-    if created and instance.order_number == 0:
-        # Get the next order number for today
-        next_number = Order.get_next_order_number()
-        instance.order_number = next_number
-        instance.save(update_fields=['order_number'])
+@receiver(pre_save, sender=Order)
+def set_daily_order_number(sender, instance, **kwargs):
+    """
+    Automatically assign the daily order number before saving.
+    Uses local timezone to ensure reset happens at exactly midnight local time.
+    """
+    # Trigger if it's a new order or has a default/legacy placeholder
+    if not instance.pk or instance.order_number in ["0000", "0", ""]:
+        today = timezone.localdate()  # Tracks local midnight transition accurately
+        
+        # CRITICAL FIX: Filter by today, but sort by '-id' to avoid alphabetical text sorting bugs
+        last_order = Order.objects.filter(created_at__date=today).order_by('-id').first()
+
+        if last_order and last_order.order_number:
+            try:
+                next_number = int(last_order.order_number) + 1
+            except ValueError:
+                next_number = 1
+        else:
+            next_number = 1
+
+        # Assign as a standard unpadded number string (e.g., "1", "2", "3")
+        instance.order_number = str(next_number)

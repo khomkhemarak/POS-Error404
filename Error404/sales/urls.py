@@ -54,6 +54,7 @@ urlpatterns = [
     path('api/inventory/logs/', views.api_inventory_logs, name='api_inventory_logs'),
     path('api/dashboard-stats/', views.api_dashboard_stats, name='api_dashboard_stats'),
     path('api/inventory/raw-materials/', views.api_raw_materials, name='api_raw_materials'),
+    path('api/customers/top/', views.api_top_customers, name='api_top_customers'),
 
     # --- Managerial Analytics ---
     path('manager/', views.manager_view, name='manager_display'),
